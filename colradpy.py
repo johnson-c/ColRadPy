@@ -32,18 +32,17 @@ import re
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 import sys
-sys.path.append('/home/curtis/spirit/svn/colradpy')
+sys.path.append('./')
 from r8yip import *
 from r8necip import *
 from read_adf04 import *
 nsigmaplus = 1
-use_recombination  = True
-use_recombination_three_body= True
+
 def convert_to_air(lam):
     s = 10**3/lam
     return 1 + 0.0000834254 + 0.02406147 / (130 - s**2) + 0.00015998 / (38.9 - s**2)
 
-def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=True, suppliment_with_ecip=True,scale_ecip=-1):
+def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=True, suppliment_with_ecip=True,scale_ecip=-1,use_recombination_three_body= True,use_recombination  = True):
     nsigma=len(metas)
     if(type(fil) == str):
         dict = read_adf04(fil)
@@ -119,28 +118,27 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
 
     dict['ionization'] = S_ij
     del S_ij
-
+    
     if(use_recombination):
+
         recomb_excit_interp = interp1d(dict['temp_grid']/11604.5,
                                        dict['recomb_excit'],
                                        kind='cubic',axis=1)
         recomb_excit_interp_grid = recomb_excit_interp(temperature_grid)
-
+        dict['recomb_excit_interp_grid'] = recomb_excit_interp_grid
     if(use_recombination_three_body):
         #from the los alimos lab manual
         #he['w'] = (he['S']*(he['L']*2+1)-1)/2
         l_map = np.array(['S','P','D','F','G'])
-        if(len(dict['ion_term']) ==2):
-            w_ion = ( int(dict['ion_term'][0]) * (np.where(l_map==dict['ion_term'][1])[0][0]*2+1) -1)/2.
+        if(len(dict['ion_term']) ==2): # was -1)/2.
+            w_ion = ( int(dict['ion_term'][0]) * (np.where(l_map==dict['ion_term'][1])[0][0]*2+1))
         elif(len(dict['ion_term']) ==3):
             w_ion = float(dict['ion_term'][2])
         else:
             w_ion=1e30
         dict['w_ion'] = w_ion#1.656742E-22
-        dict['recomb_three_body'] = 1.656742E-22*dict['w'].reshape(len(dict['w']),1) /w_ion*np.exp( (dict['ion_pot'] - dict['energy']).reshape(len(dict['energy']),1) / (temperature_grid/0.000123985)) *dict['ionization'] / (temperature_grid)**(1.5)
+        dict['recomb_three_body'] = 1.656742E-22* (dict['w'].reshape(len(dict['w']),1)*2+1) /w_ion*np.exp( (dict['ion_pot'] - dict['energy']).reshape(len(dict['energy']),1) / (temperature_grid/0.000123985)) *dict['ionization'] / (temperature_grid)**(1.5)
         #rates of this are in cm3
-
-        
         
     #removed [0:14] 7/7/17 not sure whey that was there
     #removed kind='cubic' 7/17/17, causing singular matrix for adf04-10apr17
@@ -305,12 +303,13 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
     ################################################################################
 
     qcd = np.zeros((nsigma,nsigma-1,len(temperature_grid),len(electron_den)))
+
     poptmp = np.zeros((len(aa_tmp),len(aa_tmp),nsigma,len(temperature_grid),
                        len(electron_den) ))
+
     scd = np.zeros((nsigma,nsigmaplus,len(temperature_grid),len(electron_den)))
     acd = np.zeros((nsigma,nsigmaplus,len(temperature_grid),len(electron_den)))
     for j in range(0,nsigma):
-
         for k in range(0,len(temperature_grid)):
             for l in range(0,len(electron_den)):        
                 for i in range(0,len(beta_tmp)):
@@ -325,8 +324,8 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
 
                 F = np.sum(poptmp[:,:,j,k,l],axis=1)
 
-                if(use_recombination):
-                    R = np.sum(aa_inv[:,i,k,l]*recomb_excit_interp_grid[i,k])
+                #if(use_recombination):
+                    #R = np.sum(aa_inv[:,i,k,l]*dict['recombination'][i,k])#recomb_excit_interp_grid[i,k])
 
                 for m in range(0,nsigmaplus):
                     if(use_ionization_in_cr):
@@ -336,11 +335,14 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
                         #for some reason it was impacting the metastable case but not the ground only... weird
                         #scd[j,m,k,l] = dict['ionization'][j,k]/(1+ np.sum(np.sum(poptmp[:,:,j,k,l]))) +np.sum(
                         #    dict['ionization'][nsigma:,k]*F)
-                        if(driving_population_norm):
+                        if( driving_population_norm):
                             scd[j,m,k,l] = dict['ionization'][j,k]/(1+np.sum(populations[:,j,k,l]))+np.sum(dict['ionization'][nsigma:,k]*F)
                         else:
                             scd[j,m,k,l] = dict['ionization'][j,k]+np.sum(dict['ionization'][nsigma:,k]*F)
                     if(use_recombination):
+
+                        acd[j,m,k,l] = (dict['recomb_three_body'][j,k]*electron_den[l] + dict['recomb_excit_interp_grid'][j,k]) /(1+np.sum(populations[:,j,k,l])) + np.sum(cr[j,nsigma:len(dict['energy']),k,l]*np.sum(aa_inv[:,:,k,l]*dict['recomb_excit_interp_grid'][nsigma:,k]*dict['recomb_three_body'][j,k]*electron_den[l],axis=1)) #(dict['recomb_three_body'][j,k]*electron_den[l] + dict['recomb_excit_interp_grid'][k,j]) /(1+np.sum(populations[:,j,k,l])) - np.sum(F * (dict['recomb_three_body'][nsigma:,k]*electron_den[l] + dict['recomb_excit_interp_grid'][nsigma:,k]))
+                    '''
                         if(use_recombination_three_body):
                             acd[j,m,k,l] = (recomb_excit_interp_grid[j,k]+dict['recomb_three_body'][j,k]*electron_den[l]) - np.sum(
                                 cr[j,nsigma:len(dict['energy']),k,l]*np.sum(
@@ -360,13 +362,36 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
                                     aa_inv[:,:,k,l]*dict['recomb_three_body'][j,k]*electron_den[l],
                                                      axis=1))
 
-
+                '''
                 mind=0
                 for n in range(0,nsigma):
                     if(n !=j):
                         qcd[j,mind,k,l] = (cr[n,j,k,l] + np.sum(cr[n,nsigma:len(dict['energy']),k,l]*F))/electron_den[l]
                         mind = mind+1
 
+
+    poptmprec = np.zeros((len(aa_tmp),len(aa_tmp),nsigma,nsigmaplus,len(temperature_grid),
+                       len(electron_den) ))
+
+    for j in range(0,nsigma):
+        for m in range(0,nsigmaplus):
+            for k in range(0,len(temperature_grid)):
+                for l in range(0,len(electron_den)):        
+                    for i in range(0,len(beta_tmp)):
+
+                        poptmprec[:,i,j,m,k,l] = aa_inv[:,i,k,l]*beta_tmp[i,-1,k,l]
+                    R = np.sum(poptmprec[:,:,j,m,k,l],axis=1)
+                    acd[j,m,k,l] = ((dict['recomb_three_body'][j,k]*electron_den[l]**2 + dict['recomb_excit_interp_grid'][j,k]*electron_den[l]) + np.sum( cr[j,nsigma:len(dict['energy']),k,l]*R) )/electron_den[l]
+
+
+    dict['poptmprec'] = poptmprec
+
+
+
+
+
+
+                        
     #scdd = 0
     #for ii in range(0,len(aa_inv)):
     #        for jj in range(0,len(aa_inv)):
@@ -382,6 +407,7 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
                 sxbs[:,m,t,n] = scd[m,0,t,n]/pecs[:,m,t,n]
 
     dict['aa_inv'] = aa_inv
+    dict['aa_tmp'] = aa_tmp
     dict['beta_tmp'] = beta_tmp
     dict['a_ji'] = A_ji
     dict['populations'] = populations
