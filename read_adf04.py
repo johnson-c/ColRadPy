@@ -28,7 +28,8 @@ def read_adf04(file_path):
     ############################################################################
     first_line = re.split('[ ]', f.readline())
 
-
+    ion_pot = []
+    ion_term = []
     for i in range(0,len(first_line)):
 
         if(first_line[i] != '' and  not dict.has_key('element')):
@@ -52,10 +53,10 @@ def read_adf04(file_path):
         elif(first_line[i] != '' and  dict.has_key('element') and \
            dict.has_key('charge_state') and dict.has_key('iz0') and \
            dict.has_key('iz1') and not dict.has_key('ion_term')):
-            dict['ion_pot'] = float(re.split('[(]',first_line[i])[0])
-            dict['ion_term'] = re.split('[)]',re.split('[(]',
-                                                       first_line[i])[1])[0]
-
+             ion_pot.append(float(re.split('[(]',first_line[i])[0]))
+             ion_term.append(re.split('[)]',re.split('[(]',first_line[i])[1])[0])
+    dict['ion_pot'] = np.asarray(ion_pot)
+    dict['ion_term'] = np.asarray(ion_term)
     ############################################################################
     #
     # done reading the first line, reading the level information
@@ -69,6 +70,10 @@ def read_adf04(file_path):
     w = []
     energy = []
     zpla = []
+    zpla1 = []
+    zplaa = []
+    zp_arr = np.ones(len(dict['ion_term']))
+    zp_arr = zp_arr*-1.
     neg_found = False
     level_ind_found = False
     conf_temp = ''
@@ -76,6 +81,7 @@ def read_adf04(file_path):
     maybe_w=''
     ttttmp = f.readline()
     level_line = re.split('[ ]',ttttmp)
+
     while(  xor( ('-1\n' not in level_line),(level_line[0] == 'C') )):
         neg_found = False
         level_ind_found = False
@@ -83,8 +89,8 @@ def read_adf04(file_path):
         conf_tmp_found = False
         maybe_w=''
         energy_found = False
+        zplaf = False
         conf_tmp = ''
-        import pdb
 
         for i in range(0,len(level_line)):
 
@@ -112,15 +118,36 @@ def read_adf04(file_path):
                   level_line[i]!='' and level_line[i][0]!='{' and not energy_found):
                 energy.append(float(level_line[i]))
                 energy_found = True
+                zpla1.append(-1)
             elif( maybe_w and conf_tmp_found and level_ind_found and
                   level_line[i]!='' and level_line[i][0] == '{'):
-                if(level_line[i][1]=='' or level_line[i][1] =='X'):
-                    zpla.append(-1)
-                else:
+                if(level_line[i][1] !='X'):
+                    ion_sig = int(level_line[i][1])-1
+                    zp_arr[ion_sig] = float(re.split('[}]',level_line[i])[1])
+
+                if(level_line[i][1]=='1'):
                     zpla.append( float(re.split('[}]',level_line[i])[1]))
+                    zplaf=True
+                    
+                else:
+                    zpla.append(-1)
+                    zplaf=True
+            
+            if(maybe_w and conf_tmp_found and level_ind_found and
+                  level_line[i]!='' and level_line[i][0] == '{' and level_line[i][1]=='2'):
+                    zpla1[len(energy)-1] =  float(re.split('[}]',level_line[i])[1])
+
+                    
+        
+        if( '\n' in level_line[i]):
+
+            zplaa.append(zp_arr)
+            zp_arr = np.ones(len(dict['ion_term']))
+            zp_arr = zp_arr*-1.        
         config.append(conf_tmp[0:len(conf_tmp)-1])
         ttttmp = f.readline()        
         level_line = re.split('[ ]',ttttmp)
+    dict['zpla'] = np.asarray(zplaa)
     ############################################################################
     #
     # end reading level info start reading temperature grid
@@ -152,7 +179,8 @@ def read_adf04(file_path):
     dict['S'] = np.asarray(L)
     dict['w'] = np.asarray(w)
     dict['config'] = np.asarray(config)
-    dict['zpla'] = np.asarray(zpla)
+
+    dict['zpla1'] = np.asarray(zpla1)
     ################################################################################
     #
     # end reading temp grid start reading in the atomic data from the adf04 file
@@ -286,6 +314,7 @@ def read_adf04(file_path):
                     b[j] = b[j].replace('-','E-')
                 c[j] =float(b[j])
             recomb_excit.append(c)
+
 
         elif(b[0] == 'S'):
             k = 0

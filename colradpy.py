@@ -36,26 +36,27 @@ sys.path.append('./')
 from r8yip import *
 from r8necip import *
 from read_adf04 import *
-nsigmaplus = 1
+
 
 def convert_to_air(lam):
     s = 10**3/lam
     return 1 + 0.0000834254 + 0.02406147 / (130 - s**2) + 0.00015998 / (38.9 - s**2)
 
-def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=True, suppliment_with_ecip=True,scale_ecip=-1,use_recombination_three_body= True,use_recombination  = True):
+def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=True, suppliment_with_ecip=True,scale_ecip=-1,use_recombination_three_body= False,use_recombination  = False,td_t=np.array([]),td_n0=np.array([])):
     nsigma=len(metas)
     if(type(fil) == str):
         dict = read_adf04(fil)
     else:
         dict = fil
     mapp = np.array(['S','P','D','F'])
+    nsigmaplus = len(dict['ion_pot'])
     #def colradpy(dict,temperature_grid,electron_den,nsigma=1,
     #             nsigmaplus=1,use_ionization_in_cr=False,suppliment_with_ecip=False)
     #This will calculated the ECIP data for all of the levels and use
     #The ecip where there is no ionization data available in the
     #adf04 file coming from the "S 1   +1" part
 
-    S_ij = np.zeros((len(dict['energy']),len(temperature_grid) ))
+    S_ij = np.zeros((len(dict['energy']),len(dict['ion_pot']),len(temperature_grid) ))#changed 4/19/17 to allow mutliple ion metas
     ################################################################################
 
     if(len(dict['ion_excit']) >0 and use_ionization_in_cr):
@@ -63,58 +64,65 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
         #removed kind='cubic' office computer was throwing error
         #no other computers were throwing errors
         dict['ion_excit'] = np.asarray(dict['ion_excit'])
+
         ion_excit_interp = interp1d(dict['temp_grid']/11604.5,dict['ion_excit'],axis=1)
         ion_excit_interp_grid = ion_excit_interp(temperature_grid)
         for i in range(0,len(dict['ion_transitions'])):
             for j in range(0,len(temperature_grid)):
 
-                S_ij[dict['ion_transitions'][i,0] -1,j] = ion_excit_interp_grid[i,j]/np.exp(
-                    (dict['ion_pot'] - dict['energy'][dict['ion_transitions'][i,0] -1 ])
+
+                S_ij[dict['ion_transitions'][i,0] -1,dict['ion_transitions'][i,1] -1, j] = ion_excit_interp_grid[i,j]/np.exp(
+                    (dict['ion_pot'][dict['ion_transitions'][i,1]-1] - dict['energy'][dict['ion_transitions'][i,0] -1 ])
                     *0.00012398774011749576/temperature_grid[j])
 
     ################################################################################
-
+    
     if(suppliment_with_ecip):
-
-        ion_inds = np.where(dict['zpla'] > -1)[0]
-        dict['ecip'] =r8ecip(dict['charge_state'], dict['ion_pot'],
-                             dict['energy'][ion_inds],dict['zpla'][ion_inds],temperature_grid*11604.5)
-        
-        ecip_inds = np.where(S_ij[:,0] ==0)[0]
-        to_use = np.intersect1d(ecip_inds,ion_inds)
-        
-        #added this ECIP scaling 12/14/17
-        if(scale_ecip>-1):
-            # going to do the interpolation between the given data points first
-
-            ion_data_inds = np.sort(dict['ion_transitions'][:,0]) - 1
-                                    #-1 for python starting
-                                    # at zero
-            ion_scale_grid = interp1d(ion_data_inds,S_ij[ion_data_inds]
-                                      /dict['ecip'][ion_data_inds],axis=0)
-                                    
-            scaled_ion_interp = ion_scale_grid(np.linspace(ion_data_inds[0],
-                       ion_data_inds[-1],ion_data_inds[-1] - ion_data_inds[0] + 1 ))
-            dict['ecip_scaled'] = np.zeros_like(dict['ecip'])
+        dict['ecip'] = np.zeros((len(dict['energy']),len(dict['ion_pot']),len(temperature_grid)))
+        for p in range(0,len(dict['ion_pot'])):
+            ion_inds = np.where(dict['zpla'][:,p] > -1)[0]#there was a stupid problem beacuse {X} only designates ecip not other ionization
+            #ion_inds = np.sort(np.append(ion_inds,dict['ion_transitions'][:,0][np.in1d(np.unique(dict['ion_transitions'][:,0]),ion_inds,invert=True)]))
+            ecip_inds = np.where(S_ij[:,p,0] ==0)[0]
+            to_use = np.intersect1d(ecip_inds,ion_inds)
             
-            
-            last_ind_scale = ion_data_inds[np.where(scale_ecip > ion_data_inds)[0][-1]]
-            dict['ecip_scaled'][0:scale_ecip] = dict['ecip'][0:scale_ecip] *\
-                                                scaled_ion_interp[0:scale_ecip,:]
+            dict['ecip'][ion_inds,p,:] =r8ecip(dict['charge_state'], dict['ion_pot'][p],
+                             dict['energy'][ion_inds],dict['zpla'][ion_inds,p],temperature_grid*11604.5)
 
-            
-            dict['ecip_scaled'][scale_ecip:] = dict['ecip'][scale_ecip:]*scaled_ion_interp[scale_ecip,:]
-
-                                               #+dict['ecip_scaled'][scale_ecip-1] changed 12/18/17
-            #now that the interpolation is done go through and do linear extrapolation
-            #not sure how valid this is
-            ecip_to_use = dict['ecip_scaled']
-        else:
-            ecip_to_use = dict['ecip']
         
-        for i in range(0,len(to_use)):
-            S_ij[to_use[i],:] = ecip_to_use[to_use[i],:]#changed this 12/14/17
+            #added this ECIP scaling 12/14/17
+            if(scale_ecip>-1):
+                # going to do the interpolation between the given data points first
+
+                ion_data_inds = np.sort(dict['ion_transitions'][:,0]) - 1
+                                        #-1 for python starting
+                                        # at zero
+                ion_scale_grid = interp1d(ion_data_inds,S_ij[ion_data_inds]
+                                          /dict['ecip'][ion_data_inds],axis=0)
+
+                scaled_ion_interp = ion_scale_grid(np.linspace(ion_data_inds[0],
+                           ion_data_inds[-1],ion_data_inds[-1] - ion_data_inds[0] + 1 ))
+                dict['ecip_scaled'] = np.zeros_like(dict['ecip'])
+
+
+                last_ind_scale = ion_data_inds[np.where(scale_ecip > ion_data_inds)[0][-1]]
+                dict['ecip_scaled'][0:scale_ecip] = dict['ecip'][0:scale_ecip] *\
+                                                    scaled_ion_interp[0:scale_ecip,:]
+
+
+                dict['ecip_scaled'][scale_ecip:] = dict['ecip'][scale_ecip:]*scaled_ion_interp[scale_ecip,:]
+
+                                                   #+dict['ecip_scaled'][scale_ecip-1] changed 12/18/17
+                #now that the interpolation is done go through and do linear extrapolation
+                #not sure how valid this is
+                ecip_to_use = dict['ecip_scaled'][:,p]
+            else:
+                ecip_to_use = dict['ecip'][to_use,p,:]
+            #for i in range(0,len(to_use)):
+
+            S_ij[to_use,p,:] = ecip_to_use#changed this 12/14/17
                                     #to allow for the scaled ECIP data to be used
+                                    #was ecip_to_use[to_use[i],:]
+
 
     dict['ionization'] = S_ij
     del S_ij
@@ -124,25 +132,52 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
         recomb_excit_interp = interp1d(dict['temp_grid']/11604.5,
                                        dict['recomb_excit'],
                                        kind='cubic',axis=1)
+        
         recomb_excit_interp_grid = recomb_excit_interp(temperature_grid)
-        dict['recomb_excit_interp_grid'] = recomb_excit_interp_grid
+        dict['recomb_excit_interp_grid'] = recomb_excit_interp_grid        
+        #replace values lower than 1e-30 with a linear interpolation
+        #because cubic gives the the wrong answer for some reason
+
+        a,b,c = np.unique(np.where(dict['recomb_excit']<1.e-30)[0],return_inverse=True,return_counts=True)
+        #if( temperature_grid < dict['temp_grid'][d.max()]):
+        #tmp_interp_grid = []
+        if(c.any()):
+            if(any(temperature_grid < dict['temp_grid'][c.max()]/11604.5)):
+                for v in range(0,len(a)):
+
+                    tmp = np.where(temperature_grid < dict['temp_grid'][c.max()]/11604.5)[0]
+                    w = interp1d(dict['temp_grid'][0:c[v]+1]/11604.5,dict['recomb_excit'][a[v],0:c[v]+1],kind='linear')
+                    dict['recomb_excit_interp_grid'][a[v],0:c[v]+1] = w(temperature_grid[0:tmp+1])
+            
+        
+            
+
+        dict['recombination'] = np.zeros((len(dict['energy']),len(dict['ion_pot']),len(temperature_grid) ))
+        for q in range(0,len(dict['recomb_transitions'])):
+            dict['recombination'][dict['recomb_transitions'][q,1]-1,dict['recomb_transitions'][q,0]-1,:] = dict['recomb_excit_interp_grid'][q]
+
+        
     if(use_recombination_three_body):
         #from the los alimos lab manual
         #he['w'] = (he['S']*(he['L']*2+1)-1)/2
-        l_map = np.array(['S','P','D','F','G'])
-        if(len(dict['ion_term']) ==2): # was -1)/2.
-            w_ion = ( int(dict['ion_term'][0]) * (np.where(l_map==dict['ion_term'][1])[0][0]*2+1))
-        elif(len(dict['ion_term']) ==3):
-            w_ion = float(dict['ion_term'][2])
-        else:
-            w_ion=1e30
-        dict['w_ion'] = w_ion#1.656742E-22
-        dict['recomb_three_body'] = 1.656742E-22* (dict['w'].reshape(len(dict['w']),1)*2+1) /w_ion*np.exp( (dict['ion_pot'] - dict['energy']).reshape(len(dict['energy']),1) / (temperature_grid/0.000123985)) *dict['ionization'] / (temperature_grid)**(1.5)
+        dict['recomb_three_body']=np.zeros((len(dict['energy']),len(dict['ion_pot']),len(temperature_grid)))
+        for p in range(0,len(dict['ion_pot'])):
+            l_map = np.array(['S','P','D','F','G'])
+            if(len(dict['ion_term'][p]) ==2): # was -1)/2.
+                w_ion = ( int(dict['ion_term'][p][0]) * (np.where(l_map==dict['ion_term'][p][1])[0][0]*2+1))
+            elif(len(dict['ion_term'][p]) ==3):
+                w_ion = float(dict['ion_term'][p][2])
+            else:
+                w_ion=1e30
+            dict['w_ion'] = w_ion#1.656742E-22
+            dict['recomb_three_body'][:,p,:] = 1.656742E-22* (dict['w'].reshape(len(dict['w']),1)*2+1) /w_ion*np.exp( (dict['ion_pot'][p] - dict['energy']).reshape(len(dict['energy']),1) / (temperature_grid/0.000123985)) *dict['ionization'][:,p,:] / (temperature_grid)**(1.5)
         #rates of this are in cm3
         
     #removed [0:14] 7/7/17 not sure whey that was there
     #removed kind='cubic' 7/17/17, causing singular matrix for adf04-10apr17
     #when run on the office computer no other computer had this error
+
+    
     col_excit_interp = interp1d(dict['temp_grid']/11604.5,dict['col_excit']
                                 ,axis=1)
 
@@ -152,7 +187,258 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
     q_ji = np.zeros((len(dict['energy']),len(dict['energy']),len(temperature_grid) ))
     q_ij = np.zeros((len(dict['energy']),len(dict['energy']),len(temperature_grid) ))
     A_ji = np.zeros((len(dict['energy']),len(dict['energy'])))
-    col_excit_interp_grid = col_excit_interp(temperature_grid)
+
+    if(any(dict['inf_engy'])):
+        dict['burg_tully'] = {}
+        
+        dict['burg_tully']['interp_temp_inds'] = np.where( temperature_grid*11604.5 < dict['temp_grid'][-1])[0]
+        dict['burg_tully']['extrap_temp_inds']  = np.where( temperature_grid*11604.5 > dict['temp_grid'][-1])[0]
+
+
+        FBIG = 0.01
+        FZERO = 1E-4
+        ELU = np.abs(dict['energy'][dict['col_transitions'][:,0]-1] - dict['energy'][dict['col_transitions'][:,1]-1])/109737.26
+        WTU = 2*dict['w'][dict['col_transitions'][:,0]-1]+1
+        WTL = 2*dict['w'][dict['col_transitions'][:,1]-1]+1
+
+        S = 3.73491E-10*dict['a_val']*WTU/ELU**3
+        FIN = 1/3.*ELU*S/WTL
+
+        
+        dict['burg_tully']['type1_ind_arr'] = np.where( (FIN>FBIG) &(dict['S'][dict['col_transitions'][:,0]-1] == dict['S'][dict['col_transitions'][:,1]-1]) & (np.abs(dict['L'][dict['col_transitions'][:,0]-1] - dict['L'][dict['col_transitions'][:,1]-1]) <=1))[0]
+        
+        dict['burg_tully']['type2_ind_arr'] = np.where( (dict['S'][dict['col_transitions'][:,0]-1] == dict['S'][dict['col_transitions'][:,1]-1]) & ( (np.abs(dict['L'][dict['col_transitions'][:,0]-1] - dict['L'][dict['col_transitions'][:,1]-1]) >1) | (FIN<0.01)))[0]
+        
+
+        dict['burg_tully']['type4_ind_arr'] = np.where( (FIN>FZERO) & (dict['S'][dict['col_transitions'][:,0]-1] != dict['S'][dict['col_transitions'][:,1]-1]) & (FIN<FBIG))[0]
+
+        dict['burg_tully']['type3_ind_arr'] = np.where( ((FIN>0.01) | (FIN<FZERO)) & (dict['S'][dict['col_transitions'][:,0]-1] != dict['S'][dict['col_transitions'][:,1]-1]) )[0]
+
+        dict['burg_tully']['c'] = 1.5
+
+        
+        def type1_xconv(tconv_grid):
+            return 1- np.log(dict['burg_tully']['c']) / np.transpose(np.log( tconv_grid.reshape(len(tconv_grid),1)*0.69488623/ (dict['energy'][dict['col_transitions'][dict['burg_tully']['type1_ind_arr'],0]-1] - dict['energy'][dict['col_transitions'][dict['burg_tully']['type1_ind_arr'],1] -1]) + dict['burg_tully']['c']))
+
+        #dict['col_excit'][:,-1] changed 3/11/17   .reshape(len(dict['temp_grid']),1)
+        def type1_yconv(tconv_grid):
+            return dict['col_excit'][dict['burg_tully']['type1_ind_arr'],:] / np.transpose(np.log( tconv_grid.reshape(len(tconv_grid),1)*0.69488623/ (dict['energy'][dict['col_transitions'][dict['burg_tully']['type1_ind_arr'],0]-1] - dict['energy'][dict['col_transitions'][dict['burg_tully']['type1_ind_arr'],1] -1])  + np.exp(1)))
+
+        
+        def type2_xconv(tconv_grid):
+            return np.transpose(tconv_grid.reshape(len(tconv_grid),1)*0.69488623/ (dict['energy'][dict['col_transitions'][dict['burg_tully']['type2_ind_arr'],0]-1] - dict['energy'][dict['col_transitions'][dict['burg_tully']['type2_ind_arr'],1] -1])/( tconv_grid.reshape(len(tconv_grid),1)*0.69488623/ (dict['energy'][dict['col_transitions'][dict['burg_tully']['type2_ind_arr'],0]-1] - dict['energy'][dict['col_transitions'][dict['burg_tully']['type2_ind_arr'],1] -1]) +dict['burg_tully']['c']))
+
+        
+        def type2_yconv(tconv_grid):
+            return dict['col_excit'][dict['burg_tully']['type2_ind_arr'],:]
+
+        
+        def type3_xconv(tconv_grid):
+            return np.transpose((tconv_grid.reshape(len(tconv_grid),1)*0.69488623/ (dict['energy'][dict['col_transitions'][dict['burg_tully']['type3_ind_arr'],0]-1] - dict['energy'][dict['col_transitions'][dict['burg_tully']['type3_ind_arr'],1] -1]))/( tconv_grid.reshape(len(tconv_grid),1)*0.69488623/ (dict['energy'][dict['col_transitions'][dict['burg_tully']['type3_ind_arr'],0]-1] - dict['energy'][dict['col_transitions'][dict['burg_tully']['type3_ind_arr'],1] -1]) +dict['burg_tully']['c']))
+        
+        def type3_yconv(tconv_grid):
+            return np.transpose(tconv_grid.reshape(len(tconv_grid),1)*0.69488623/ (dict['energy'][dict['col_transitions'][dict['burg_tully']['type3_ind_arr'],0]-1] - dict['energy'][dict['col_transitions'][dict['burg_tully']['type3_ind_arr'],1] -1]) +1)*dict['col_excit'][dict['burg_tully']['type3_ind_arr'],:]
+
+        
+        def type4_xconv(tconv_grid):
+            return 1- np.log(dict['burg_tully']['c']) / np.transpose(np.log( tconv_grid.reshape(len(tconv_grid),1)*0.69488623/ (dict['energy'][dict['col_transitions'][dict['burg_tully']['type4_ind_arr'],0]-1] - dict['energy'][dict['col_transitions'][dict['burg_tully']['type4_ind_arr'],1] -1]) + dict['burg_tully']['c']))
+        def type4_yconv(tconv_grid):
+            return dict['col_excit'][dict['burg_tully']['type4_ind_arr'],:] / np.transpose(np.log( tconv_grid.reshape(len(tconv_grid),1)*0.69488623/ (dict['energy'][dict['col_transitions'][dict['burg_tully']['type4_ind_arr'],0]-1] - dict['energy'][dict['col_transitions'][dict['burg_tully']['type4_ind_arr'],1] -1])  + dict['burg_tully']['c']))
+        
+
+
+        dict['burg_tully']['type1_xval_arr'] =type1_xconv(dict['temp_grid'])
+        dict['burg_tully']['type1_yval_arr'] = type1_yconv(dict['temp_grid'])
+        dict['burg_tully']['type1_yval_inf'] = np.abs(dict['inf_engy'][dict['burg_tully']['type1_ind_arr']])
+
+        dict['burg_tully']['type1_coeff_b1'] = (np.log(dict['burg_tully']['type1_yval_inf']) - np.log(dict['burg_tully']['type1_yval_arr'][:,-1])) / (1 - dict['burg_tully']['type1_xval_arr'][:,-1])
+
+        dict['burg_tully']['type1_coeff_a1'] = np.log(dict['burg_tully']['type1_yval_arr'][:,-1]) - dict['burg_tully']['type1_coeff_b1']*dict['burg_tully']['type1_xval_arr'][:,-1]
+
+
+        
+        dict['burg_tully']['type1_coeff_b'] = (np.log(dict['burg_tully']['type1_yval_arr'][:,-1]) - \
+                                            np.log(dict['burg_tully']['type1_yval_inf']))/\
+                                              (dict['burg_tully']['type1_xval_arr'][:,-1] -1)
+        dict['burg_tully']['type1_coeff_a'] = np.exp(np.log(dict['burg_tully']['type1_yval_inf']) -1*dict['burg_tully']['type1_coeff_b'])
+        
+        type1_zero_inds = np.where(np.isnan(dict['burg_tully']['type1_coeff_a']))[0]
+        
+        dict['burg_tully']['type1_zero_inds'] = type1_zero_inds
+
+        dict['burg_tully']['type1_coeff_m_lin_fit'] = (np.log(dict['burg_tully']['type1_yval_arr'][dict['burg_tully']['type1_zero_inds'],np.shape(dict['burg_tully']['type1_yval_arr'])[1]-1]) - \
+                                      np.log(dict['burg_tully']['type1_yval_arr'][dict['burg_tully']['type1_zero_inds'],-2]))/\
+                                       (dict['burg_tully']['type1_xval_arr'][dict['burg_tully']['type1_zero_inds'],np.shape(dict['burg_tully']['type1_yval_arr'])[1]-1] - dict['burg_tully']['type1_xval_arr'][dict['burg_tully']['type1_zero_inds'],-2])
+        
+        dict['burg_tully']['type1_coeff_b_lin_fit'] = np.log(dict['burg_tully']['type1_yval_arr'][dict['burg_tully']['type1_zero_inds'],-1]) - dict['burg_tully']['type1_coeff_m_lin_fit']*dict['burg_tully']['type1_xval_arr'][dict['burg_tully']['type1_zero_inds'],-1]
+
+
+        
+        if(any(dict['burg_tully']['extrap_temp_inds'])):
+
+            dict['burg_tully']['type1_xval_extrap'] = type1_xconv(temperature_grid[dict['burg_tully']['extrap_temp_inds']]*11604.5)
+
+            #dict['burg_tully']['type1_yval_extrap'] = np.transpose(dict['burg_tully']['type1_coeff_a']*np.exp(np.transpose(dict['burg_tully']['type1_xval_extrap'])*dict['burg_tully']['type1_coeff_b']))
+            dict['burg_tully']['type1_yval_extrap'] = np.transpose(np.exp(dict['burg_tully']['type1_coeff_a1'] + np.transpose(dict['burg_tully']['type1_xval_extrap'])*dict['burg_tully']['type1_coeff_b1']))
+            
+            dict['burg_tully']['type1_excit'] = dict['burg_tully']['type1_yval_extrap']*np.transpose(np.log( temperature_grid[dict['burg_tully']['extrap_temp_inds']].reshape(len(dict['burg_tully']['extrap_temp_inds']),1)*11604.5*0.69488623/ (dict['energy'][dict['col_transitions'][dict['burg_tully']['type1_ind_arr'],0]-1] - dict['energy'][dict['col_transitions'][dict['burg_tully']['type1_ind_arr'],1] -1])  + np.exp(1)))
+
+
+
+            if(any(dict['burg_tully']['type1_zero_inds'])):
+
+                dict['burg_tully']['type1_yval_extrap_lin'] =  np.transpose(np.exp(dict['burg_tully']['type1_coeff_b_lin_fit'] + dict['burg_tully']['type1_coeff_m_lin_fit']*np.transpose(dict['burg_tully']['type1_xval_extrap'][dict['burg_tully']['type1_zero_inds']])))                
+
+                dict['burg_tully']['type1_excit_lin'] = dict['burg_tully']['type1_yval_extrap_lin']*np.transpose(np.log( temperature_grid[dict['burg_tully']['extrap_temp_inds']].reshape(len(dict['burg_tully']['extrap_temp_inds']),1)*11604.5*0.69488623/ (dict['energy'][dict['col_transitions'][dict['burg_tully']['type1_ind_arr'][dict['burg_tully']['type1_zero_inds']],0]-1] - dict['energy'][dict['col_transitions'][dict['burg_tully']['type1_ind_arr'][dict['burg_tully']['type1_zero_inds']],1] -1])  + np.exp(1)))
+
+               
+        dict['burg_tully']['type2_xval_arr'] =type2_xconv(dict['temp_grid'])
+        dict['burg_tully']['type2_yval_arr'] = type2_yconv(dict['temp_grid'])
+        dict['burg_tully']['type2_yval_inf'] = np.abs(dict['inf_engy'][dict['burg_tully']['type2_ind_arr']])
+        dict['burg_tully']['type2_coeff_b'] = (np.log(dict['burg_tully']['type2_yval_arr'][:,-1]) - \
+                                            np.log(dict['burg_tully']['type2_yval_inf']))/\
+                                              (dict['burg_tully']['type2_xval_arr'][:,-1] -1)
+
+
+        dict['burg_tully']['type2_coeff_b1'] = (np.log(dict['burg_tully']['type2_yval_inf']) - np.log(dict['burg_tully']['type2_yval_arr'][:,-1])) / (1 - dict['burg_tully']['type2_xval_arr'][:,-1])
+
+        dict['burg_tully']['type2_coeff_a1'] = np.log(dict['burg_tully']['type2_yval_arr'][:,-1]) - dict['burg_tully']['type2_coeff_b1']*dict['burg_tully']['type2_xval_arr'][:,-1]
+        
+        dict['burg_tully']['type2_coeff_a'] = np.exp(np.log(dict['burg_tully']['type2_yval_inf']) -1*dict['burg_tully']['type2_coeff_b'])
+        dict['burg_tully']['type2_zero_inds'] = np.where(np.isnan(dict['burg_tully']['type2_coeff_a']))[0]
+        
+        dict['burg_tully']['type2_coeff_m_lin_fit'] = (np.log(dict['burg_tully']['type2_yval_arr'][dict['burg_tully']['type2_zero_inds'],np.shape(dict['burg_tully']['type2_yval_arr'])[1]-1]) - \
+                                      np.log(dict['burg_tully']['type2_yval_arr'][dict['burg_tully']['type2_zero_inds'],-2]))/\
+                                       (dict['burg_tully']['type2_xval_arr'][dict['burg_tully']['type2_zero_inds'],np.shape(dict['burg_tully']['type2_yval_arr'])[1]-1] - dict['burg_tully']['type2_xval_arr'][dict['burg_tully']['type2_zero_inds'],-2])
+        
+        dict['burg_tully']['type2_coeff_b_lin_fit'] = np.log(dict['burg_tully']['type2_yval_arr'][dict['burg_tully']['type2_zero_inds'],-1]) - dict['burg_tully']['type2_coeff_m_lin_fit']*dict['burg_tully']['type2_xval_arr'][dict['burg_tully']['type2_zero_inds'],-1]
+
+
+        if(any(dict['burg_tully']['extrap_temp_inds'])):
+            dict['burg_tully']['type2_xval_extrap'] = type2_xconv(temperature_grid[dict['burg_tully']['extrap_temp_inds']]*11604.5)
+
+            if(any(dict['burg_tully']['type2_zero_inds'])):
+
+
+                dict['burg_tully']['type2_yval_extrap_lin'] =  np.transpose(np.exp(dict['burg_tully']['type2_coeff_b_lin_fit'] + dict['burg_tully']['type2_coeff_m_lin_fit']*np.transpose(dict['burg_tully']['type2_xval_extrap'][dict['burg_tully']['type2_zero_inds']])))                
+
+                dict['burg_tully']['type2_excit_lin'] = dict['burg_tully']['type2_yval_extrap_lin']
+
+
+            
+            #dict['burg_tully']['type2_yval_extrap'] = np.transpose(dict['burg_tully']['type2_coeff_a']*np.exp(np.transpose(dict['burg_tully']['type2_xval_extrap'])*dict['burg_tully']['type2_coeff_b']))
+            dict['burg_tully']['type2_yval_extrap'] = np.transpose(np.exp(dict['burg_tully']['type2_coeff_a1'] + np.transpose(dict['burg_tully']['type2_xval_extrap'])*dict['burg_tully']['type2_coeff_b1']))            
+            dict['burg_tully']['type2_excit'] = dict['burg_tully']['type2_yval_extrap']
+
+        dict['burg_tully']['type3_xval_arr'] =type3_xconv(dict['temp_grid'])
+        dict['burg_tully']['type3_yval_arr'] = type3_yconv(dict['temp_grid'])
+        dict['burg_tully']['type3_yval_inf'] = np.abs(dict['inf_engy'][dict['burg_tully']['type3_ind_arr']])
+
+
+
+
+        dict['burg_tully']['type3_coeff_b1'] = (np.log(dict['burg_tully']['type3_yval_inf']) - np.log(dict['burg_tully']['type3_yval_arr'][:,-1])) / (1 - dict['burg_tully']['type3_xval_arr'][:,-1])
+
+        dict['burg_tully']['type3_coeff_a1'] = np.log(dict['burg_tully']['type3_yval_arr'][:,-1]) - dict['burg_tully']['type3_coeff_b1']*dict['burg_tully']['type3_xval_arr'][:,-1]
+
+        
+        dict['burg_tully']['type3_coeff_b'] = (np.log(dict['burg_tully']['type3_yval_arr'][:,-1]) - \
+                                            np.log(dict['burg_tully']['type3_yval_inf']))/\
+                                              (dict['burg_tully']['type3_xval_arr'][:,-1] -1)
+        dict['burg_tully']['type3_coeff_a'] = np.exp(np.log(dict['burg_tully']['type3_yval_inf']) -1*dict['burg_tully']['type3_coeff_b'])
+
+
+        dict['burg_tully']['type3_zero_inds'] = np.where(np.isnan(dict['burg_tully']['type3_coeff_a']))[0]
+
+        dict['burg_tully']['type3_coeff_m_lin_fit'] = (np.log(dict['burg_tully']['type3_yval_arr'][dict['burg_tully']['type3_zero_inds'],np.shape(dict['burg_tully']['type3_yval_arr'])[1]-1]) - \
+                                      np.log(dict['burg_tully']['type3_yval_arr'][dict['burg_tully']['type3_zero_inds'],-2]))/\
+                                       (dict['burg_tully']['type3_xval_arr'][dict['burg_tully']['type3_zero_inds'],np.shape(dict['burg_tully']['type3_yval_arr'])[1]-1] - dict['burg_tully']['type3_xval_arr'][dict['burg_tully']['type3_zero_inds'],-2])
+        
+        dict['burg_tully']['type3_coeff_b_lin_fit'] = np.log(dict['burg_tully']['type3_yval_arr'][dict['burg_tully']['type3_zero_inds'],-1]) - dict['burg_tully']['type3_coeff_m_lin_fit']*dict['burg_tully']['type3_xval_arr'][dict['burg_tully']['type3_zero_inds'],-1]
+
+
+        if(any(dict['burg_tully']['extrap_temp_inds'])):
+            dict['burg_tully']['type3_xval_extrap'] = type3_xconv(temperature_grid[dict['burg_tully']['extrap_temp_inds']]*11604.5)
+            #dict['burg_tully']['type3_yval_extrap'] = np.transpose(dict['burg_tully']['type3_coeff_a']*np.exp(np.transpose(dict['burg_tully']['type3_xval_extrap'])*dict['burg_tully']['type3_coeff_b']))
+
+            dict['burg_tully']['type3_yval_extrap'] = np.transpose(np.exp(dict['burg_tully']['type3_coeff_a1'] + np.transpose(dict['burg_tully']['type3_xval_extrap'])*dict['burg_tully']['type3_coeff_b1']))
+            
+            dict['burg_tully']['type3_excit'] = dict['burg_tully']['type3_yval_extrap']/ np.transpose( temperature_grid[dict['burg_tully']['extrap_temp_inds']].reshape(len(dict['burg_tully']['extrap_temp_inds']),1)*11604.5*0.69488623/ (dict['energy'][dict['col_transitions'][dict['burg_tully']['type3_ind_arr'],0]-1] - dict['energy'][dict['col_transitions'][dict['burg_tully']['type3_ind_arr'],1] -1])  + 1 )
+
+            if(any(dict['burg_tully']['type3_zero_inds'])):
+                
+                dict['burg_tully']['type3_yval_extrap_lin'] =  np.transpose(np.exp(dict['burg_tully']['type3_coeff_b_lin_fit'] + dict['burg_tully']['type3_coeff_m_lin_fit']*np.transpose(dict['burg_tully']['type3_xval_extrap'][dict['burg_tully']['type3_zero_inds']])))                
+
+                
+
+                dict['burg_tully']['type3_excit_lin'] = dict['burg_tully']['type3_yval_extrap_lin']/np.transpose( temperature_grid[dict['burg_tully']['extrap_temp_inds']].reshape(len(dict['burg_tully']['extrap_temp_inds']),1)*11604.5*0.69488623/ (dict['energy'][dict['col_transitions'][dict['burg_tully']['type3_ind_arr'][dict['burg_tully']['type3_zero_inds']],0]-1] - dict['energy'][dict['col_transitions'][dict['burg_tully']['type3_ind_arr'][dict['burg_tully']['type3_zero_inds']],1] -1])  + 1 )
+
+
+                #*np.transpose(np.log( temperature_grid[dict['burg_tully']['extrap_temp_inds']].reshape(len(dict['burg_tully']['extrap_temp_inds']),1)*11604.5*0.69488623/ (dict['energy'][dict['col_transitions'][dict['burg_tully']['type3_ind_arr'][dict['burg_tully']['type3_zero_inds']],0]-1] - dict['energy'][dict['col_transitions'][dict['burg_tully']['type3_ind_arr'][dict['burg_tully']['type3_zero_inds']],1] -1])  + np.exp(1)))
+
+
+        dict['burg_tully']['type4_xval_arr'] =type4_xconv(dict['temp_grid'])
+        dict['burg_tully']['type4_yval_arr'] = type4_yconv(dict['temp_grid'])
+        dict['burg_tully']['type4_yval_inf'] = np.abs(dict['inf_engy'][dict['burg_tully']['type4_ind_arr']])
+        dict['burg_tully']['type4_coeff_b1'] = (np.log(dict['burg_tully']['type4_yval_inf']) - np.log(dict['burg_tully']['type4_yval_arr'][:,-1])) / (1 - dict['burg_tully']['type4_xval_arr'][:,-1])
+
+        dict['burg_tully']['type4_coeff_a1'] = np.log(dict['burg_tully']['type4_yval_arr'][:,-1]) - dict['burg_tully']['type4_coeff_b1']*dict['burg_tully']['type4_xval_arr'][:,-1]
+        
+        dict['burg_tully']['type4_coeff_b'] = (np.log(dict['burg_tully']['type4_yval_arr'][:,-1]) - \
+                                            np.log(dict['burg_tully']['type4_yval_inf']))/\
+                                              (dict['burg_tully']['type4_xval_arr'][:,-1] -1)
+        dict['burg_tully']['type4_coeff_a'] = np.exp(np.log(dict['burg_tully']['type4_yval_inf']) -1*dict['burg_tully']['type4_coeff_b'])
+
+        dict['burg_tully']['type4_zero_inds'] = np.where(np.isnan(dict['burg_tully']['type4_coeff_a']))[0]
+
+        dict['burg_tully']['type4_coeff_m_lin_fit'] = (np.log(dict['burg_tully']['type4_yval_arr'][dict['burg_tully']['type4_zero_inds'],np.shape(dict['burg_tully']['type4_yval_arr'])[1]-1]) - \
+                                      np.log(dict['burg_tully']['type4_yval_arr'][dict['burg_tully']['type4_zero_inds'],-2]))/\
+                                       (dict['burg_tully']['type4_xval_arr'][dict['burg_tully']['type4_zero_inds'],np.shape(dict['burg_tully']['type4_yval_arr'])[1]-1] - dict['burg_tully']['type4_xval_arr'][dict['burg_tully']['type4_zero_inds'],-2])
+        
+        dict['burg_tully']['type4_coeff_b_lin_fit'] = np.log(dict['burg_tully']['type4_yval_arr'][dict['burg_tully']['type4_zero_inds'],-1]) - dict['burg_tully']['type4_coeff_m_lin_fit']*dict['burg_tully']['type4_xval_arr'][dict['burg_tully']['type4_zero_inds'],-1]
+
+        
+        if(any(dict['burg_tully']['extrap_temp_inds'])):
+            dict['burg_tully']['type4_xval_extrap'] = type4_xconv(temperature_grid[dict['burg_tully']['extrap_temp_inds']]*11604.5)
+            #dict['burg_tully']['type4_yval_extrap'] = np.transpose(dict['burg_tully']['type4_coeff_a']*np.exp(np.transpose(dict['burg_tully']['type4_xval_extrap'])*dict['burg_tully']['type4_coeff_b']))
+            dict['burg_tully']['type4_yval_extrap'] = np.transpose(np.exp(dict['burg_tully']['type4_coeff_a1'] + np.transpose(dict['burg_tully']['type4_xval_extrap'])*dict['burg_tully']['type4_coeff_b1']))            
+            dict['burg_tully']['type4_excit'] = dict['burg_tully']['type4_yval_extrap']*np.transpose(np.log( temperature_grid[dict['burg_tully']['extrap_temp_inds']].reshape(len(dict['burg_tully']['extrap_temp_inds']),1)*11604.5*0.69488623/ (dict['energy'][dict['col_transitions'][dict['burg_tully']['type4_ind_arr'],0]-1] - dict['energy'][dict['col_transitions'][dict['burg_tully']['type4_ind_arr'],1] -1])  + dict['burg_tully']['c']))
+            if(any(dict['burg_tully']['type4_zero_inds'])):
+                
+                dict['burg_tully']['type4_yval_extrap_lin'] =  np.transpose(np.exp(dict['burg_tully']['type4_coeff_b_lin_fit'] + dict['burg_tully']['type4_coeff_m_lin_fit']*np.transpose(dict['burg_tully']['type4_xval_extrap'][dict['burg_tully']['type4_zero_inds']])))
+
+                dict['burg_tully']['type4_excit_lin'] = dict['burg_tully']['type4_yval_extrap_lin']*np.transpose(np.log( temperature_grid[dict['burg_tully']['extrap_temp_inds']].reshape(len(dict['burg_tully']['extrap_temp_inds']),1)*11604.5*0.69488623/ (dict['energy'][dict['col_transitions'][dict['burg_tully']['type4_ind_arr'][dict['burg_tully']['type4_zero_inds']],0]-1] - dict['energy'][dict['col_transitions'][dict['burg_tully']['type4_ind_arr'][dict['burg_tully']['type4_zero_inds']],1] -1])  + dict['burg_tully']['c']))
+
+
+        #col_excit_interp_grid_tmp = 
+        col_excit_interp_grid = np.zeros((len(dict['col_excit']),len(temperature_grid)))
+
+        for i in range(0,len(dict['burg_tully']['extrap_temp_inds'])):
+            col_excit_interp_grid[dict['burg_tully']['type1_ind_arr'],dict['burg_tully']['extrap_temp_inds'][i] ] = dict['burg_tully']['type1_excit'][:,i]
+            col_excit_interp_grid[dict['burg_tully']['type2_ind_arr'],dict['burg_tully']['extrap_temp_inds'][i] ] = dict['burg_tully']['type2_excit'][:,i]
+
+            col_excit_interp_grid[dict['burg_tully']['type3_ind_arr'],dict['burg_tully']['extrap_temp_inds'][i] ] = dict['burg_tully']['type3_excit'][:,i]
+
+                
+            col_excit_interp_grid[dict['burg_tully']['type4_ind_arr'],dict['burg_tully']['extrap_temp_inds'][i] ] = dict['burg_tully']['type4_excit'][:,i]
+
+            if(any(dict['burg_tully']['type1_zero_inds'])):
+                col_excit_interp_grid[dict['burg_tully']['type1_ind_arr'][dict['burg_tully']['type1_zero_inds']],dict['burg_tully']['extrap_temp_inds'][i] ] = dict['burg_tully']['type1_excit_lin'][:,i]
+            if(any(dict['burg_tully']['type2_zero_inds'])):
+                col_excit_interp_grid[dict['burg_tully']['type2_ind_arr'][dict['burg_tully']['type2_zero_inds']],dict['burg_tully']['extrap_temp_inds'][i] ] = dict['burg_tully']['type2_excit_lin'][:,i]
+            if(any(dict['burg_tully']['type3_zero_inds'])):
+                col_excit_interp_grid[dict['burg_tully']['type3_ind_arr'][dict['burg_tully']['type3_zero_inds']],dict['burg_tully']['extrap_temp_inds'][i] ] = dict['burg_tully']['type3_excit_lin'][:,i]
+            if(any(dict['burg_tully']['type4_zero_inds'])):
+                col_excit_interp_grid[dict['burg_tully']['type4_ind_arr'][dict['burg_tully']['type4_zero_inds']],dict['burg_tully']['extrap_temp_inds'][i] ] = dict['burg_tully']['type4_excit_lin'][:,i]
+                
+        col_excit_interp_grid[:,dict['burg_tully']['interp_temp_inds']] = col_excit_interp(temperature_grid[dict['burg_tully']['interp_temp_inds']])
+
+        
+    else:
+        col_excit_interp_grid = col_excit_interp(temperature_grid)
+
+
+
     dict['col_excit_interp'] = col_excit_interp_grid
     rates_ji = np.zeros_like(col_excit_interp_grid)
     rates_ij = np.zeros_like(col_excit_interp_grid)
@@ -181,7 +467,7 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
 
     #construct the collisional radiative matrix
     if(use_recombination):
-        cr = np.zeros( (len(dict['energy']),len(dict['energy'])+1,len(temperature_grid),len(electron_den)  )  )
+        cr = np.zeros( (len(dict['energy']),len(dict['energy'])+nsigmaplus,len(temperature_grid),len(electron_den)  )  )
 
     else:
         cr = np.zeros( (len(dict['energy']),len(dict['energy']),len(temperature_grid),len(electron_den)  )  )
@@ -200,8 +486,8 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
                 cr_loss[i,i,t,e] = cr_loss[i,i,t,e] - np.sum(q_ji[i,:,t])*electron_den[e] - np.sum(q_ij[i,:,t])*electron_den[e]                
                 #these are the ways to ionize out of ion
                 if(use_ionization_in_cr):
-                    cr[i,i,t,e] = cr[i,i,t,e] - dict['ionization'][i,t]*electron_den[e]
-                    cr_loss[i,i,t,e] = cr_loss[i,i,t,e] - dict['ionization'][i,t]*electron_den[e]                    
+                    cr[i,i,t,e] = cr[i,i,t,e] - np.sum(dict['ionization'][i,:,t])*electron_den[e]
+                    cr_loss[i,i,t,e] = cr_loss[i,i,t,e] - np.sum(dict['ionization'][i,:,t])*electron_den[e]                    
 
                 #
                 #level i populating mechanisms
@@ -212,10 +498,14 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
                 cr[i,0:len(dict['energy']),t,e] = cr[i,:len(dict['energy']),t,e] + q_ij[:,i,t]*electron_den[e] + q_ji[:,i,t]*electron_den[e]
 
             if(use_recombination):
-                cr[0:len(dict['energy']),-1,t,e] = cr[0:len(dict['energy']),-1,t,e] + recomb_excit_interp_grid[0:len(dict['energy']),t]*electron_den[e]
-            if(use_recombination_three_body):
+                qq=0
+                for p in range(0,len(dict['ion_pot'])):
 
-                cr[0:len(dict['energy']),-1,t,e] = cr[0:len(dict['energy']),-1,t,e] + dict['recomb_three_body'][0:len(dict['energy']),t]*(electron_den[e])**2
+                    cr[0:len(dict['energy']),len(dict['energy'])+p,t,e] = cr[0:len(dict['energy']),len(dict['energy'])+p,t,e] + dict['recombination'][0:len(dict['energy']),p,t]*electron_den[e]#recomb_excit_interp_grid[0:len(dict['energy']),t][qq:(p+1)*len(dict['energy'])]*electron_den[e]
+                    #qq = (p+1)*len(dict['energy'])-1
+            if(use_recombination_three_body):
+                for p in range(0,len(dict['ion_pot'])):
+                    cr[0:len(dict['energy']),len(dict['energy'])+p,t,e] = cr[0:len(dict['energy']),len(dict['energy'])+p,t,e] + dict['recomb_three_body'][0:len(dict['energy']),p,t]*(electron_den[e])**2
 
             #these are the ionizations into the
             #cr[-1,0:len(dict['energy']),t,e] = cr[-1,0:len(dict['energy']),t,e] + dict['ionization'][:,t]*electron_den[e]
@@ -232,17 +522,43 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
                                                len(dict['energy']) ,dtype='int64'),metas)
 
     if(use_recombination):
-        beta_tmp = np.append(-cr[nsigma:len(dict['energy']),0:nsigma],
-                             -cr[nsigma:len(dict['energy']),-1,:,:][:,None,:,:],axis=1)
+        beta_tmp = -cr[nsigma:len(dict['energy']),metas]
+        
+        #beta_tmp = np.append(-cr[nsigma:len(dict['energy']),metas],#was 0:sigma
+        #                     -cr[nsigma:len(dict['energy']),len(dict['energy']),:,:][:,None,:,:],axis=1)
+        #                    #was -cr[nsigma:len(dict['energy']),0,:,:][:,None,:,:],axis=1)
+
+        for p in range(0,nsigmaplus):
+            beta_tmp = np.append(beta_tmp,-cr[nsigma:len(dict['energy']),len(dict['energy'])+p,:,:][:,None,:,:],axis=1)
+            
         aa_tmp = cr[nsigma:len(dict['energy']),nsigma:len(dict['energy'])]
         aa_tmp_inv = np.zeros((len(aa_tmp),len(aa_tmp), len(temperature_grid),len(electron_den)))
-
     else:
 
         beta_tmp = -cr[levels_to_keep][:,metas]
         aa_tmp = cr[levels_to_keep][:,levels_to_keep]
         aa_tmp_inv = np.zeros((len(aa_tmp),len(aa_tmp), len(temperature_grid),len(electron_den)))
+        if(td_t.any() and td_n0.any()):
+            dict['td_n0'] = td_n0
+            dict['td_t'] = td_t
+            if(use_ionization_in_cr):
+                dict['td_cr'] = np.zeros( (len(dict['energy'])+1,len(dict['energy'])+1,len(temperature_grid),len(electron_den)  )  )
 
+                dict['td_cr'][-1,0:len(dict['energy']),:,:] = np.einsum('ij,k->ijk',dict['ionization'][:,0,:],electron_den)
+            else:
+                dict['td_cr'] = np.zeros( (len(dict['energy']),len(dict['energy']),len(temperature_grid),len(electron_den)  )  )
+                
+            dict['td_cr'][0:len(dict['energy']),0:len(dict['energy']),:,:] = dict['cr']
+
+            dict['td_pop'] = np.zeros( (len(dict['td_n0']),len(dict['td_t']),len(temperature_grid),len(electron_den)))
+            for e in range(0,len(electron_den)):
+                for t in range(0,len(temperature_grid)):
+                    eigenval,eigenvectors = np.linalg.eig(dict['td_cr'][:,:,t,e])
+                    v0 = np.dot(np.linalg.inv(eigenvectors),dict['td_n0'])
+
+                    vt = v0[:,None]*np.exp(eigenval[:,None]*dict['td_t'])
+                    dict['td_pop'][:,:,t,e] = np.dot(eigenvectors,vt)
+            
     for i in range(0,len(electron_den)):
         for j in range(0,len(temperature_grid)):
 
@@ -251,7 +567,7 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
 
 
     if(use_recombination):
-        populations = np.zeros((len(aa_tmp),nsigma+1,len(temperature_grid),len(electron_den) ))
+        populations = np.zeros((len(aa_tmp),nsigma+nsigmaplus,len(temperature_grid),len(electron_den) ))
     else:
         populations = np.zeros((len(aa_tmp),nsigma,len(temperature_grid),len(electron_den) ))
     for t in range(0,len(temperature_grid)):
@@ -306,14 +622,19 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
 
     poptmp = np.zeros((len(aa_tmp),len(aa_tmp),nsigma,len(temperature_grid),
                        len(electron_den) ))
+    poptmpr = np.zeros((len(aa_tmp),len(aa_tmp),nsigmaplus,len(temperature_grid),
+                       len(electron_den) ))
 
     scd = np.zeros((nsigma,nsigmaplus,len(temperature_grid),len(electron_den)))
     acd = np.zeros((nsigma,nsigmaplus,len(temperature_grid),len(electron_den)))
+    xcd = np.zeros((nsigmaplus,nsigmaplus-1,len(temperature_grid),len(electron_den)))
+
     for j in range(0,nsigma):
         for k in range(0,len(temperature_grid)):
             for l in range(0,len(electron_den)):        
                 for i in range(0,len(beta_tmp)):
                     poptmp[:,i,j,k,l] = aa_inv[:,i,k,l]*beta_tmp[i,j,k,l]
+
 
                 #if there is only one metastable we have to normalize to the entire population
                 #this is because there can be more populations in the excited states than in the
@@ -336,33 +657,33 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
                         #scd[j,m,k,l] = dict['ionization'][j,k]/(1+ np.sum(np.sum(poptmp[:,:,j,k,l]))) +np.sum(
                         #    dict['ionization'][nsigma:,k]*F)
                         if( driving_population_norm):
-                            scd[j,m,k,l] = dict['ionization'][j,k]/(1+np.sum(populations[:,j,k,l]))+np.sum(dict['ionization'][nsigma:,k]*F)
+
+                            scd[j,m,k,l] = dict['ionization'][j,m,k]/(1+np.sum(populations[:,j,k,l]))+np.sum(dict['ionization'][nsigma:,m,k]*F)
                         else:
-                            scd[j,m,k,l] = dict['ionization'][j,k]+np.sum(dict['ionization'][nsigma:,k]*F)
+                            scd[j,m,k,l] = dict['ionization'][j,m,k]+np.sum(dict['ionization'][nsigma:,m,k]*F)
                     if(use_recombination):
 
-                        acd[j,m,k,l] = (dict['recomb_three_body'][j,k]*electron_den[l] + dict['recomb_excit_interp_grid'][j,k]) /(1+np.sum(populations[:,j,k,l])) + np.sum(cr[j,nsigma:len(dict['energy']),k,l]*np.sum(aa_inv[:,:,k,l]*dict['recomb_excit_interp_grid'][nsigma:,k]*dict['recomb_three_body'][j,k]*electron_den[l],axis=1)) #(dict['recomb_three_body'][j,k]*electron_den[l] + dict['recomb_excit_interp_grid'][k,j]) /(1+np.sum(populations[:,j,k,l])) - np.sum(F * (dict['recomb_three_body'][nsigma:,k]*electron_den[l] + dict['recomb_excit_interp_grid'][nsigma:,k]))
-                    '''
-                        if(use_recombination_three_body):
-                            acd[j,m,k,l] = (recomb_excit_interp_grid[j,k]+dict['recomb_three_body'][j,k]*electron_den[l]) - np.sum(
-                                cr[j,nsigma:len(dict['energy']),k,l]*np.sum(
-                                    aa_inv[:,:,k,l]*recomb_excit_interp_grid[nsigma:,k]*dict['recomb_three_body'][j,k]*electron_den[l],
-                                                     axis=1))
-                        else:    
-                            acd[j,m,k,l] = recomb_excit_interp_grid[j,k] - np.sum(
-                                cr[j,nsigma:len(dict['energy']),k,l]*np.sum(
-                                    aa_inv[:,:,k,l]*recomb_excit_interp_grid[nsigma:,k],
-                                    axis=1))
+                        poptmpr[:,i,m,k,l] =aa_inv[i,:,k,l]*beta_tmp[i,nsigma+m,k,l]/electron_den[l]
+                        #acd[j,m,k,l] = (dict['recomb_three_body'][j,m,k]*electron_den[l] + dict['recombination'][j,m,k]) /(1+np.sum(populations[:,j,k,l])) + np.sum(cr[j,nsigma:len(dict['energy']),k,l]*np.sum(aa_inv[:,:,k,l]*dict['recombination'][nsigma:,m,k]*dict['recomb_three_body'][j,m,k]*electron_den[l],axis=1)) #(dict['recomb_three_body'][j,k]*electron_den[l] + dict['recomb_excit_interp_grid'][k,j]) /(1+np.sum(populations[:,j,k,l])) - np.sum(F * (dict['recomb_three_body'][nsigma:,k]*electron_den[l] + dict['recomb_excit_interp_grid'][nsigma:,k]))
 
-                    else:
-                        if(use_recombination_three_body):
 
-                            acd[j,m,k,l] = (dict['recomb_three_body'][j,k]*electron_den[l]) - np.sum(
-                                cr[j,nsigma:len(dict['energy']),k,l]*np.sum(
-                                    aa_inv[:,:,k,l]*dict['recomb_three_body'][j,k]*electron_den[l],
-                                                     axis=1))
+                        acd[j,m,k,l] = (dict['recomb_three_body'][j,m,k]*electron_den[l] + dict['recombination'][j,m,k])  - np.sum(
+                            cr[j,nsigma:len(dict['energy']),k,l]*np.sum(aa_inv[:,:,k,l]*(dict['recomb_three_body'][nsigma:,m,k]*electron_den[l] + dict['recombination'][nsigma:,m,k]),axis=1))
 
-                '''
+
+
+
+
+                        mindd=0
+                        for n in range(0,nsigmaplus-1):
+
+                            if(m !=n ):
+
+                                xcd[m,mindd,k,l] = -np.sum(dict['ionization'][nsigma:,n,k]*np.sum(aa_inv[:,:,k,l]*(dict['recomb_three_body'][nsigma:,m,k]*electron_den[l] + dict['recombination'][nsigma:,m,k]),axis=1))
+                                mindd = mindd+1
+
+                            
+                        
                 mind=0
                 for n in range(0,nsigma):
                     if(n !=j):
@@ -370,24 +691,31 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
                         mind = mind+1
 
 
+
+
+                        
+
     poptmprec = np.zeros((len(aa_tmp),len(aa_tmp),nsigma,nsigmaplus,len(temperature_grid),
                        len(electron_den) ))
 
-    for j in range(0,nsigma):
-        for m in range(0,nsigmaplus):
-            for k in range(0,len(temperature_grid)):
-                for l in range(0,len(electron_den)):        
-                    for i in range(0,len(beta_tmp)):
 
-                        poptmprec[:,i,j,m,k,l] = aa_inv[:,i,k,l]*beta_tmp[i,-1,k,l]
-                    R = np.sum(poptmprec[:,:,j,m,k,l],axis=1)
-                    acd[j,m,k,l] = ((dict['recomb_three_body'][j,k]*electron_den[l]**2 + dict['recomb_excit_interp_grid'][j,k]*electron_den[l]) + np.sum( cr[j,nsigma:len(dict['energy']),k,l]*R) )/electron_den[l]
+    '''
+    if( use_recombination):
+        for j in range(0,nsigma):
+            for m in range(0,nsigmaplus):
+                for k in range(0,len(temperature_grid)):
+                    for l in range(0,len(electron_den)):        
+                        for i in range(0,len(beta_tmp)):
+                            poptmprec[:,i,j,m,k,l] = aa_inv[:,i,k,l]*beta_tmp[i,nsigma+m,k,l]/electron_den[l]
+                        R = np.sum(poptmprec[:,:,j,m,k,l],axis=1)
+
+                        acd[j,m,k,l] = (dict['recombination'][j,m,k]+dict['recomb_three_body'][j,m,k]*electron_den[l]) - np.sum(cr[n,nsigma:len(dict['energy']),k,l]*R)
 
 
-    dict['poptmprec'] = poptmprec
 
+        dict['poptmprec'] = poptmprec
 
-
+    '''
 
 
 
@@ -415,7 +743,9 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
     dict['acd'] = acd
     dict['scd'] = scd
     dict['qcd'] = qcd
+    dict['xcd'] = xcd
     dict['poptmp'] = poptmp
+    dict['poptmpr'] = poptmpr
     dict['F'] = F
     dict['nsigma'] = nsigma
     dict['user_temp_grid'] = temperature_grid
@@ -617,3 +947,8 @@ In [90]: wdxm['pecs'][541,0,0,0]/(np.sum(wdx['populations'])+1) + np.sum(wdxm['p
 In [95]: wdxm['scd'][0,0,0,0]/(np.sum(wdx['populations'])+1) + np.sum(wdxm['scd'][1:6,0,0,0]/(np.sum(wdx['populations'])+1)*wdx['populations'][0:5,0,0,0])
 
 '''
+
+
+
+
+
