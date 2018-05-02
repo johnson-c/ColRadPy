@@ -579,7 +579,7 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
     sbxs = []
     pecs_levels = []
     wavelengths =[]
-    rad_pwr = np.zeros( (nsigma,len(temperature_grid),len(electron_den) ))
+    specific_line_pwr = []
     if(nsigma>1):
         driving_population_norm=False
     else:
@@ -593,7 +593,8 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
 
                     pecs.append(A_ji[j,i]*populations[j-nsigma]/electron_den/
                                 (1+np.sum(populations,axis=0)))
-                    
+                    specific_line_pwr.append(A_ji[j,i]*populations[j-nsigma]/electron_den/
+                                            (1+np.sum(populations,axis=0))*((dict['energy'][j] - dict['energy'][i])/5.03e15))                    
                 else:
                     pecs.append(A_ji[j,i]*populations[j-nsigma]/electron_den)
                     #print('a')
@@ -751,10 +752,11 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
     dict['user_temp_grid'] = temperature_grid
     dict['user_dens_grid'] = electron_den
     dict['pecs'] = pecs
+    dict['specific_line_pwr'] = np.asarray(specific_line_pwr)
     dict['wavelengths'] = wavelengths
     dict['loss'] = cr_loss
     dict['pecs_levels'] = pecs_levels
-    dict['rad_pwr'] = rad_pwr
+    dict['plt_pwr'] = np.sum(dict['specific_line_pwr'],axis=0)
     dict['metas'] = np.asarray(metas)
     return dict
 
