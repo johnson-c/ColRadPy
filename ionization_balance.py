@@ -144,9 +144,6 @@ def ioniz(gc):
 
     #include source term
 
-
-    
-
     t_min = 0
     t_max = .001
     dt = (np.max(ionbal))
@@ -157,7 +154,7 @@ def ioniz(gc):
     td_pop_correct = np.zeros( (len(td_pop),len(t_steps),len(temperature_grid),len(electron_den)))
     for e in range(0,len(electron_den)):
         for t in range(0,len(temperature_grid)):
-            eigenval,eigenvectors = np.linalg.eig(ionbal[:,:,t,e]*electron_den)
+            eigenval,eigenvectors = np.linalg.eig((ionbal[:,:,t,e])*electron_den)
             v0 = np.dot(np.linalg.inv(eigenvectors),td_pop)
             vt = v0[:,None]*np.exp(eigenval[:,None]*t_steps)
             td_pop_correct[:,:,t,e] = np.dot(eigenvectors,vt)
@@ -184,15 +181,6 @@ def ioniz(gc):
         for n in range(0,len(gcrs[0]['user_dens_grid'])):
             for i in range(1, len(t_steps)):
                 td_pop[i,:,t,n] = td_pop[i-1,:,t,n] + (1/dt)*np.dot(ionbal[:,:,t,n],td_pop[i-1,:,t,n])
-
-
-
-
-
-
-
-
-                
 
 
     ##########################################################################################

@@ -518,7 +518,6 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
     dict['cr'] = cr
     levels_to_keep = np.setdiff1d( np.linspace(0,len(dict['energy'])-1,
                                                len(dict['energy']) ,dtype='int64'),metas)
-
     if(use_recombination):
         beta_tmp = -cr[nsigma:len(dict['energy']),metas]
         
@@ -532,7 +531,6 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
         aa_tmp = cr[nsigma:len(dict['energy']),nsigma:len(dict['energy'])]
         aa_tmp_inv = np.zeros((len(aa_tmp),len(aa_tmp), len(temperature_grid),len(electron_den)))
     else:
-
         beta_tmp = -cr[levels_to_keep][:,metas]
         aa_tmp = cr[levels_to_keep][:,levels_to_keep]
         aa_tmp_inv = np.zeros((len(aa_tmp),len(aa_tmp), len(temperature_grid),len(electron_den)))
@@ -584,10 +582,11 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
     else:
         driving_population_norm=True
 
-
     for i in range(0,len(A_ji)):
         for j in range(nsigma,len(A_ji)):
-            if( j>i and A_ji[j,i] >1E-31):
+
+            if( levels_to_keep[j-nsigma]>i and A_ji[j,i] >1E-31):
+
                 if(driving_population_norm):
 
                     pecs.append(A_ji[j,i]*populations[j-nsigma]/electron_den/
@@ -599,13 +598,13 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
                     specific_line_pwr.append(A_ji[j,i]*populations[j-nsigma]/electron_den\
                                             *((dict['energy'][j] - dict['energy'][i])/5.03e15))                    
                     
-                pecs_levels.append(np.array([j,i]))
+                pecs_levels.append(np.array([levels_to_keep[j-nsigma],i]))
 
-                wavelengths.append(  (1./abs(dict['energy'][j] - dict['energy'][i])*1e7))#/
+                wavelengths.append(  (1./abs(dict['energy'][levels_to_keep[j-nsigma]] - dict['energy'][i])*1e7))#/
                                      #convert_to_air(1./abs(dict['energy'][j] - dict['energy'][i])*1e7))
                 #rad_pwr = rad_pwr + (he['energy'][j] - he['energy'][i])*(A_ji[j,i]*populations[j-nsigma])
                 #print(i,j)
-                
+
     wavelengths = np.asarray(wavelengths)
     pecs = np.asarray(pecs)
     pecs_levels = np.asarray(pecs_levels)
@@ -634,8 +633,8 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
         for k in range(0,len(temperature_grid)):
             for l in range(0,len(electron_den)):        
                 for i in range(0,len(beta_tmp)):
-                    poptmp[:,i,j,k,l] = aa_inv[:,i,k,l]*beta_tmp[i,j,k,l]
 
+                    poptmp[:,i,j,k,l] = aa_inv[:,i,k,l]*beta_tmp[i,j,k,l]
 
                 #if there is only one metastable we have to normalize to the entire population
                 #this is because there can be more populations in the excited states than in the
@@ -645,7 +644,6 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
                     poptmp[:,:,j,k,l] = poptmp[:,:,j,k,l]/(1+ np.sum(np.sum(poptmp[:,:,j,k,l],axis=1),axis=0)) 
 
                 F = np.sum(poptmp[:,:,j,k,l],axis=1)
-
                 #if(use_recombination):
                     #R = np.sum(aa_inv[:,i,k,l]*dict['recombination'][i,k])#recomb_excit_interp_grid[i,k])
 
@@ -661,13 +659,11 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
 
                             scd[j,m,k,l] = dict['ionization'][j,m,k]/(1+np.sum(populations[:,j,k,l]))+np.sum(dict['ionization'][nsigma:,m,k]*F)
                         else:
-                            scd[j,m,k,l] = dict['ionization'][j,m,k]+np.sum(dict['ionization'][nsigma:,m,k]*F)
+                            scd[j,m,k,l] = dict['ionization'][metas[j],m,k]+np.sum(dict['ionization'][levels_to_keep,m,k]*F)
                     if(use_recombination):
 
                         poptmpr[:,i,m,k,l] =aa_inv[i,:,k,l]*beta_tmp[i,nsigma+m,k,l]/electron_den[l]
-                        #acd[j,m,k,l] = (dict['recomb_three_body'][j,m,k]*electron_den[l] + dict['recombination'][j,m,k]) /(1+np.sum(populations[:,j,k,l])) + np.sum(cr[j,nsigma:len(dict['energy']),k,l]*np.sum(aa_inv[:,:,k,l]*dict['recombination'][nsigma:,m,k]*dict['recomb_three_body'][j,m,k]*electron_den[l],axis=1)) #(dict['recomb_three_body'][j,k]*electron_den[l] + dict['recomb_excit_interp_grid'][k,j]) /(1+np.sum(populations[:,j,k,l])) - np.sum(F * (dict['recomb_three_body'][nsigma:,k]*electron_den[l] + dict['recomb_excit_interp_grid'][nsigma:,k]))
-
-
+                        #acd[j,m,k,l] = (dict['recomb_three_body'][j,m,k]*electron_den[l] + dict['recombination'][j,m,k]) /(1+np.sum(populations[:,j,k,l])) + np.sum(cr[j,nsigma:len(dict['energy']),k,l]*np.sum(aa_inv[:,:,k,l]*dict['recombination'][nsigma:,m,k]*dict['recomb_three_body'][j,m,k]*electron_den[l],axis=1)) #(dict['recomb_three_body'][j,k]*electron_den[l] + dict['recomb_excit_interp_grid'][k,j]) /(1+np.sum(populations[:,j,k,l])) - np.sum(F * (dict['recomb_three_body'][nsigma:,k]*electron_den[l] + dict['recomb_excit_interp_grid'][nsigma:,k
                         acd[j,m,k,l] = (dict['recomb_three_body'][j,m,k]*electron_den[l] + dict['recombination'][j,m,k])  - np.sum(
                             cr[j,nsigma:len(dict['energy']),k,l]*np.sum(aa_inv[:,:,k,l]*(dict['recomb_three_body'][nsigma:,m,k]*electron_den[l] + dict['recombination'][nsigma:,m,k]),axis=1))
 
@@ -686,15 +682,21 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
                             
                         
                 mind=0
-                for n in range(0,nsigma):
-                    if(n !=j):
-                        qcd[j,mind,k,l] = (cr[n,j,k,l] + np.sum(cr[n,nsigma:len(dict['energy']),k,l]*F))/electron_den[l]
+                #for n in range(0,nsigma):
+                for n in metas:
+
+                    if(n !=metas[j]):
+                        print(j,n,mind)
+
+                        
+                        qcd[j,mind,k,l] = (cr[n,metas[j],k,l] + np.sum(cr[n,levels_to_keep,k,l]*F))/electron_den[l]
+
+                        
+                        #cr_del = np.delete(cr,metas,axis=1)
+                        #qcd[j,mind,k,l] = (cr[n,j,k,l] + np.sum(cr_del[n,:,k,l]*F))/electron_den[l]
                         mind = mind+1
 
 
-
-
-                        
 
     poptmprec = np.zeros((len(aa_tmp),len(aa_tmp),nsigma,nsigmaplus,len(temperature_grid),
                        len(electron_den) ))
