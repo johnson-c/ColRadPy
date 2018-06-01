@@ -20,8 +20,6 @@
 # The read_adf04.py will read adf04 files and produces the dictionary with data
 # Takes a density array, temperature array, metastable number, 
 #
-# todo     allow non consequative metastable levels, remove read adf04 part
-#          at the begining and replace with read_adf04.py, put into a class
 #
 #
 ################################################################################
@@ -558,7 +556,8 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
 
                     vt = v0[:,None]*np.exp(eigenval[:,None]*dict['td_t'])
                     dict['td_pop'][:,:,t,e] = np.dot(eigenvectors,vt)
-            
+            dict['eigenval'] = eigenval
+            dict['eigenvectors'] = eigenvectors
     for i in range(0,len(electron_den)):
         for j in range(0,len(temperature_grid)):
 
@@ -597,8 +596,9 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
                                             (1+np.sum(populations,axis=0))*((dict['energy'][j] - dict['energy'][i])/5.03e15))                    
                 else:
                     pecs.append(A_ji[j,i]*populations[j-nsigma]/electron_den)
-                    #print('a')
-                #rad_pwr = rad_pwr + (energy[j] - energy[i])*A[j,i]*populations[j-nsigma]
+                    specific_line_pwr.append(A_ji[j,i]*populations[j-nsigma]/electron_den\
+                                            *((dict['energy'][j] - dict['energy'][i])/5.03e15))                    
+                    
                 pecs_levels.append(np.array([j,i]))
 
                 wavelengths.append(  (1./abs(dict['energy'][j] - dict['energy'][i])*1e7))#/
