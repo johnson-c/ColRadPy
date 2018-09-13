@@ -68,10 +68,10 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
         for i in range(0,len(dict['ion_transitions'])):
             for j in range(0,len(temperature_grid)):
 
-
                 S_ij[dict['ion_transitions'][i,0] -1,dict['ion_transitions'][i,1] -1, j] = ion_excit_interp_grid[i,j]/np.exp(
                     (dict['ion_pot'][dict['ion_transitions'][i,1]-1] - dict['energy'][dict['ion_transitions'][i,0] -1 ])
                     *0.00012398774011749576/temperature_grid[j])
+
 
     ################################################################################
     

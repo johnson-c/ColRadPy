@@ -145,10 +145,10 @@ def ioniz(gc):
     #include source term
 
     t_min = 0
-    t_max = .001
+    t_max = .01
     dt = (np.max(ionbal))
-    t_steps = np.array([0,.001,t_max])
-    t_steps = np.linspace(0,.0001,1000)
+    #t_steps = np.array([0,.001,t_max])
+    t_steps = np.linspace(0,120e-6,100000)
     td_pop = np.zeros( len(ionbal[0]))
     td_pop[0] = 1.
     td_pop_correct = np.zeros( (len(td_pop),len(t_steps),len(temperature_grid),len(electron_den)))
@@ -158,8 +158,8 @@ def ioniz(gc):
             v0 = np.dot(np.linalg.inv(eigenvectors),td_pop)
             vt = v0[:,None]*np.exp(eigenval[:,None]*t_steps)
             td_pop_correct[:,:,t,e] = np.dot(eigenvectors,vt)
-    return t_steps,td_pop_correct
-    
+    return t_steps, td_pop_correct
+    '''
     ##########################################################################################
     #
     # time depepent part
@@ -182,22 +182,29 @@ def ioniz(gc):
             for i in range(1, len(t_steps)):
                 td_pop[i,:,t,n] = td_pop[i-1,:,t,n] + (1/dt)*np.dot(ionbal[:,:,t,n],td_pop[i-1,:,t,n])
 
-
+    '''
     ##########################################################################################
     #
     # time depepent part with source
     #
     ##########################################################################################
 
-    source =1.
+    source =1.e13
+    t_min = 0
+    t_max = .01
+    dt = (np.max(ionbal))*100.
+    print(dt)
+    nsteps = (t_max - t_min) /dt
+    nsteps = nsteps
+    t_steps = np.linspace(t_min,t_max,1e3)
 
     td_pop_s = np.zeros( (np.shape(t_steps) + np.shape(ionbal[0]) ))
-
     source_arr = np.zeros(len(sig)+1)
     source_arr[0] = source
-    td_pop_s[0,0,:,:] = 1.
+    td_pop_s[0,0,:,:] = 1.e13
     for t in range(0,len(gcrs[0]['user_temp_grid'])):
         for n in range(0,len(gcrs[0]['user_dens_grid'])):
             for i in range(1, len(t_steps)):
-                td_pop_s[i,:,t,n] = td_pop_s[i-1,:,t,n] + (1/dt)*np.dot(ionbal[:,:,t,n],td_pop_s[i-1,:,t,n]) + source_arr 
-    return t_steps,td_pop,td_pop_s,td_pop_correct
+                td_pop_s[i,:,t,n] = td_pop_s[i-1,:,t,n] + (1/dt)*np.dot(ionbal[:,:,t,n],td_pop_s[i-1,:,t,n]) + source_arr
+                #td_pop_s[i,:,t,n] = td_pop_s[i-1,:,t,n] + (1/dt)*np.dot(ionbal[:,:,t,n],td_pop_s[i-1,:,t,n]) + source_arr 
+    return t_steps,td_pop_correct,td_pop_s

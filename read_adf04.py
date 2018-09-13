@@ -206,7 +206,6 @@ def read_adf04(file_path):
 
     i = 0 #this is the index of the line in the adf04 file starting at the colision
     b = re.split('[ ]',a[i])#this will the the line that gets read from the loadtxt
-
     while( '-1' not in b):
 
         #################################################
@@ -253,6 +252,7 @@ def read_adf04(file_path):
                     b[j] = b[j].replace('+','E')
                 elif('-' in b[j]):
                     b[j] = b[j].replace('-','E-')
+
                 c[j] =float(b[j])
             a_val.append(c[0])#append the A values
             col_excit.append(c[1:1+len(adf04_temp_grid)])#append the upsilon matrix

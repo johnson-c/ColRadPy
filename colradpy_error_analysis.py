@@ -462,9 +462,9 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
         dict['err_excit_interp'] = err_excit_interp(temperature_grid)
         dict['err_excit_trials'] = np.zeros((np.shape(dict['err_excit_interp'])[0],np.shape(dict['err_excit_interp'])[1],n_trials))
         for i in range(0,len(temperature_grid)):
-                                              
-            dict['err_excit_trials'][:,i,:] = np.transpose(np.random.multivariate_normal(dict['col_excit_interp'][:,0],np.diag(dict['err_excit_interp'][:,0]),size=n_trials))
-    
+            dict['err_excit_trials'][:,i,:] = np.transpose(np.random.multivariate_normal(dict['col_excit_interp'][:,i],np.diag(dict['err_excit_interp'][:,i]),size=n_trials))
+
+    #dict['err_excit_trials'] = np.abs(dict['err_excit_trials'])
     rates_ji = np.zeros_like(col_excit_interp_grid)
     rates_ij = np.zeros_like(col_excit_interp_grid)
     
@@ -475,10 +475,9 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
         # want to included then this allows the matrix to be made ignoring
         # levels above the levels taken out in the file.
         if( dict['col_transitions'][i,0] < len(dict['energy'])+1):
-            
             for j in range(0,len(temperature_grid)):
                 if(err):
-                    q_ji[dict['col_transitions'][i,0]-1,dict['col_transitions'][i,1]-1, j,:] = 1/(2*dict['w'][dict['col_transitions'][i,0]-1] +1)* np.sqrt(13.6058/temperature_grid[j]) * dict['err_excit_trials'][i,j]*2.1716E-8
+                    q_ji[dict['col_transitions'][i,0]-1,dict['col_transitions'][i,1]-1, j,:] = 1/(2*dict['w'][dict['col_transitions'][i,0]-1] +1)* np.sqrt(13.6058/temperature_grid[j]) * dict['err_excit_trials'][i,j,:]*2.1716E-8
                     
                     q_ij[dict['col_transitions'][i,0]-1,dict['col_transitions'][i,1]-1, j,:] = (2*dict['w'][dict['col_transitions'][i,0]-1]+1)/(2*dict['w'][dict['col_transitions'][i,1]-1]+1) * np.exp(-np.abs(dict['energy'][dict['col_transitions'][i,0]-1] -dict['energy'][dict['col_transitions'][i,1]-1])/8.065E3/temperature_grid[j]) *q_ji[dict['col_transitions'][i,0]-1,dict['col_transitions'][i,1]-1,j,:]
                     A_ji[dict['col_transitions'][i,0]-1,dict['col_transitions'][i,1]-1,:] = dict['a_val'][i]
@@ -517,8 +516,8 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
                 for mm in range(0,n_trials):
                     #level i depopulating mechanisms
                     #these are all the transitions from the level
-                    cr[i,i,t,e,mm]  =  -1*np.sum(A_ji[i,:])
-                    cr_loss[i,i,t,e,mm]  =  -1*np.sum(A_ji[i,:])
+                    cr[i,i,t,e,mm]  =  -1*np.sum(A_ji[i,:,mm])
+                    cr_loss[i,i,t,e,mm]  =  -1*np.sum(A_ji[i,:,mm])
                     #these are all the excitation and dexcitation bringing you out of the level
                     cr[i,i,t,e,mm] = cr[i,i,t,e,mm] - np.sum(q_ji[i,:,t,mm])*electron_den[e] - np.sum(q_ij[i,:,t,mm])*electron_den[e]
                     cr_loss[i,i,t,e,mm] = cr_loss[i,i,t,e,mm] - np.sum(q_ji[i,:,t,mm])*electron_den[e] - np.sum(q_ij[i,:,t,mm])*electron_den[e]                
@@ -531,7 +530,7 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
                     #level i populating mechanisms
                     #
                     #these are the transition rates from higher levels into the level i
-                    cr[i,0:len(dict['energy']),t,e,mm] = cr[i,0:len(dict['energy']),t,e,mm] + A_ji[:,i]
+                    cr[i,0:len(dict['energy']),t,e,mm] = cr[i,0:len(dict['energy']),t,e,mm] + A_ji[:,i,mm]
                     #these are excitation and dexciation into the level i
                     cr[i,0:len(dict['energy']),t,e,mm] = cr[i,:len(dict['energy']),t,e,mm] + q_ij[:,i,t,mm]*electron_den[e] + q_ji[:,i,t,mm]*electron_den[e]
 
