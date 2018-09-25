@@ -25,7 +25,6 @@
 ################################################################################
 
 import numpy as np
-import fortranformat as ff
 import re
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
@@ -33,7 +32,7 @@ import sys
 sys.path.append('./')
 from r8yip import *
 from r8necip import *
-from read_adf04 import *
+from read_adf04_py3 import *
 
 
 def convert_to_air(lam):
@@ -201,7 +200,8 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
 
         S = 3.73491E-10*dict['a_val']*WTU/ELU**3
         FIN = 1/3.*ELU*S/WTL
-
+        import pdb
+        pdb.set_trace()
         
         dict['burg_tully']['type1_ind_arr'] = np.where( (FIN>FBIG) &(dict['S'][dict['col_transitions'][:,0]-1] == dict['S'][dict['col_transitions'][:,1]-1]) & (np.abs(dict['L'][dict['col_transitions'][:,0]-1] - dict['L'][dict['col_transitions'][:,1]-1]) <=1))[0]
         
@@ -213,7 +213,6 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
         dict['burg_tully']['type3_ind_arr'] = np.where( ((FIN>0.01) | (FIN<FZERO)) & (dict['S'][dict['col_transitions'][:,0]-1] != dict['S'][dict['col_transitions'][:,1]-1]) )[0]
 
         dict['burg_tully']['c'] = 1.5
-
         
         def type1_xconv(tconv_grid):
             return 1- np.log(dict['burg_tully']['c']) / np.transpose(np.log( tconv_grid.reshape(len(tconv_grid),1)*0.69488623/ (dict['energy'][dict['col_transitions'][dict['burg_tully']['type1_ind_arr'],0]-1] - dict['energy'][dict['col_transitions'][dict['burg_tully']['type1_ind_arr'],1] -1]) + dict['burg_tully']['c']))

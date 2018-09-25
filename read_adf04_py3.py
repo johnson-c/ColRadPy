@@ -1,10 +1,10 @@
 ################################################################################
-# file name         : read_adf04.py
+# file name         : read_adf04_py3.py
 # author            : Curt Johnson
 # description       : This code reads adf04 formatted files
-# version           : 0.1
-# python version    : 2.7.12 ipython 2.4.1
-# dependencies      : numpy, re
+# version           : 0.9
+# python version    : 3.6.5 |Anaconda, INC.| ipython 6.4.0
+# dependencies      : numpy, re, sys
 # license           : to be freed after code is stable and papers are published
 #
 # todo          check with all the adf04 files in adas
@@ -14,16 +14,18 @@
 
 import numpy as np
 import re
-from operator import xor
 import sys
+
+
+
 def first_substring(strings, substring):
     return next(i for i, string in enumerate(strings) if substring in string[0])
+
 def config_format(config_arr):
     conf = config_arr[0]
     if(len(config_arr)>1):
         for i in range(1,len(config_arr)):
             conf = conf+'.' + config_arr[i]
-
     return conf
 
 def read_adf04(fil):
@@ -46,13 +48,15 @@ def read_adf04(fil):
         adf04['iz0'] = int(first_linep[first_linep_inds[1]])
         adf04['iz1'] = int(first_linep[first_linep_inds[2]])
         adf04['ion_pot'] = np.zeros(len(first_linep_inds)-3)
-        adf04['ion_term'] = np.chararray(len(first_linep_inds)-3,itemsize=3)
 
+        ion_term = []
         for i in range(0,len(adf04['ion_pot'])):
             adf04['ion_pot'][i] =float(
                 re.split('[(]',first_linep[first_linep_inds[i+3]])[0])
-            adf04['ion_term'][i] = re.split(
-                '[)]',re.split('[(]',first_linep[first_linep_inds[i+3]])[1])[0]
+            ion_term.append(re.split(
+                '[)]',re.split('[(]',first_linep[first_linep_inds[i+3]])[1])[0])
+
+        adf04['ion_term'] = np.asarray(ion_term)            
     except:
         print("**Failed first line of the adf04**\n\n"+first_line+"\n\nfile is formatted incorrectly failed line.\nIt should be formatted as below (Neutral Tungsten example). \nIf more than one ionization metastable,\nadd more ionization potentials and terms after the first\nW+ 0        74         1       63427.7(6D3)")
         sys.exit(1)
@@ -164,18 +168,39 @@ def read_adf04(fil):
                 a_val.append(float(tmp[tmp_inds[2]].replace('-','E-')))
             #collisional values
             col_excit_row = np.zeros(len(adf04['temp_grid']))
-            for i in range(0,len(adf04['temp_grid'])):
-                if( '+' in tmp[tmp_inds[i+3]]):
-                    col_excit_row[i] = float(tmp[tmp_inds[i+3]].replace('+','E'))
-                elif('-' in tmp[tmp_inds[i+3]]):
-                    col_excit_row[i] = float(tmp[tmp_inds[i+3]].replace('-','E-'))
+            for i in range(0,len(tmp_inds) - 3):
+
+                if(len(tmp[tmp_inds[i+3]]) < 9):
+
+                    if(i>len(adf04['temp_grid'])-1):
+                        if( '+' in tmp[tmp_inds[i+3]]):
+                            inf_engy.append(float(tmp[tmp_inds[i+3]].replace('+','E')))
+                        elif('-' in tmp[tmp_inds[i+3]]):
+                            inf_engy.append(float(tmp[tmp_inds[i+3]].replace('-','E-')))
+                    else:
+                        if( '+' in tmp[tmp_inds[i+3]]):
+                            col_excit_row[i] = float(tmp[tmp_inds[i+3]].replace('+','E'))
+                        elif('-' in tmp[tmp_inds[i+3]]):
+                            col_excit_row[i] = float(tmp[tmp_inds[i+3]].replace('-','E-'))
+
+                        
+                else:
+
+                    last_temp = tmp[tmp_inds[i+3]][0:7]
+                    inf_temp =  tmp[tmp_inds[i+3]][8:15]
+                    if( '+' in last_temp):
+                        col_excit_row[i] = float(last_temp.replace('+','E'))
+                    elif('-' in last_temp):
+                        col_excit_row[i] = float(last_temp.replace('-','E-'))
+                    
+                    if( '+' in inf_temp):
+                        inf_engy.append(float(inf_temp.replace('+','E')))
+                    elif('-' in inf_temp):
+                        inf_engy.append(float(inf_temp.replace('-','E-')))
+
             col_excit.append(col_excit_row)
             #infinite energy
-            if(len(tmp_inds)-3>=len(adf04['temp_grid'])):
-                if( '+' in tmp[tmp_inds[-1]]):
-                    inf_engy.append(float(tmp[tmp_inds[-1]].replace('+','E')))
-                elif('-' in tmp[tmp_inds[-1]]):
-                    inf_engy.append(float(tmp[tmp_inds[-1]].replace('-','E-')))
+
     ######################################################################
     #
     # end excitation and a values from the adf04, start looking for recomb
