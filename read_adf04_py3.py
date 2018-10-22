@@ -58,7 +58,7 @@ def read_adf04(fil):
 
         adf04['ion_term'] = np.asarray(ion_term)            
     except:
-        print("**Failed first line of the adf04**\n\n"+first_line+"\n\nfile is formatted incorrectly failed line.\nIt should be formatted as below (Neutral Tungsten example). \nIf more than one ionization metastable,\nadd more ionization potentials and terms after the first\nW+ 0        74         1       63427.7(6D3)")
+        print("**Failed first line of the adf04**\n\n"+first_line+"\n\nfile is formatted incorrectly failed line.\nCHECK WHITE SPACE.\nIt should be formatted as below (Neutral Tungsten example). \nIf more than one ionization metastable,\nadd more ionization potentials and terms after the first\nW+ 0        74         1       63427.7(6D3)")
         sys.exit(1)
 
     ############################################################################
@@ -76,6 +76,8 @@ def read_adf04(fil):
         zpla1 = []
         level_num = 0
         tmp_line =   first_line
+        zpla = []
+        zpla1 = []
         while('-1' not in tmp_line or '-1\n' not in tmp_line):
             level_num = level_num + 1
             tmp_line = f.readline()
@@ -90,19 +92,27 @@ def read_adf04(fil):
                 config.append(config_format(tmp[tmp_inds[1:config_stop]]))
                 S.append(int(re.split('[)]',re.split('[(]',tmp[tmp_inds[config_stop]])[1])[0]))
                 L.append(int(re.split('[)]',re.split('[(]',tmp[tmp_inds[config_stop]])[1])[1]))
-                w.append(float(re.split('[)]',re.split('[(]',tmp[tmp_inds[config_stop+1]])[0])[0]))
-                energy.append(float(tmp[tmp_inds[config_stop+2]]))
-                zz = []
-                zz1 = []
-                for i in range(0,len(adf04['ion_term'])):
-                    if(len(tmp_inds)>config_stop+3+i):
-                        zz1.append(int(re.split('[}]',tmp[tmp_inds[config_stop+3+i]])[0][1]))
-                        zz.append(float(re.split('[}]',tmp[tmp_inds[config_stop+3+i]])[1]))
-                    else:
-                        zz.append(-1.)
-                        zz1.append(0)
-                zpla.append(np.asarray(zz))
-                zpla1.append(np.asarray(zz1))
+
+                if( tmp[tmp_inds[config_stop]].count(')') > 1):
+                    w.append(float(re.split('[(]',tmp[tmp_inds[config_stop]])[2][0:3]))
+                    offset = -1
+                else:
+                    w.append(float(re.split('[)]',re.split('[(]',tmp[tmp_inds[config_stop+1]])[0])[0]))
+                    offset=0
+                    
+                energy.append(float(tmp[tmp_inds[config_stop+2+offset]]))
+                zz = np.array([-1,-1])
+                zz1 = np.array([-1.,-1.])
+                for i in range(config_stop+3+offset,len(tmp_inds)):
+                    if ('X' not in tmp[tmp_inds[i]]):
+                        zpla1_line = int(re.split('[}]',tmp[tmp_inds[i]])[0][1])
+                        zpla_line = float(re.split('[}]',tmp[tmp_inds[i]])[1])
+                        zz[zpla1_line-1] = zpla1_line
+                        zz1[zpla1_line-1] = zpla_line
+                        
+                zpla.append(zz1)
+                zpla1.append(zz)
+
         adf04['config'] = np.asarray(config)
         adf04['L'] = np.asarray(L)
         adf04['S'] = np.asarray(S)
@@ -113,7 +123,6 @@ def read_adf04(fil):
     except:
         print("\n**FAILED LEVEL " +str(level_num)+"**\n\n"+"\n\nOne or more configuration/energy lines in the adf04 file are formatted incorrectly.\nIt should be formatted as below (C+3 example). \nIf more than one ionization metastable,\nadd more apla,zpla after the first ie. {2}1.00\n      2 1S2 2P1           (2)1( 2.5)    64555.4   {1}1.000")
         sys.exit(1)
-
     ############################################################################
     #
     # end reading level info start reading temperature grid
@@ -127,9 +136,10 @@ def read_adf04(fil):
         for i in range(2,len(temp_line_inds)):
             if( '+' in temp_line_arr[temp_line_inds[i]]):
                 temp_tmp = temp_line_arr[temp_line_inds[i]].replace('+','E')
-            elif('-' in temp_grid_tmp[i]):
+            elif('-' in temp_line_arr[temp_grid_inds[i]]):
                 temp_tmp = temp_line_arr[temp_line_inds[i]].replace('-','E-')
             adf04_temp_grid.append(float(temp_tmp))
+
         adf04['temp_grid'] = np.asarray(adf04_temp_grid)
     except:
         print("\n**FAILED TEMPERATURE GRID**\n\n" +temp_line+"\n\nadf04 temperature grid formatted incorrectly.\nShould be formatted as below (C+3 example).\n  4.0    3       8.00+03 1.60+04 3.20+04 8.00+04 1.60+05 3.20+05 8.00+05 1.60+06 3.20+06 8.00+06 1.60+07")

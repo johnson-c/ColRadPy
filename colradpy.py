@@ -39,7 +39,7 @@ def convert_to_air(lam):
     s = 10**3/lam
     return 1 + 0.0000834254 + 0.02406147 / (130 - s**2) + 0.00015998 / (38.9 - s**2)
 
-def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=True, suppliment_with_ecip=True,scale_ecip=-1,use_recombination_three_body= False,use_recombination  = False,td_t=np.array([]),td_n0=np.array([])):
+def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=True, suppliment_with_ecip=True,scale_ecip=-1,use_recombination_three_body= False,use_recombination  = False,td_t=np.array([]),td_n0=np.array([]),td_source=np.array([])):
     nsigma=len(metas)
     if(type(fil) == str):
         dict = read_adf04(fil)
@@ -77,11 +77,12 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
     if(suppliment_with_ecip):
         dict['ecip'] = np.zeros((len(dict['energy']),len(dict['ion_pot']),len(temperature_grid)))
         for p in range(0,len(dict['ion_pot'])):
-            ion_inds = np.where(dict['zpla'][:,p] > -1)[0]#there was a stupid problem beacuse {X} only designates ecip not other ionization
+            ion_inds = np.where( dict['zpla'][:,p] > -1)[0]#there was a stupid problem beacuse {X} only designates ecip not other ionization
+            ion_inds2 = np.where( dict['zpla1'] == p +1)[0]
+            ion_inds = np.intersect1d(ion_inds,ion_inds2)
             #ion_inds = np.sort(np.append(ion_inds,dict['ion_transitions'][:,0][np.in1d(np.unique(dict['ion_transitions'][:,0]),ion_inds,invert=True)]))
             ecip_inds = np.where(S_ij[:,p,0] ==0)[0]
             to_use = np.intersect1d(ecip_inds,ion_inds)
-            
             dict['ecip'][ion_inds,p,:] =r8ecip(dict['charge_state'], dict['ion_pot'][p],
                              dict['energy'][ion_inds],dict['zpla'][ion_inds,p],temperature_grid*11604.5)
 
@@ -200,8 +201,6 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
 
         S = 3.73491E-10*dict['a_val']*WTU/ELU**3
         FIN = 1/3.*ELU*S/WTL
-        import pdb
-        pdb.set_trace()
         
         dict['burg_tully']['type1_ind_arr'] = np.where( (FIN>FBIG) &(dict['S'][dict['col_transitions'][:,0]-1] == dict['S'][dict['col_transitions'][:,1]-1]) & (np.abs(dict['L'][dict['col_transitions'][:,0]-1] - dict['L'][dict['col_transitions'][:,1]-1]) <=1))[0]
         
@@ -270,8 +269,8 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
         dict['burg_tully']['type1_coeff_b_lin_fit'] = np.log(dict['burg_tully']['type1_yval_arr'][dict['burg_tully']['type1_zero_inds'],-1]) - dict['burg_tully']['type1_coeff_m_lin_fit']*dict['burg_tully']['type1_xval_arr'][dict['burg_tully']['type1_zero_inds'],-1]
 
 
-        
-        if(any(dict['burg_tully']['extrap_temp_inds'])):
+
+        if(dict['burg_tully']['extrap_temp_inds'].size > 0):
 
             dict['burg_tully']['type1_xval_extrap'] = type1_xconv(temperature_grid[dict['burg_tully']['extrap_temp_inds']]*11604.5)
 
@@ -311,10 +310,10 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
         dict['burg_tully']['type2_coeff_b_lin_fit'] = np.log(dict['burg_tully']['type2_yval_arr'][dict['burg_tully']['type2_zero_inds'],-1]) - dict['burg_tully']['type2_coeff_m_lin_fit']*dict['burg_tully']['type2_xval_arr'][dict['burg_tully']['type2_zero_inds'],-1]
 
 
-        if(any(dict['burg_tully']['extrap_temp_inds'])):
+        if(dict['burg_tully']['extrap_temp_inds'].size >0):
             dict['burg_tully']['type2_xval_extrap'] = type2_xconv(temperature_grid[dict['burg_tully']['extrap_temp_inds']]*11604.5)
 
-            if(any(dict['burg_tully']['type2_zero_inds'])):
+            if(dict['burg_tully']['type2_zero_inds'].size > 0):
 
 
                 dict['burg_tully']['type2_yval_extrap_lin'] =  np.transpose(np.exp(dict['burg_tully']['type2_coeff_b_lin_fit'] + dict['burg_tully']['type2_coeff_m_lin_fit']*np.transpose(dict['burg_tully']['type2_xval_extrap'][dict['burg_tully']['type2_zero_inds']])))                
@@ -354,7 +353,7 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
         dict['burg_tully']['type3_coeff_b_lin_fit'] = np.log(dict['burg_tully']['type3_yval_arr'][dict['burg_tully']['type3_zero_inds'],-1]) - dict['burg_tully']['type3_coeff_m_lin_fit']*dict['burg_tully']['type3_xval_arr'][dict['burg_tully']['type3_zero_inds'],-1]
 
 
-        if(any(dict['burg_tully']['extrap_temp_inds'])):
+        if(dict['burg_tully']['extrap_temp_inds'].size > 0):
             dict['burg_tully']['type3_xval_extrap'] = type3_xconv(temperature_grid[dict['burg_tully']['extrap_temp_inds']]*11604.5)
             #dict['burg_tully']['type3_yval_extrap'] = np.transpose(dict['burg_tully']['type3_coeff_a']*np.exp(np.transpose(dict['burg_tully']['type3_xval_extrap'])*dict['burg_tully']['type3_coeff_b']))
 
@@ -362,7 +361,7 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
             
             dict['burg_tully']['type3_excit'] = dict['burg_tully']['type3_yval_extrap']/ np.transpose( temperature_grid[dict['burg_tully']['extrap_temp_inds']].reshape(len(dict['burg_tully']['extrap_temp_inds']),1)*11604.5*0.69488623/ (dict['energy'][dict['col_transitions'][dict['burg_tully']['type3_ind_arr'],0]-1] - dict['energy'][dict['col_transitions'][dict['burg_tully']['type3_ind_arr'],1] -1])  + 1 )
 
-            if(any(dict['burg_tully']['type3_zero_inds'])):
+            if(dict['burg_tully']['type3_zero_inds'].size > 0):
                 
                 dict['burg_tully']['type3_yval_extrap_lin'] =  np.transpose(np.exp(dict['burg_tully']['type3_coeff_b_lin_fit'] + dict['burg_tully']['type3_coeff_m_lin_fit']*np.transpose(dict['burg_tully']['type3_xval_extrap'][dict['burg_tully']['type3_zero_inds']])))                
 
@@ -395,12 +394,12 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
         dict['burg_tully']['type4_coeff_b_lin_fit'] = np.log(dict['burg_tully']['type4_yval_arr'][dict['burg_tully']['type4_zero_inds'],-1]) - dict['burg_tully']['type4_coeff_m_lin_fit']*dict['burg_tully']['type4_xval_arr'][dict['burg_tully']['type4_zero_inds'],-1]
 
         
-        if(any(dict['burg_tully']['extrap_temp_inds'])):
+        if(dict['burg_tully']['extrap_temp_inds'].size > 0):
             dict['burg_tully']['type4_xval_extrap'] = type4_xconv(temperature_grid[dict['burg_tully']['extrap_temp_inds']]*11604.5)
             #dict['burg_tully']['type4_yval_extrap'] = np.transpose(dict['burg_tully']['type4_coeff_a']*np.exp(np.transpose(dict['burg_tully']['type4_xval_extrap'])*dict['burg_tully']['type4_coeff_b']))
             dict['burg_tully']['type4_yval_extrap'] = np.transpose(np.exp(dict['burg_tully']['type4_coeff_a1'] + np.transpose(dict['burg_tully']['type4_xval_extrap'])*dict['burg_tully']['type4_coeff_b1']))            
             dict['burg_tully']['type4_excit'] = dict['burg_tully']['type4_yval_extrap']*np.transpose(np.log( temperature_grid[dict['burg_tully']['extrap_temp_inds']].reshape(len(dict['burg_tully']['extrap_temp_inds']),1)*11604.5*0.69488623/ (dict['energy'][dict['col_transitions'][dict['burg_tully']['type4_ind_arr'],0]-1] - dict['energy'][dict['col_transitions'][dict['burg_tully']['type4_ind_arr'],1] -1])  + dict['burg_tully']['c']))
-            if(any(dict['burg_tully']['type4_zero_inds'])):
+            if(dict['burg_tully']['type4_zero_inds'].size > 0):
                 
                 dict['burg_tully']['type4_yval_extrap_lin'] =  np.transpose(np.exp(dict['burg_tully']['type4_coeff_b_lin_fit'] + dict['burg_tully']['type4_coeff_m_lin_fit']*np.transpose(dict['burg_tully']['type4_xval_extrap'][dict['burg_tully']['type4_zero_inds']])))
 
@@ -419,13 +418,13 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
                 
             col_excit_interp_grid[dict['burg_tully']['type4_ind_arr'],dict['burg_tully']['extrap_temp_inds'][i] ] = dict['burg_tully']['type4_excit'][:,i]
 
-            if(any(dict['burg_tully']['type1_zero_inds'])):
+            if(dict['burg_tully']['type1_zero_inds'].size >0):
                 col_excit_interp_grid[dict['burg_tully']['type1_ind_arr'][dict['burg_tully']['type1_zero_inds']],dict['burg_tully']['extrap_temp_inds'][i] ] = dict['burg_tully']['type1_excit_lin'][:,i]
-            if(any(dict['burg_tully']['type2_zero_inds'])):
+            if(dict['burg_tully']['type2_zero_inds'].size >0):
                 col_excit_interp_grid[dict['burg_tully']['type2_ind_arr'][dict['burg_tully']['type2_zero_inds']],dict['burg_tully']['extrap_temp_inds'][i] ] = dict['burg_tully']['type2_excit_lin'][:,i]
-            if(any(dict['burg_tully']['type3_zero_inds'])):
+            if(dict['burg_tully']['type3_zero_inds'].size > 0):
                 col_excit_interp_grid[dict['burg_tully']['type3_ind_arr'][dict['burg_tully']['type3_zero_inds']],dict['burg_tully']['extrap_temp_inds'][i] ] = dict['burg_tully']['type3_excit_lin'][:,i]
-            if(any(dict['burg_tully']['type4_zero_inds'])):
+            if(dict['burg_tully']['type4_zero_inds'].size > 0):
                 col_excit_interp_grid[dict['burg_tully']['type4_ind_arr'][dict['burg_tully']['type4_zero_inds']],dict['burg_tully']['extrap_temp_inds'][i] ] = dict['burg_tully']['type4_excit_lin'][:,i]
                 
         col_excit_interp_grid[:,dict['burg_tully']['interp_temp_inds']] = col_excit_interp(temperature_grid[dict['burg_tully']['interp_temp_inds']])
@@ -548,13 +547,30 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
             dict['td_pop'] = np.zeros( (len(dict['td_n0']),len(dict['td_t']),len(temperature_grid),len(electron_den)))
             for e in range(0,len(electron_den)):
                 for t in range(0,len(temperature_grid)):
-                    eigenval,eigenvectors = np.linalg.eig(dict['td_cr'][:,:,t,e])
-                    v0 = np.dot(np.linalg.inv(eigenvectors),dict['td_n0'])
 
-                    vt = v0[:,None]*np.exp(eigenval[:,None]*dict['td_t'])
-                    dict['td_pop'][:,:,t,e] = np.dot(eigenvectors,vt)
-            dict['eigenval'] = eigenval
-            dict['eigenvectors'] = eigenvectors
+                    if(td_source.any()):
+                        #solve using Matrix exponential method outlined in LeVeque                                            #but careful about eignval =0 so need to do an expansion
+                        
+                        dict['td_source'] = td_source
+                        dict['eigenval'],dict['eigenvectors'] = np.linalg.eig(dict['td_cr'][:,:,t,e])
+                        CC = np.dot(np.linalg.inv(dict['eigenvectors']),dict['td_source'])
+                        V0 = np.dot(np.linalg.inv(dict['eigenvectors']),dict['td_n0'])
+
+                        eig_zero_ind = np.where(dict['eigenval'] == 0)[0]
+                        eig_non_zero = np.delete(dict['eigenval'],eig_zero_ind)
+                        amplitude_non = np.delete(V0,eig_zero_ind) + np.delete(CC,eig_zero_ind)/eig_non_zero
+                        amplitude_zer = V0[eig_zero_ind]
+                        v_non = amplitude_non[:,None]*np.exp(eig_non_zero[:,None]*dict['td_t']) - np.delete(CC,eig_zero_ind)[:,None]/eig_non_zero[:,None]
+                        v_zer = CC[eig_zero_ind]*dict['td_t'] + amplitude_zer
+                        v = np.insert(v_non,eig_zero_ind,v_zer,axis=0)
+                        dict['td_pop'][:,:,t,e] = np.dot(dict['eigenvectors'],v)
+                    #solve using Matrix exponential method outlined in LeVeque                        
+                    else:
+                        dict['eigenval'],dict['eigenvectors'] = np.linalg.eig(dict['td_cr'][:,:,t,e])
+                        v0 = np.dot(np.linalg.inv(dict['eigenvectors']),dict['td_n0'])
+                        vt = v0[:,None]*np.exp(dict['eigenval'][:,None]*dict['td_t'])
+                        dict['td_pop'][:,:,t,e] = np.dot(dict['eigenvectors'],vt)
+                    
     for i in range(0,len(electron_den)):
         for j in range(0,len(temperature_grid)):
 
@@ -685,7 +701,7 @@ def colradpy(fil,metas, temperature_grid, electron_den, use_ionization_in_cr=Tru
                 for n in metas:
 
                     if(n !=metas[j]):
-                        print(j,n,mind)
+                        
 
                         
                         qcd[j,mind,k,l] = (cr[n,metas[j],k,l] + np.sum(cr[n,levels_to_keep,k,l]*F))/electron_den[l]

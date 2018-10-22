@@ -57,13 +57,15 @@ electron_den = np.array([1.e11]) #dens_arr
 
 '''
 
-def ioniz(gc):
-    gcrs=[]
-    nsigmas = np.array([len(gc['metas'])])
-    sig = gc['metas']
-    gcrs.append(gc)
-    temperature_grid = gc['user_temp_grid']
-    electron_den = gc['user_dens_grid']
+def ioniz(gcrs):
+    #sig = gc['metas']
+    #gcrs.append(gc)
+    nsigmas = []
+    for i in range(0,len(gcrs)):
+        nsigmas.append(len(gcrs[i]['metas']))
+    nsigmas = np.asarray(nsigmas)
+    temperature_grid =np.array([10])# gc['user_temp_grid']
+    electron_den = np.array([1.e13])#gc['user_dens_grid']
 
     ionbal = np.zeros((np.sum(nsigmas)+1,np.sum(nsigmas)+1,
                        len(gcrs[0]['user_temp_grid']),
@@ -93,20 +95,19 @@ def ioniz(gc):
     r = 0
     s = 0
     t = 0
-
     for k in range(0, np.sum(nsigmas)):
+        
         if(k > np.sum(nsigmas[0:i+1]-1)):
             i = i + 1
             p = 0
             q = 0
             r = 0
-        for j in range(0,np.sum(nsigmas)):
+        for j in range(0,nsigmas[s]):
 
             #put the -qcd on the diagonal
             if( k==j and j < np.sum(nsigmas) and gcrs[i]['qcd'].any()):
                 ionbal[k,j,:,:] = ionbal[k,j,:,:] + -1*(np.sum(gcrs[i]['qcd'][p,:,:,:],axis=0))
                 p = p + 1
-
             if( k!=j and gcrs[i]['qcd'].any()):
                 if(k<nsigmas[i] and j <nsigmas[i]):
                     if(k>j):
@@ -116,6 +117,8 @@ def ioniz(gc):
 
             if( k!=j and gcrs[s]['scd'].any() and (k>np.sum(nsigmas[0:s+1])-1 or j >np.sum(nsigmas[0:s+1])-1) ):
                 if(k < j):
+                    import pdb
+                    pdb.set_trace()
                     ionbal[k,j,:,:] = ionbal[k,j,:,:] + gcrs[s]['acd'][k,j-nsigmas[s],:,:]
                 if(k > j):
                     ionbal[k,j,:,:] = ionbal[k,j,:,:] + gcrs[s]['scd'][j,k-nsigmas[s],:,:]
