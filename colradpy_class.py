@@ -141,9 +141,6 @@ class colradpy():
            values in the dictionary. See documentation ecip_rates.py for a better desciption
            
         """
-
-
-        
         self.data['rates'].update( burgess_tully_rates(self.data['user']['temp_grid'],self.data['input_file']['temp_grid'],
                                                        self.data['rates']['excit']['col_transitions'],self.data['rates']\
                                                        ['excit']['col_excit'],
@@ -590,7 +587,7 @@ class colradpy():
         #these are how levels get populated
         self.data['processed']['pop_lvl'] = np.einsum('ijkl,jmkl->ijmkl',
                                                       self.data['cr_matrix']['aa_inv'],
-                                                      self.data['cr_matrix']['beta'])
+                                                      self.data['cr_matrix']['beta'][:,0:len(self.data['atomic']['metas']),:,:])
         #population of levels with no normalization
         self.data['processed']['pops_no_norm'] = np.sum(self.data['processed']['pop_lvl'],axis=1)
         
@@ -605,6 +602,8 @@ class colradpy():
                                                   self.data['processed']['F'][:,0:len(self.data['atomic']['metas']),:])
 
         if(self.data['processed']['driving_populations_norm']):
+            import pdb
+            pdb.set_trace()
             self.data['processed']['scd'] = self.data['processed']['scd'] + \
                                           np.einsum('ipk,ikl->ipkl',
                                           self.data['rates']['ioniz']['ionization'][self.data['atomic']['metas'],:,:],
@@ -663,7 +662,6 @@ class colradpy():
                     recomb_coeff[len(self.data['atomic']['metas']):len(self.data['atomic']['energy']),metasplus_to_keep,:,:])
                     )
 
-
     def solve_time_dependent(self):
         """This function will solve the CR matrix with no assumptions. A matrix expoential is used to solve this problem.
            A source term can be included to mimick erosion of fresh atoms or injection of neutral gas or maybe even LIF
@@ -674,7 +672,6 @@ class colradpy():
            Mathemat), Society for Industrial and Applied Mathematics,
            Philadelphia, PA, USA, 2007.
         """
-
         
         if('processed' not in self.data.keys()):
             self.data['processed'] = {}
@@ -689,10 +686,8 @@ class colradpy():
             V0 = np.dot(np.linalg.inv(self.data['processed']['td']['eigenvectors']),
                                       self.data['user']['td_n0'])
 
-
             eig_zero_ind = np.where(self.data['processed']['td']['eigenvals'] == 0)            
             eig_non_zero = np.delete(self.data['processed']['td']['eigenvals'] ,eig_zero_ind)
-
 
             amplitude_non = np.delete(V0,eig_zero_ind) + np.delete(CC,eig_zero_ind)/eig_non_zero
             amplitude_zer = V0[eig_zero_ind]
@@ -714,7 +709,6 @@ class colradpy():
             self.data['processed']['td']['eigenvals'] = self.data['processed']['td']['eigenvals'].transpose(2,0,1)
             self.data['processed']['td']['eigenvectors'] = self.data['processed']['td']['eigenvectors'].transpose(2,3,0,1)
             
-
     def solve_cr(self):
         if(self.data['user']['use_ionization']):
             self.make_ioniz_from_reduced_ionizrates()
