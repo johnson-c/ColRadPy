@@ -602,8 +602,6 @@ class colradpy():
                                                   self.data['processed']['F'][:,0:len(self.data['atomic']['metas']),:])
 
         if(self.data['processed']['driving_populations_norm']):
-            import pdb
-            pdb.set_trace()
             self.data['processed']['scd'] = self.data['processed']['scd'] + \
                                           np.einsum('ipk,ikl->ipkl',
                                           self.data['rates']['ioniz']['ionization'][self.data['atomic']['metas'],:,:],
