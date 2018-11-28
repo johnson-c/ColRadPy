@@ -1,7 +1,28 @@
 import numpy as np
 from r8yip import *
 
-def r8necip(IZ, ion_pot, energy, zpla,temperature_grid): 
+def r8necip(IZ, ion_pot, energy, zpla,temperature_grid):
+    """THis function calculates ECIP rates, adapted from ADAS code.
+
+    :param IZ: charge state
+    :type IZ: int
+
+    :param ion_pot: ionization potential
+    :type ion_pot: float
+
+    :param energy: Energy levels
+    :type energy: array
+
+    :param zpla: ionization potential
+    :type zpla: array
+
+    :param temp_grid: Temperature grid to return ECIP rates on
+    :type temp_grid: array
+
+    :returns: array --ECIP rates on the temperature grid
+
+    """
+    
     ZETA = zpla
     CL = 2.3
     DXIPOW = 1.5

@@ -1,0 +1,741 @@
+################################################################################
+# file name         : colrad.py
+# author            : Curt Johnson
+# description       : This code solves the collsion radiative matrix
+# version           : 0.3
+# python version    : 2.7.12 ipython 2.4.1
+# dependencies      : read_adf04.py, numpy, scipy interpolate, matplotlib
+# license           : to be freed after code is stable and papers are published
+#
+# This code originally went through different file names and versions that
+# incorprated different functionalitiy before it was under version control.
+# These are included in the repos for historical and bug tracking reasons.
+# The order went adf04_read.py, adf04_read1.py, adf04_dens_grid.py,
+# adf04_dens_temp_grid_tmp.py, colrad.py
+# 
+# The code solves the colisional radiative problem see Stuart loch's 
+# spectroscopy class notes or Curt Johnson's upcoming thesis for a derivation
+# of the CR matrix.
+#
+# The read_adf04.py will read adf04 files and produces the dictionary with data
+# Takes a density array, temperature array, metastable number, 
+#
+#
+#
+################################################################################
+
+import numpy as np
+import re
+import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
+import sys
+sys.path.append('./')
+from r8yip import *
+from r8necip import *
+from read_adf04_py3_class import *
+from ecip_rates import *
+from burgess_tully_rates import *
+import collections
+
+def convert_to_air(lam):
+    s = 10**3/lam
+    return 1 + 0.0000834254 + 0.02406147 / (130 - s**2) + 0.00015998 / (38.9 - s**2)
+
+class colradpy():
+
+    def __init__(self,fil,metas=np.array([]),temp_grid=np.array([]),electron_den=np.array([]),
+                 use_ionization=True,suppliment_with_ecip=True,use_recombination_three_body=False,
+                 use_recombination = False, td_t = np.array([]), td_n0=np.array([]),td_source=np.array([]),
+                  default_pop_norm=True):
+
+        self.data = {}
+        self.processed = {} 
+        self.data['user'] = {}
+        self.data['user']['temp_grid'] = temp_grid
+        self.data['user']['dens_grid'] = electron_den
+        self.data['user']['use_ionization'] = use_ionization
+        self.data['user']['suppliment_with_ecip'] = suppliment_with_ecip
+        self.data['user']['use_recombination_three_body'] = use_recombination_three_body
+        self.data['user']['use_recombination'] = use_recombination
+        self.data['user']['metas'] = 'look at [atomic][metas] for values'
+        self.data['user']['td_t'] = td_t
+        self.data['user']['td_n0'] = td_n0
+        self.data['user']['td_source'] = td_source
+        self.data['user']['default_pop_norm'] = default_pop_norm
+
+        self.populate_data(fil)
+        self.data['atomic']['metas'] = np.asarray(metas)
+
+        
+        
+    def update_dict(self,d, u):
+
+        for k, v in u.items():
+            if isinstance(v, collections.Mapping):
+                d[k] = self.update_dict(d.get(k, {}), v)
+            else:
+                d[k] = v
+        return d
+
+    def populate_data(self,fil):
+
+        if(type(fil) == str):
+
+            self.data = self.update_dict(self.data,read_adf04(fil))
+            self.data['user']['file_loc'] = fil
+        else:
+            if(self.data):
+                self.data = self.update_dict(self.data,fil)
+            else:
+                self.data = fil
+
+    def make_ecip(self):
+        self.data['rates']['ioniz']['ecip'] = np.zeros((len(self.data['atomic']['energy']),
+                                                        len(self.data['atomic']['ion_pot']),
+                                                        len(self.data['user']['temp_grid'])))
+        #there was a stupid problem beacuse {X} only designates ecip not other ionization
+
+        '''
+        for p in range(0, len(self.data['atomic']['ion_pot'])):
+            ion_inds = np.where( self.data['atomic']['zpla'][:,p] > -1)[0]
+            ion_inds2 = np.where( self.data['atomic']['zpla1'] == p +1)[0]
+        '''
+            
+        self.data['rates']['ioniz']['ecip'] = ecip_rates(self.data['atomic']['energy'],
+                                                  self.data['atomic']['ion_pot'],self.data['atomic']['zpla'],
+                                                  self.data['atomic']['zpla1'],self.data['atomic']['charge_state'],
+                                                  self.data['user']['temp_grid'])
+        
+    def make_burgess_tully(self):
+        self.data['rates'].update( burgess_tully_rates(self.data['user']['temp_grid'],self.data['input_file']['temp_grid'],
+                                                       self.data['rates']['excit']['col_transitions'],self.data['rates']\
+                                                       ['excit']['col_excit'],
+                                                       self.data['atomic']['energy'],self.data['atomic']['w'],
+                                                       self.data['rates']['a_val'],self.data['atomic']['S'],
+                                                       self.data['atomic']['L'],self.data['rates']['inf_engy']))
+
+    def make_ioniz_from_reduced_ionizrates(self):
+        #if there is no ionization in the file create a zero matrix so that ECIP can be subbed in
+        if(np.size(self.data['rates']['ioniz']['ion_excit']) < 1):
+            print('No ionization in the input file ECIP can be made')
+            self.data['rates']['ioniz']['ionization'] = np.zeros((len(self.data['atomic']['energy']),
+                                                                  len(self.data['atomic']['ion_pot']),
+                                                                  len(self.data['user']['temp_grid'])))
+            return
+
+        #changed 4/19/17 to allow mutliple ion metas        
+        self.data['rates']['ioniz']['ionization'] = np.zeros((len(self.data['atomic']['energy']),
+                                                                       len(self.data['atomic']['ion_pot']),
+                                                                       len(self.data['user']['temp_grid'])))
+
+        ion_excit_interp = interp1d(self.data['input_file']['temp_grid']/11604.5,
+                                    self.data['rates']['ioniz']['ion_excit'],axis=1)
+        
+        ion_excit_interp_grid = ion_excit_interp(self.data['user']['temp_grid'])
+
+        for i in range(0,len(self.data['rates']['ioniz']['ion_transitions'])):
+            for j in range(0,len(self.data['user']['temp_grid'])):
+
+                self.data['rates']['ioniz']['ionization'][self.data['rates']['ioniz']\
+                    ['ion_transitions'][i,0] -1,self.data['rates']['ioniz']\
+                    ['ion_transitions'][i,1] -1, j] = ion_excit_interp_grid[i,j]/\
+                    np.exp((self.data['atomic']['ion_pot'][self.data['rates']['ioniz']\
+                    ['ion_transitions'][i,1]-1] - self.data['atomic']['energy']\
+                    [self.data['rates']['ioniz']['ion_transitions'][i,0] -1 ])\
+                    *0.00012398774011749576/self.data['user']['temp_grid'][j])
+
+    def suppliment_with_ecip(self):
+
+        if('ecip' not in self.data['rates']['ioniz']):
+            print("ECIP was not previously calculated, calculating now"+\
+                   " from inside 'suppliment_with_ecip'")
+            self.make_ecip()
+
+        if('ionization' not in self.data['rates']['ioniz']):
+            print('No ionization rates from files were calculated,'+\
+                  ' try to calculate them')
+            self.make_ioniz_from_reduced_ionizrates()
+        
+        for p in range(0,len(self.data['atomic']['ion_pot'])):
+            #there was a stupid problem beacuse {X} only designates ecip not other ionization   
+            ion_inds = np.where( self.data['atomic']['zpla'][:,p] > -1)[0]
+            ion_inds2 = np.where( self.data['atomic']['zpla1'] == p +1)[0]
+            ion_inds = np.intersect1d(ion_inds,ion_inds2)
+            ecip_inds = np.where(self.data['rates']['ioniz']['ionization'][:,p,0] ==0)[0]
+            to_use = np.intersect1d(ecip_inds,ion_inds)
+            self.data['rates']['ioniz']['ionization'][to_use,p,:] =\
+                                        self.data['rates']['ioniz']['ecip'][to_use,p,:]
+
+    def make_recombination_rates_from_file(self):
+
+        recomb_excit_interp = interp1d(self.data['input_file']['temp_grid']/11604.5,
+                                       self.data['rates']['recomb']['recomb_excit'],
+                                       axis=1)
+        self.data['rates']['recomb']['recomb_excit_interp_grid'] =\
+                                    recomb_excit_interp(self.data['user']['temp_grid'])
+        #replace values lower than 1e-30 with a linear interpolation
+        #because cubic gives the the wrong answer for some reason
+        #maybe dont need this part now, 1dinterp was using kind='cubic'
+        #changed now and hopefully wont get the errors
+        a,b,c = np.unique(np.where(self.data['rates']['recomb']['recomb_excit']\
+                                   <1.e-30)[0],return_inverse=True,return_counts=True)
+        if(c.any()):
+            if(any(self.data['user']['temp_grid'] < \
+                   self.data['input_file']['temp_grid'][c.max()]/11604.5)):
+                for v in range(0,len(a)):
+                    tmp = np.where(self.data['user']['temp_grid'] <\
+                                   self.data['input_file']['temp_grid'][c.max()]/11604.5)[0]
+                    w = interp1d(self.data['input_file']['temp_grid'][0:c[v]+1]/11604.5,\
+                                 self.data['rates']['recomb']['recomb_excit'][a[v],0:c[v]+1],\
+                                 kind='linear')
+
+                    self.data['rates']['recomb']['recomb_excit_interp_grid'][a[v],0:c[v]+1] =\
+                                                    w(self.data['user']['temp_grid'][0:tmp+1])
+
+        self.data['rates']['recomb']['recombination'] = \
+            np.zeros((len(self.data['atomic']['energy']),
+                      len(self.data['atomic']['ion_pot']),
+                      len(self.data['user']['temp_grid'])))
+        
+        for q in range(0,len(self.data['rates']['recomb']['recomb_transitions'])):
+            self.data['rates']['recomb']['recombination']\
+                [self.data['rates']['recomb']['recomb_transitions'][q,1]-1,
+                 self.data['rates']['recomb']['recomb_transitions'][q,0]-1,:] = \
+                                    self.data['rates']['recomb']['recomb_excit_interp_grid'][q]
+
+    def make_three_body_recombination(self):
+        #from the los alimos lab manual
+        #he['w'] = (he['S']*(he['L']*2+1)-1)/2
+        self.data['rates']['recomb']['recomb_three_body'] = \
+                        np.zeros((len(self.data['atomic']['energy']),
+                                  len(self.data['atomic']['ion_pot']),
+                                  len(self.data['user']['temp_grid'])))
+        for p in range(0,len(self.data['atomic']['ion_pot'])):
+            l_map = np.array(['S','P','D','F','G'])
+            if(len(self.data['atomic']['ion_term'][p]) ==2): # was -1)/2.
+                w_ion = ( int(self.data['atomic']['ion_term'][p][0]) * \
+                          (np.where(l_map==self.data['atomic']['ion_term'][p][1])[0][0]*2+1))
+            elif(len(self.data['atomic']['ion_term'][p]) ==3):
+                w_ion = float(self.data['atomic']['ion_term'][p][2])
+            else:
+                w_ion=1e30
+            self.data['rates']['recomb']['w_ion'] = w_ion#1.656742E-22
+            #this is from detailed balance
+            self.data['rates']['recomb']['recomb_three_body'][:,p,:] = 1.656742E-22* \
+                (self.data['atomic']['w'].reshape(len(self.data['atomic']['w']),1)*2+1)/ \
+                w_ion*np.exp( (self.data['atomic']['ion_pot'][p] - \
+                self.data['atomic']['energy']).reshape(len(self.data['atomic']['energy']),1) / \
+                (self.data['user']['temp_grid']/0.000123985)) *\
+                self.data['rates']['ioniz']['ionization'][:,p,:] / \
+                (self.data['user']['temp_grid'])**(1.5)
+        #rates of this are in cm3
+
+    def make_electron_excitation_rates(self):
+        tmp = interp1d(self.data['input_file']['temp_grid']/11604.5,self.data['rates']['excit']['col_excit'],axis=1)
+
+        self.data['rates']['excit']['col_excit_interp'] = np.zeros((len(self.data['rates']['excit']['col_excit']),
+                                                                         len(self.data['user']['temp_grid'])))
+
+
+        if( ('burg_tully' not in self.data['rates'].keys()) and (np.max(self.data['input_file']\
+                                ['temp_grid'])/11604.5 < np.max(self.data['user']['temp_grid']) )):
+            print('Atleast one user temp pont above last calculated temperature using extrapolation be carefull')
+            self.make_burgess_tully()
+
+        if(np.max(self.data['input_file']['temp_grid'])/11604.5 < \
+           np.max(self.data['user']['temp_grid'])):
+
+            for i in range(0,len(self.data['rates']['burg_tully']['extrap_temp_inds'])):
+                for j in range(0,3):
+                    self.data['rates']['excit']['col_excit_interp']\
+                        [self.data['rates']['burg_tully']['ind_arrs'][j],
+                                      self.data['rates']['burg_tully']['extrap_temp_inds'][i] ] =\
+                                      self.data['rates']['burg_tully']['excit_extrap'][j][:,i]
+
+                for j in range(0,3):
+                    if(self.data['rates']['burg_tully']['zero_inds'][j].size >0):
+                        self.data['rates']['excit']['col_excit_interp']\
+                            [self.data['rates']['burg_tully']['ind_arrs'][j]\
+                                           [self.data['rates']['burg_tully']['zero_inds'][j]],
+                                        self.data['rates']['burg_tully']['extrap_temp_inds'][i] ] =\
+                                        self.data['rates']['burg_tully']['excit_extrap_lin'][j][:,i]
+
+
+            self.data['rates']['excit']['col_excit_interp'][:,self.data['rates']['burg_tully']\
+                                   ['interp_temp_inds']] =\
+            tmp(self.data['user']['temp_grid'][self.data['rates']['burg_tully']['interp_temp_inds']])
+
+        else:
+
+            self.data['rates']['excit']['col_excit_interp'] = tmp(self.data['user']['temp_grid'])
+
+
+    def populate_cr_matrix(self):
+
+        if('col_excit_interp' not in self.data['rates']['excit'].keys()):
+            print('Electron collisional rates have not yet been made on the user defined temperature grid. Doing that now')
+            self.make_electron_excitation_rates()
+
+        
+        self.data['cr_matrix'] = {}
+        self.data['cr_matrix']['q_ji'] = np.zeros((len(self.data['atomic']['energy']),
+                                                   len(self.data['atomic']['energy']),
+                                                   len(self.data['user']['temp_grid'])))
+        
+        self.data['cr_matrix']['q_ij'] = np.zeros((len(self.data['atomic']['energy']),
+                                                   len(self.data['atomic']['energy']),
+                                                   len(self.data['user']['temp_grid'])))
+
+        self.data['cr_matrix']['A_ji'] = np.zeros((len(self.data['atomic']['energy']),len(self.data['atomic']['energy'])))
+            
+        for i in range(0,len(self.data['rates']['excit']['col_transitions'])):
+            # the if statement here is to account for files that have had energies
+            # deleted from the begining of the adf04. It is assumed if those
+            # entries are not at the top of the adf04 file then the user does not
+            # want to included then this allows the matrix to be made ignoring
+            # levels above the levels taken out in the file.
+            if( self.data['rates']['excit']['col_transitions'][i,0] < len(self.data['atomic']['energy'])+1):
+
+                for j in range(0,len(self.data['user']['temp_grid'])):
+
+                    self.data['cr_matrix']['q_ji'][self.data['rates']['excit']['col_transitions'][i,0]-1,
+                                                   self.data['rates']['excit']['col_transitions'][i,1]-1, j] = \
+                            1/(2*self.data['atomic']['w'][self.data['rates']['excit']['col_transitions'][i,0]-1] +1)* \
+                            np.sqrt(13.6058/self.data['user']['temp_grid'][j]) * \
+                            self.data['rates']['excit']['col_excit_interp'][i,j]*2.1716E-8
+
+
+                    self.data['cr_matrix']['q_ij'][self.data['rates']['excit']['col_transitions'][i,0]-1,
+                                                   self.data['rates']['excit']['col_transitions'][i,1]-1, j] = \
+                            (2*self.data['atomic']['w'][self.data['rates']['excit']['col_transitions'][i,0]-1]+1)/ \
+                            (2*self.data['atomic']['w'][self.data['rates']['excit']['col_transitions'][i,1]-1]+1) * \
+                            np.exp(-np.abs(self.data['atomic']['energy'][self.data['rates']['excit']['col_transitions'][i,0]-1]\
+                            -self.data['atomic']['energy'][self.data['rates']['excit']['col_transitions'][i,1]-1])/ \
+                            8.065E3/self.data['user']['temp_grid'][j]) * \
+                            self.data['cr_matrix']['q_ji'][self.data['rates']['excit']['col_transitions'][i,0]-1,
+                                                           self.data['rates']['excit']['col_transitions'][i,1]-1,j]
+
+
+                self.data['cr_matrix']['A_ji'][self.data['rates']['excit']['col_transitions'][i,0]-1,
+                                               self.data['rates']['excit']['col_transitions'][i,1]-1] = \
+                                                                                            self.data['rates']['a_val'][i]
+
+        #transpose the self.data['cr_matrix']['q_ij'] matrix so the indexes make sense
+        self.data['cr_matrix']['q_ij'] = self.data['cr_matrix']['q_ij'].transpose(1,0,2)
+        nsigmaplus = len(self.data['atomic']['ion_pot'])
+        if(self.data['user']['use_recombination']):
+            if(len(np.unique(self.data['rates']['recomb']['recomb_transitions'][:,0]))>nsigmaplus):
+               nsigmaplus = len(np.unique(self.data['rates']['recomb']['recomb_transitions'][:,0]))
+
+        self.data['cr_matrix']['cr'] = np.zeros((len(self.data['atomic']['energy'])+nsigmaplus,
+                                                 len(self.data['atomic']['energy'])+nsigmaplus,
+                                                 len(self.data['user']['temp_grid']),
+                                                 len(self.data['user']['dens_grid'])))
+
+        for t in range(0,len(self.data['user']['temp_grid'])):
+            for e in range(0,len(self.data['user']['dens_grid'])):
+                for i in range(0,len(self.data['atomic']['energy'])):
+
+                    #level i depopulating mechanisms
+                    #these are all the transitions from the level
+                    self.data['cr_matrix']['cr'][i,i,t,e]  =  -1*np.sum(self.data['cr_matrix']['A_ji'][i,:])
+
+                    #these are all the excitation and dexcitation bringing you out of the level
+                    self.data['cr_matrix']['cr'][i,i,t,e] = self.data['cr_matrix']['cr'][i,i,t,e] - \
+                                              np.sum(self.data['cr_matrix']['q_ji'][i,:,t])*self.data['user']['dens_grid'][e]-\
+                                              np.sum(self.data['cr_matrix']['q_ij'][i,:,t])*self.data['user']['dens_grid'][e]
+
+                    #these are the ways to ionize out of ion
+                    if(self.data['user']['use_ionization']):
+                        self.data['cr_matrix']['cr'][i,i,t,e] = self.data['cr_matrix']['cr'][i,i,t,e] - \
+                                              np.sum(self.data['rates']['ioniz']['ionization'][i,:,t])*\
+                                              self.data['user']['dens_grid'][e]
+
+                    #
+                    #level i populating mechanisms
+                    #
+                    #these are the transition rates from higher levels into the level i
+
+                    self.data['cr_matrix']['cr'][i,0:len(self.data['atomic']['energy']),t,e] = \
+                                            self.data['cr_matrix']['cr'][i,0:len(self.data['atomic']['energy']),t,e] + \
+                                            self.data['cr_matrix']['A_ji'][:,i]
+
+                    #these are excitation and dexciation into the level i
+                    self.data['cr_matrix']['cr'][i,0:len(self.data['atomic']['energy']),t,e] = \
+                                            self.data['cr_matrix']['cr'][i,:len(self.data['atomic']['energy']),t,e] + \
+                                            self.data['cr_matrix']['q_ij'][:,i,t]*self.data['user']['dens_grid'][e] + \
+                                            self.data['cr_matrix']['q_ji'][:,i,t]*self.data['user']['dens_grid'][e]
+    def solve_quasi_static(self):
+        if('cr_matrix' not in self.data.keys()):
+            self.test()
+            
+        levels_to_keep = np.setdiff1d( np.linspace(0,len(self.data['atomic']['energy'])-1,
+                                              len(self.data['atomic']['energy']) ,dtype='int64'),
+                                       self.data['atomic']['metas'])
+        #[:,0:len(self.data['atomic']['metas']),:,:] 
+        self.data['cr_matrix']['beta']= \
+                                          -self.data['cr_matrix']['cr'][levels_to_keep][:,self.data['atomic']['metas']]
+        aa_tmp = self.data['cr_matrix']['cr'][levels_to_keep][:,levels_to_keep]
+
+        if(self.data['user']['use_recombination']):
+            recomb_driving_lvls = len(self.data['atomic']['energy']) + \
+                                  np.unique(self.data['rates']['recomb']['recomb_transitions'][:,0]) - 1
+            self.data['cr_matrix']['beta'] = np.append(self.data['cr_matrix']['beta'],
+                                                   -self.data['cr_matrix']['cr'][levels_to_keep][:,recomb_driving_lvls],axis=1)
+
+        self.data['cr_matrix']['aa_inv'] = np.zeros((len(aa_tmp),len(aa_tmp), len(self.data['user']['temp_grid']),
+                               len(self.data['user']['dens_grid'])))
+
+        for p in range(0,len(self.data['atomic']['energy'])):
+            np.einsum('ij,k->ijk',self.data['rates']['ioniz']['ionization'][p,:,:],
+                                                                         self.data['user']['dens_grid'])
+
+        self.data['cr_matrix']['aa_inv'] = np.linalg.inv(aa_tmp.transpose(2,3,0,1)).transpose(2,3,0,1)
+
+        self.data['processed'] = {}
+
+        if(self.data['user']['use_recombination']):
+            self.data['processed']['pops'] = np.zeros((len(aa_tmp),
+                                            len(self.data['atomic']['metas'])+len(self.data['atomic']['ion_pot']),
+                                            len(self.data['user']['temp_grid']),
+                                            len(self.data['user']['dens_grid'])))
+        else:
+            self.data['processed']['pops'] = np.zeros((len(aa_tmp),
+                                            len(self.data['atomic']['metas']),
+                                            len(self.data['user']['temp_grid']),
+                                            len(self.data['user']['dens_grid'])))
+
+        for t in range(0,len(self.data['user']['temp_grid'])):
+            for e in range(0,len(self.data['user']['dens_grid'])):
+                self.data['processed']['pops'][:,:,t,e] = np.dot(self.data['cr_matrix']['aa_inv'][:,:,t,e],
+                                                                 self.data['cr_matrix']['beta'][:,:,t,e])
+        #normalization of populations is done here. Quasistatic approximation assumes that
+        #there is a small population in 'excited' states, this is sometimes not the case
+        #so the populations must be renomalized the default when there is one metastable
+        #present is to normalize, but there is a choice for the user to decide
+        #default when there is more than one metastable is to not normalize
+        if(len(self.data['atomic']['metas']) > 1):
+
+            self.data['processed']['driving_populations_norm'] = False
+        else:
+            self.data['processed']['driving_populations_norm'] = True
+
+        if(not self.data['user']['default_pop_norm']):
+            self.data['processed']['driving_populations_norm'] =\
+                          not self.data['processed']['driving_populations_norm']
+
+        if(self.data['processed']['driving_populations_norm']):
+            self.data['processed']['pops'] = self.data['processed']['pops'] /\
+                                             (1 + np.sum(self.data['processed']['pops'],axis=0))
+            print('here')
+            
+        self.data['processed']['pecs'] = [] #np.zeros(len(levels_to_keep)*len(self.data['cr_matrix']['A_ji']))
+        self.data['processed']['pec_levels'] = [] #np.zeros((2,len(levels_to_keep)*len(self.data['cr_matrix']['A_ji'])))
+        self.data['processed']['wave_vac'] = [] #np.zeros(len(levels_to_keep)*len(self.data['cr_matrix']['A_ji']))
+        
+        for i in range(0,len(self.data['cr_matrix']['A_ji'])):
+            for j in range(0,len(levels_to_keep)):
+                #if statement here because there will be a number of transitions that have zero
+                #for the PEC value and don't want to have to keep track of these.
+                if(levels_to_keep[j] > i and self.data['cr_matrix']['A_ji'][j,i] > 1E-31):
+                    self.data['processed']['pecs'].append( self.data['cr_matrix']['A_ji'][levels_to_keep[j],i]*\
+                                                        self.data['processed']['pops'][j]/ \
+                                                        self.data['user']['dens_grid'])
+                    self.data['processed']['wave_vac'].append( 1./abs(self.data['atomic']['energy'][levels_to_keep[j]] - \
+                                                                                      self.data['atomic']['energy'][i]))
+                    self.data['processed']['pec_levels'].append( np.array([j,i]))
+
+        self.data['processed']['pecs'] = np.asarray(self.data['processed']['pecs'])
+        self.data['processed']['wave_vac'] = np.asarray(self.data['processed']['wave_vac'])
+        self.data['processed']['pec_levels'] = np.asarray(self.data['processed']['pec_levels'])
+
+        self.data['processed']['scd'] = np.zeros((len(self.data['atomic']['metas']),
+                                                  len(self.data['atomic']['ion_pot']),
+                                                  len(self.data['user']['temp_grid']),
+                                                  len(self.data['user']['dens_grid'])))
+        self.data['processed']['acd'] = np.zeros((len(self.data['atomic']['metas']),
+                                                  len(self.data['atomic']['ion_pot']),
+                                                  len(self.data['user']['temp_grid']),
+                                                  len(self.data['user']['dens_grid'])))
+        self.data['processed']['xcd'] = np.zeros((len(self.data['atomic']['ion_pot']),
+                                                  len(self.data['atomic']['ion_pot']),
+                                                  len(self.data['user']['temp_grid']),
+                                                  len(self.data['user']['dens_grid'])))
+        self.data['processed']['pop_lvl'] = np.zeros((len(self.data['cr_matrix']['aa_inv']),
+                                                       len(self.data['cr_matrix']['aa_inv']),
+                                                       len(self.data['atomic']['metas']),
+                                                       len(self.data['user']['temp_grid']),
+                                                       len(self.data['user']['dens_grid'])))
+
+        self.data['processed']['pop_lvl'] = np.einsum('ijkl,jmkl->ijmkl',
+                                                      self.data['cr_matrix']['aa_inv'],
+                                                      self.data['cr_matrix']['beta'])
+
+        self.data['processed']['pops_no_norm'] = np.sum(self.data['processed']['pop_lvl'],axis=1)
+        
+        if(self.data['processed']['driving_populations_norm']):
+            self.data['processed']['pop_lvl'] = self.data['processed']['pop_lvl']/   \
+                                            (1+np.sum(np.sum(self.data['processed']['pop_lvl'],axis=1),axis=0))
+        
+        self.data['processed']['F'] = np.sum(self.data['processed']['pop_lvl'][:,:,0:len(self.data['atomic']['metas']),:,:],axis=1)
+        
+        self.data['processed']['scd'] = np.einsum('ipk,imkl->mpkl',
+                                                  self.data['rates']['ioniz']['ionization'][levels_to_keep,:,:],
+                                                  self.data['processed']['F'][:,0:len(self.data['atomic']['metas']),:])
+
+        if(self.data['processed']['driving_populations_norm']):
+            self.data['processed']['scd'] = self.data['processed']['scd'] + \
+                                          np.einsum('ipk,ikl->ipkl',
+                                          self.data['rates']['ioniz']['ionization'][self.data['atomic']['metas'],:,:],
+                                          1/(1+np.sum(self.data['processed']['pops_no_norm'],axis=0)))
+
+        else:
+            self.data['processed']['scd'] = self.data['processed']['scd'] + \
+                                            self.data['rates']['ioniz']['ionization'][self.data['atomic']['metas'],:,:,None]
+
+        recomb_coeff = np.einsum('ijk,l->ijkl',
+                                 self.data['rates']['recomb']['recomb_three_body'],
+                                 self.data['user']['dens_grid']) + \
+                                 self.data['rates']['recomb']['recombination'][:,:,:,None]
+
+        self.data['processed']['acd'] = -np.einsum('njkl,jmkl->nmkl',
+                                                   
+                       self.data['cr_matrix']['cr'][0:len(self.data['atomic']['metas']), len(self.data['atomic']['metas']):
+                       len(self.data['atomic']['energy']),:,:],
+                       np.einsum('ijkl,jmkl->imkl', self.data['cr_matrix']['aa_inv'][0:len(self.data['atomic']['energy']),
+                       0:len(self.data['atomic']['energy']),:,:],
+                       recomb_coeff[len(self.data['atomic']['metas']):len(self.data['atomic']['energy']),:,:,:])
+                       )
+
+        self.data['processed']['acd'] = self.data['processed']['acd'] + recomb_coeff[self.data['atomic']['metas'],:,:,:]
+
+        self.data['processed']['qcd'] = np.zeros((len(self.data['atomic']['metas']),
+                                                  len(self.data['atomic']['metas']),
+                                                  len(self.data['user']['temp_grid']),
+                                                  len(self.data['user']['dens_grid'])))
+        t = []
+        for n in range(0,len(self.data['atomic']['metas'])):
+            metas_to_keep = np.setdiff1d( self.data['atomic']['metas'],
+                                          self.data['atomic']['metas'][n])
+            
+            self.data['processed']['qcd'][metas_to_keep,n,:,:] = np.einsum('nkl,l->nkl',
+                                                                           
+                                    self.data['cr_matrix']['cr'][self.data['atomic']['metas'][n],metas_to_keep,:,:] +\
+                                    np.einsum('mkl,mnkl->nkl', self.data['cr_matrix']['cr'][self.data['atomic']['metas'][n],
+                                    levels_to_keep,:,:],
+                                    self.data['processed']['F'][:,metas_to_keep,:,:]
+                                    ),1/self.data['user']['dens_grid'])
+
+
+        for m in range(0,len(self.data['atomic']['ion_pot'])):
+
+            metasplus_to_keep = np.setdiff1d( np.linspace(0,len(self.data['atomic']['ion_pot'])-1,
+                                                          len(self.data['atomic']['ion_pot']),dtype='int'),m)
+            
+            self.data['processed']['xcd'][metasplus_to_keep,np.array([m]),:,:] =-np.einsum('ik,imkl->mkl',
+                                                                                           
+                    self.data['rates']['ioniz']['ionization'][levels_to_keep,m,:],np.einsum('ijkl,jmkl->imkl',
+                    self.data['cr_matrix']['aa_inv'][0:len(self.data['atomic']['energy']),0:len(self.data['atomic']['energy']),:,:],
+                    recomb_coeff[len(self.data['atomic']['metas']):len(self.data['atomic']['energy']),metasplus_to_keep,:,:])
+                    )
+
+
+
+
+
+    def solve_time_dependent(self):
+        if('processed' not in self.data.keys()):
+            self.data['processed'] = {}
+        self.data['processed']['td'] = {}
+        
+        if(self.data['user']['td_source'].any()):
+            self.data['processed']['td']['eigenvals'], \
+            self.data['processed']['td']['eigenvectors'] = np.linalg.eig(self.data['cr_matrix']['cr'].transpose(2,3,0,1))
+
+            CC = np.dot(np.linalg.inv(self.data['processed']['td']['eigenvectors']),
+                                      self.data['user']['td_source'])
+            V0 = np.dot(np.linalg.inv(self.data['processed']['td']['eigenvectors']),
+                                      self.data['user']['td_n0'])
+
+
+            eig_zero_ind = np.where(self.data['processed']['td']['eigenvals'] == 0)            
+            eig_non_zero = np.delete(self.data['processed']['td']['eigenvals'] ,eig_zero_ind)
+
+
+            amplitude_non = np.delete(V0,eig_zero_ind) + np.delete(CC,eig_zero_ind)/eig_non_zero
+            amplitude_zer = V0[eig_zero_ind]
+            v_non = amplitude_non[:,:,:,None]*np.exp(eig_non_zero[:,:,:,None]*self.data['user']['td_t']) - \
+                                            np.delete(CC,eig_zero_ind)[:,:,:,None]/eig_non_zero[:,:,:,None]
+            v_zer = CC[eig_zero_ind]*self.data['user']['td_t'] + amplitude_zer
+            v = np.insert(v_non,eig_zero_ind,v_zer,axis=0)
+            dict['td_pop'][:,:,t,e] = np.dot(dict['eigenvectors'],v)
+
+        else:
+            
+            self.data['processed']['td']['eigenvals'], \
+            self.data['processed']['td']['eigenvectors'] = np.linalg.eig(self.data['cr_matrix']['cr'].transpose(2,3,0,1))
+            
+            v0 = np.dot(np.linalg.inv(self.data['processed']['td']['eigenvectors']),self.data['user']['td_n0'])
+            vt = v0[:,:,:,None]*np.exp(self.data['processed']['td']['eigenvals'][:,:,:,None]*self.data['user']['td_t'])
+            self.data['processed']['td']['td_pop'] = np.einsum('klij,kljt->itkl',
+                                                               self.data['processed']['td']['eigenvectors'], vt)
+            self.data['processed']['td']['eigenvals'] = self.data['processed']['td']['eigenvals'].transpose(2,0,1)
+            self.data['processed']['td']['eigenvectors'] = self.data['processed']['td']['eigenvectors'].transpose(2,3,0,1)
+            
+    def test(self):
+        if('col_excit_interp' not in self.data['rates']['excit'].keys()):
+            print('Electron collisional rates have not yet been made on the user defined temperature grid. Doing that now')
+            self.make_electron_excitation_rates()
+        self.data['cr_matrix'] = {}
+        self.data['cr_matrix']['q_ji'] = np.zeros((len(self.data['atomic']['energy']),
+                                                   len(self.data['atomic']['energy']),
+                                                   len(self.data['user']['temp_grid'])))
+        self.data['cr_matrix']['q_ij'] = np.zeros((len(self.data['atomic']['energy']),
+                                                   len(self.data['atomic']['energy']),
+                                                   len(self.data['user']['temp_grid'])))
+        self.data['cr_matrix']['A_ji'] = np.zeros((len(self.data['atomic']['energy']),
+                                                   len(self.data['atomic']['energy'])))
+        for i in range(0,len(self.data['rates']['excit']['col_transitions'])):
+            # the if statement here is to account for files that have had energies
+            # deleted from the begining of the adf04. It is assumed if those
+            # entries are not at the top of the adf04 file then the user does not
+            # want to included then this allows the matrix to be made ignoring
+            # levels above the levels taken out in the file.
+            if( self.data['rates']['excit']['col_transitions'][i,0] < len(self.data['atomic']['energy'])+1):
+                for j in range(0,len(self.data['user']['temp_grid'])):
+
+                    self.data['cr_matrix']['q_ji'][self.data['rates']['excit']['col_transitions'][i,0]-1,
+                                                   self.data['rates']['excit']['col_transitions'][i,1]-1, j] =  \
+                    1/(2*self.data['atomic']['w'][self.data['rates']['excit']['col_transitions'][i,0]-1] +1)* \
+                    np.sqrt(13.6058/self.data['user']['temp_grid'][j]) * \
+                    self.data['rates']['excit']['col_excit_interp'][i,j]*2.1716E-8
+
+                    self.data['cr_matrix']['q_ij'][self.data['rates']['excit']['col_transitions'][i,0]-1,
+                                                   self.data['rates']['excit']['col_transitions'][i,1]-1, j] =  \
+                    (2*self.data['atomic']['w'][self.data['rates']['excit']['col_transitions'][i,0]-1]+1)/  \
+                    (2*self.data['atomic']['w'][self.data['rates']['excit']['col_transitions'][i,1]-1]+1) * \
+                    np.exp(-np.abs(self.data['atomic']['energy'][self.data['rates']['excit']['col_transitions'][i,0]-1] - \
+                    self.data['atomic']['energy'][self.data['rates']['excit']['col_transitions'][i,1]-1])/  \
+                    8.065E3/self.data['user']['temp_grid'][j]) * \
+                    self.data['cr_matrix']['q_ji'][self.data['rates']['excit']['col_transitions'][i,0]-1,
+                                                   self.data['rates']['excit']['col_transitions'][i,1]-1,j]
+
+                self.data['cr_matrix']['A_ji'][self.data['rates']['excit']['col_transitions'][i,0]-1,
+                                               self.data['rates']['excit']['col_transitions'][i,1]-1] = \
+                                                                                            self.data['rates']['a_val'][i]
+        #transpose the self.data['cr_matrix']['q_ij'] matrix so the indexes make sense
+        self.data['cr_matrix']['q_ij'] = self.data['cr_matrix']['q_ij'].transpose(1,0,2)
+
+        
+        nsigmaplus = len(self.data['atomic']['ion_pot'])
+        if(self.data['user']['use_recombination']):
+            if(len(np.unique(self.data['rates']['recomb']['recomb_transitions'][:,0]))>nsigmaplus):
+               nsigmaplus = len(np.unique(self.data['rates']['recomb']['recomb_transitions'][:,0]))
+               
+        self.data['cr_matrix']['cr'] = np.zeros((len(self.data['atomic']['energy'])+nsigmaplus,
+                                                 len(self.data['atomic']['energy'])+nsigmaplus,
+                                                 len(self.data['user']['temp_grid']),
+                                                 len(self.data['user']['dens_grid'])))
+
+        for i in range(0,len(self.data['atomic']['energy'])):
+            #level i depopulating mechanisms
+            #these are all the transitions from the level
+
+            self.data['cr_matrix']['cr'][i,i,:,:]  =  -1*np.sum(self.data['cr_matrix']['A_ji'][i,:])
+            
+            #these are all the excitation and dexcitation bringing you out of the level
+            self.data['cr_matrix']['cr'][i,i,:,:] = self.data['cr_matrix']['cr'][i,i,:,:] - \
+            np.sum(np.einsum('ij,k->ijk',self.data['cr_matrix']['q_ji'][i,:,:],
+                             self.data['user']['dens_grid']),axis=0)-\
+            np.sum(np.einsum('ij,k->ijk',self.data['cr_matrix']['q_ij'][i,:,:],
+                             self.data['user']['dens_grid']),axis=0)
+            
+            #these are the ways to ionize out of ion
+            if(self.data['user']['use_ionization']):
+                self.data['cr_matrix']['cr'][i,i,:,:] = self.data['cr_matrix']['cr'][i,i,:,:] - \
+                                      np.sum(np.einsum('ij,k->ijk',self.data['rates']['ioniz']['ionization'][i,:,:],
+                                                       self.data['user']['dens_grid']),axis=0)
+
+            #level i populating mechanisms
+            #these are the transition rates from higher levels into the level i
+            self.data['cr_matrix']['cr'][i,0:len(self.data['atomic']['energy']),:,:] = \
+                                    self.data['cr_matrix']['cr'][i,0:len(self.data['atomic']['energy']),:,:] + \
+                                    self.data['cr_matrix']['A_ji'][:,i,None,None]
+
+            #these are excitation and dexciation into the level i
+            self.data['cr_matrix']['cr'][i,0:len(self.data['atomic']['energy']),:,:] = \
+                            self.data['cr_matrix']['cr'][i,:len(self.data['atomic']['energy']),:,:] + \
+                     np.einsum('ij,k->ijk',self.data['cr_matrix']['q_ij'][:,i,:],
+                               self.data['user']['dens_grid']) + \
+                     np.einsum('ij,k->ijk',self.data['cr_matrix']['q_ji'][:,i,:],
+                               self.data['user']['dens_grid'])
+
+
+        #recombination out of plus ion to current
+        if(self.data['user']['use_recombination']):
+            for p in range(0,nsigmaplus):
+                #these are the rates from the plus ion into the current ion levels
+                self.data['cr_matrix']['cr'][0:len(self.data['atomic']['energy']),
+                                             len(self.data['atomic']['energy'])+p,:,:] =\
+                self.data['cr_matrix']['cr'][0:len(self.data['atomic']['energy']),
+                                             len(self.data['atomic']['energy'])+p,:,:] + \
+                np.einsum('ij,k->ijk',self.data['rates']['recomb']['recombination'][:,p,:],
+                          self.data['user']['dens_grid'])
+
+                #this is the sum of all the pop lost to the current ion levels taken
+                #out of the plus ion
+                self.data['cr_matrix']['cr'][len(self.data['atomic']['energy'])+p,
+                                             len(self.data['atomic']['energy'])+p,:,:] = \
+                self.data['cr_matrix']['cr'][len(self.data['atomic']['energy'])+p,
+                                             len(self.data['atomic']['energy'])+p,:,:] - \
+                np.sum(np.einsum('ij,k->ijk',self.data['rates']['recomb']['recombination'][:,p,:],
+                                             self.data['user']['dens_grid']),axis=0)
+
+
+        if(self.data['user']['use_recombination_three_body']):
+            for p in range(0,nsigmaplus):
+                self.data['cr_matrix']['cr'][0:len(self.data['atomic']['energy']),
+                                             len(self.data['atomic']['energy'])+p,:,:] = \
+                self.data['cr_matrix']['cr'][0:len(self.data['atomic']['energy']),
+                                             len(self.data['atomic']['energy'])+p,:,:] + \
+                np.einsum('ij,k->ijk',self.data['rates']['recomb']['recomb_three_body'][:,p,:],
+                                      self.data['user']['dens_grid']**2)
+            
+                self.data['cr_matrix']['cr'][len(self.data['atomic']['energy'])+p,
+                                             len(self.data['atomic']['energy'])+p,:,:] = \
+                self.data['cr_matrix']['cr'][len(self.data['atomic']['energy'])+p,
+                                             len(self.data['atomic']['energy'])+p,:,:] - \
+                np.sum(np.einsum('ij,k->ijk',self.data['rates']['recomb']['recomb_three_body'][:,p,:],
+                                      self.data['user']['dens_grid']**2),axis=0)
+                
+        if(self.data['user']['use_ionization']):
+            for p in range(0,nsigmaplus):
+                self.data['cr_matrix']['cr'][len(self.data['atomic']['energy'])+ p,
+                                                 0:len(self.data['atomic']['energy']),:,:] = \
+                                     self.data['cr_matrix']['cr'][len(self.data['atomic']['energy'])+p,
+                                                         0:len(self.data['atomic']['energy']),:,:] + \
+                               np.einsum('ij,k->ijk',self.data['rates']['ioniz']['ionization'][:,p,:],
+                                                   self.data['user']['dens_grid'])
+
+td_n0 = np.zeros(30)
+td_n0[0] = 1.
+td_source = np.zeros(30)
+td_source[0] = 1.
+be = colradpy('/home/curtis/spirit/adf04_files/be_adf04/cpb03_ls#be0.dat',[0,1],np.array([10,100]),np.array([1.e13]),use_recombination=False,use_recombination_three_body = False,use_ionization=True,default_pop_norm=True,td_t=np.array([1.1,2]),td_n0 = td_n0,td_source=td_source)
+
+
+be.make_ioniz_from_reduced_ionizrates()
+be.suppliment_with_ecip()
+be.make_recombination_rates_from_file()
+
+be.make_three_body_recombination()
+be.test()
+be.solve_time_dependent()
+#be.solve_quasi_static()
+
+
+'''
+be1 = colradpy('/home/curtis/adf04_files/be_adf04/cpb03_ls#be0.dat',[0],np.array([100]),np.array([1.e13]),use_recombination=False,use_recombination_three_body =False,use_ionization=False)
+be1.test()
+a = (be1.data['cr_matrix']['cr'][:,:,0,0] - be.data['cr_matrix']['cr'][:,:,0,0])/be.data['cr_matrix']['cr'][:,:,0,0]*100
+'''

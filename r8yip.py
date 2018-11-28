@@ -18,6 +18,19 @@
 import numpy as np
 
 def R8YIP(XI,DELTA):
+    """This code was entirely based on the ADAS fortran routine r8ecip.for and
+ r8yip.for. They will be included in the SVN for refence. I did not think about
+ the theory here, this is a str8 copy. Was checked for He I and gives the same
+ results.
+
+
+    :param XI: -
+    :type XI: -
+
+    :param DELTA: -
+    :type DELTA:  - 
+
+    """
     P1 = 5.0E0 / 30.0E0 
     A = np.array([ 2.3916E0  , 1.6742E0  , 1.2583E0  , 9.738E-1  ,
                         7.656E-1  , 6.078E-1  , 4.8561E-1 , 3.8976E-1 ,
@@ -92,7 +105,9 @@ def r8ecip(IZC, ion_pot, energy, zpla, temperature_grid):
                 B1 = B + 1.0E0
                 C  = np.sqrt( B1 )
                 R  = ( 1.25E0 * EN**2 + 0.25E0 ) / Z
+
                 D  = ( Z / EN ) * ( R + 2.0E0 * EN**2 * C / ( ( B + 2.0E0 ) * Z**2 ) ) / ( C + np.sqrt( B ) )
+
                 C1 = 1.0E0 / ( B + 2.0E0 )
                 F  = 1.0E0
                 C4 = R8YIP( 0.0E0 , D )
