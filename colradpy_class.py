@@ -77,7 +77,6 @@ class colradpy():
         self.data['user']['td_n0'] = td_n0
         self.data['user']['td_source'] = td_source
         self.data['user']['default_pop_norm'] = default_pop_norm
-
         self.populate_data(fil)
         self.data['atomic']['metas'] = np.asarray(metas)
 
