@@ -170,7 +170,7 @@ class colradpy():
                                                                        len(self.data['user']['temp_grid'])))
 
         ion_excit_interp = interp1d(self.data['input_file']['temp_grid']/11604.5,
-                                    self.data['rates']['ioniz']['ion_excit'],axis=1)
+                                    self.data['rates']['ioniz']['ion_excit'],axis=1,kind='cubic')
         
         ion_excit_interp_grid = ion_excit_interp(self.data['user']['temp_grid'])
 
@@ -219,7 +219,7 @@ class colradpy():
 
         recomb_excit_interp = interp1d(self.data['input_file']['temp_grid']/11604.5,
                                        self.data['rates']['recomb']['recomb_excit'],
-                                       axis=1)
+                                       axis=1,kind='cubic')
         self.data['rates']['recomb']['recomb_excit_interp_grid'] =\
                                     recomb_excit_interp(self.data['user']['temp_grid'])
         #replace values lower than 1e-30 with a linear interpolation
@@ -236,7 +236,7 @@ class colradpy():
                                    self.data['input_file']['temp_grid'][c.max()]/11604.5)[0]
                     w = interp1d(self.data['input_file']['temp_grid'][0:c[v]+1]/11604.5,\
                                  self.data['rates']['recomb']['recomb_excit'][a[v],0:c[v]+1],\
-                                 kind='linear')
+                                 kind='cubic')
 
                     self.data['rates']['recomb']['recomb_excit_interp_grid'][a[v],0:c[v]+1] =\
                                                     w(self.data['user']['temp_grid'][0:tmp+1])
@@ -292,7 +292,7 @@ class colradpy():
            extrapolation will be used. There is currently no extrapolation below the first
            calculated temperature point. THis is something to add in the future.
         """
-        tmp = interp1d(self.data['input_file']['temp_grid']/11604.5,self.data['rates']['excit']['col_excit'],axis=1)
+        tmp = interp1d(self.data['input_file']['temp_grid']/11604.5,self.data['rates']['excit']['col_excit'],axis=1,kind='cubic')
 
         self.data['rates']['excit']['col_excit_interp'] = np.zeros((len(self.data['rates']['excit']['col_excit']),
                                                                          len(self.data['user']['temp_grid'])))
