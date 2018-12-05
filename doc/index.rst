@@ -11,6 +11,7 @@ Welcome to ColRadPy's documentation!
 	      
    release
    tutorial
+   dictionary
    :caption: Contents:
 
 
