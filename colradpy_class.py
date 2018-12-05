@@ -609,23 +609,26 @@ class colradpy():
         else:
             self.data['processed']['scd'] = self.data['processed']['scd'] + \
                                             self.data['rates']['ioniz']['ionization'][self.data['atomic']['metas'],:,:,None]
-        #this is the total recombination with three body and the rates that in included in the adf04 file
-        recomb_coeff = np.einsum('ijk,l->ijkl',
-                                 self.data['rates']['recomb']['recomb_three_body'],
-                                 self.data['user']['dens_grid']) + \
-                                 self.data['rates']['recomb']['recombination'][:,:,:,None]
-        
-        #effective recombination rate
-        self.data['processed']['acd'] = -np.einsum('njkl,jmkl->nmkl',
-                                                   
-                       self.data['cr_matrix']['cr'][0:len(self.data['atomic']['metas']), len(self.data['atomic']['metas']):
-                       len(self.data['atomic']['energy']),:,:],
-                       np.einsum('ijkl,jmkl->imkl', self.data['cr_matrix']['aa_inv'][0:len(self.data['atomic']['energy']),
-                       0:len(self.data['atomic']['energy']),:,:],
-                       recomb_coeff[len(self.data['atomic']['metas']):len(self.data['atomic']['energy']),:,:,:])
-                       )
 
-        self.data['processed']['acd'] = self.data['processed']['acd'] + recomb_coeff[self.data['atomic']['metas'],:,:,:]
+
+
+        if(self.data['user']['use_recombination'] or self.data['user']['use_recombination_three_body']):            
+            #this is the total recombination with three body and the rates that in included in the adf04 file
+            recomb_coeff = np.einsum('ijk,l->ijkl',
+                                     self.data['rates']['recomb']['recomb_three_body'],
+                                     self.data['user']['dens_grid']) + \
+                                     self.data['rates']['recomb']['recombination'][:,:,:,None]
+            #effective recombination rate
+            self.data['processed']['acd'] = -np.einsum('njkl,jmkl->nmkl',
+
+                           self.data['cr_matrix']['cr'][0:len(self.data['atomic']['metas']), len(self.data['atomic']['metas']):
+                           len(self.data['atomic']['energy']),:,:],
+                           np.einsum('ijkl,jmkl->imkl', self.data['cr_matrix']['aa_inv'][0:len(self.data['atomic']['energy']),
+                           0:len(self.data['atomic']['energy']),:,:],
+                           recomb_coeff[len(self.data['atomic']['metas']):len(self.data['atomic']['energy']),:,:,:])
+                           )
+
+            self.data['processed']['acd'] = self.data['processed']['acd'] + recomb_coeff[self.data['atomic']['metas'],:,:,:]
 
         self.data['processed']['qcd'] = np.zeros((len(self.data['atomic']['metas']),
                                                   len(self.data['atomic']['metas']),
@@ -646,18 +649,21 @@ class colradpy():
                                     ),1/self.data['user']['dens_grid'])
 
 
-        for m in range(0,len(self.data['atomic']['ion_pot'])):
 
-            metasplus_to_keep = np.setdiff1d( np.linspace(0,len(self.data['atomic']['ion_pot'])-1,
-                                                          len(self.data['atomic']['ion_pot']),dtype='int'),m)
-            #parent cross coupling coefficient, start in the parent atom, recombine get redistrubted then
-            #ionize back into the parent but into a different parent metastable
-            self.data['processed']['xcd'][metasplus_to_keep,np.array([m]),:,:] =-np.einsum('ik,imkl->mkl',
-                                                                                           
-                    self.data['rates']['ioniz']['ionization'][levels_to_keep,m,:],np.einsum('ijkl,jmkl->imkl',
-                    self.data['cr_matrix']['aa_inv'][0:len(self.data['atomic']['energy']),0:len(self.data['atomic']['energy']),:,:],
-                    recomb_coeff[len(self.data['atomic']['metas']):len(self.data['atomic']['energy']),metasplus_to_keep,:,:])
-                    )
+
+        if(self.data['user']['use_recombination'] or self.data['user']['use_recombination_three_body']):            
+            for m in range(0,len(self.data['atomic']['ion_pot'])):
+
+                metasplus_to_keep = np.setdiff1d( np.linspace(0,len(self.data['atomic']['ion_pot'])-1,
+                                                              len(self.data['atomic']['ion_pot']),dtype='int'),m)
+                #parent cross coupling coefficient, start in the parent atom, recombine get redistrubted then
+                #ionize back into the parent but into a different parent metastable
+                self.data['processed']['xcd'][metasplus_to_keep,np.array([m]),:,:] =-np.einsum('ik,imkl->mkl',
+
+                        self.data['rates']['ioniz']['ionization'][levels_to_keep,m,:],np.einsum('ijkl,jmkl->imkl',
+                        self.data['cr_matrix']['aa_inv'][0:len(self.data['atomic']['energy']),0:len(self.data['atomic']['energy']),:,:],
+                        recomb_coeff[len(self.data['atomic']['metas']):len(self.data['atomic']['energy']),metasplus_to_keep,:,:])
+                        )
 
     def solve_time_dependent(self):
         """This function will solve the CR matrix with no assumptions. A matrix expoential is used to solve this problem.
@@ -669,12 +675,14 @@ class colradpy():
            Mathemat), Society for Industrial and Applied Mathematics,
            Philadelphia, PA, USA, 2007.
         """
-        
+
         if('processed' not in self.data.keys()):
             self.data['processed'] = {}
         self.data['processed']['td'] = {}
+
         #check if a source term has been provided, if a source term has been provided solve the problem with s asource
         if(self.data['user']['td_source'].any()):
+            print('here')
             self.data['processed']['td']['eigenvals'], \
             self.data['processed']['td']['eigenvectors'] = np.linalg.eig(self.data['cr_matrix']['cr'].transpose(2,3,0,1))
 
@@ -693,6 +701,7 @@ class colradpy():
             v_zer = CC[eig_zero_ind]*self.data['user']['td_t'] + amplitude_zer
             v = np.insert(v_non,eig_zero_ind,v_zer,axis=0)
             dict['td_pop'][:,:,t,e] = np.dot(dict['eigenvectors'],v)
+
 
         else:
             #no source term was provided solve just the normal matrix

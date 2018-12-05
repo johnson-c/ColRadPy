@@ -345,7 +345,7 @@ def burgess_tully_rates(user_temp_grid, calc_temp_grid, col_transitions,col_exci
     """    
 
 
-    
+
     burgtully_dict = {}
     burgtully_dict['burg_tully'] = {}
     burgtully_dict['burg_tully']['interp_temp_inds'] = np.where( user_temp_grid < np.max(calc_temp_grid)/11604.5)[0]
@@ -364,10 +364,11 @@ def burgess_tully_rates(user_temp_grid, calc_temp_grid, col_transitions,col_exci
     burgtully_dict['burg_tully']['ind_arrs'].append(np.where((FIN>FBIG) &(S[col_transitions[:,0]-1] ==
                                         S[col_transitions[:,1]-1]) & (np.abs(L[col_transitions[:,0]-1] -
                                                                     L[col_transitions[:,1]-1]) <=1))[0] )
-    burgtully_dict['burg_tully']['ind_arrs'].append( np.where((S[col_transitions[:,0]-1] == S[col_transitions[:,1]-1]) &
+    burgtully_dict['burg_tully']['ind_arrs'].append( np.where((S[col_transitions[:,0]-1] == \
+                                                               S[col_transitions[:,1]-1]) &
                                                     ((np.abs(L[col_transitions[:,0]-1] -
                                                     L[col_transitions[:,1]-1]) >1) | (FIN<0.01)))[0] )
-                                          
+
     burgtully_dict['burg_tully']['ind_arrs'].append(np.where(((FIN>0.01) | (FIN<FZERO)) &
                                         (S[col_transitions[:,0]-1] !=S[col_transitions[:,1]-1]) )[0])
                                          
@@ -394,7 +395,8 @@ def burgess_tully_rates(user_temp_grid, calc_temp_grid, col_transitions,col_exci
                                     burgtully_dict['burg_tully']['ind_arrs'][1]][:,1] -1]])
 
     burgtully_dict['burg_tully']['xval_arrs'].append(type2_xconvert(calc_temp_grid, type2_energies,c))
-    burgtully_dict['burg_tully']['yval_arrs'].append(type2_yconvert(col_excit[burgtully_dict['burg_tully']['ind_arrs'][1]]))
+    burgtully_dict['burg_tully']['yval_arrs'].append(type2_yconvert(\
+                                                    col_excit[burgtully_dict['burg_tully']['ind_arrs'][1]]))
 
 
     type3_energies =  np.array([energy[col_transitions
@@ -418,10 +420,14 @@ def burgess_tully_rates(user_temp_grid, calc_temp_grid, col_transitions,col_exci
 
     #popoulated the infite energy points for the four types
     burgtully_dict['burg_tully']['yvals_inf'] = []
-    burgtully_dict['burg_tully']['yvals_inf'].append( np.abs(inf_engy[burgtully_dict['burg_tully']['ind_arrs'][0]]))
-    burgtully_dict['burg_tully']['yvals_inf'].append( np.abs(inf_engy[burgtully_dict['burg_tully']['ind_arrs'][1]]))
-    burgtully_dict['burg_tully']['yvals_inf'].append( np.abs(inf_engy[burgtully_dict['burg_tully']['ind_arrs'][2]]))
-    burgtully_dict['burg_tully']['yvals_inf'].append( np.abs(inf_engy[burgtully_dict['burg_tully']['ind_arrs'][3]]))
+    burgtully_dict['burg_tully']['yvals_inf'].append( np.abs(\
+                                            inf_engy[burgtully_dict['burg_tully']['ind_arrs'][0]]))
+    burgtully_dict['burg_tully']['yvals_inf'].append( np.abs(\
+                                            inf_engy[burgtully_dict['burg_tully']['ind_arrs'][1]]))
+    burgtully_dict['burg_tully']['yvals_inf'].append( np.abs(\
+                                            inf_engy[burgtully_dict['burg_tully']['ind_arrs'][2]]))
+    burgtully_dict['burg_tully']['yvals_inf'].append( np.abs(\
+                                            inf_engy[burgtully_dict['burg_tully']['ind_arrs'][3]]))
 
     burgtully_dict['burg_tully']['coeffs_b'] = []
     burgtully_dict['burg_tully']['coeffs_a'] = []
@@ -439,8 +445,11 @@ def burgess_tully_rates(user_temp_grid, calc_temp_grid, col_transitions,col_exci
                                                                   burgtully_dict['burg_tully']['yval_arrs'][0]))
 
     burgtully_dict['burg_tully']['zero_inds'].append( np.where(np.isinf(burgtully_dict['burg_tully']['coeffs_a'][0]))[0])
-    burgtully_dict['burg_tully']['coeffs_lin_m'].append(calc_coeffs_lin_m(type1_xconvert(calc_temp_grid, type1_energies,c)[burgtully_dict['burg_tully']['zero_inds'][0],:],
-                                                                  type1_yconvert(calc_temp_grid,type1_energies, col_excit[burgtully_dict['burg_tully']['ind_arrs'][0]] )[burgtully_dict['burg_tully']['zero_inds'][0],:]))
+    burgtully_dict['burg_tully']['coeffs_lin_m'].append(calc_coeffs_lin_m(type1_xconvert(calc_temp_grid,
+                                                  type1_energies,c)[burgtully_dict['burg_tully']['zero_inds'][0],:],
+                                                                  type1_yconvert(calc_temp_grid,
+                                                                                 type1_energies,
+               col_excit[burgtully_dict['burg_tully']['ind_arrs'][0]] )[burgtully_dict['burg_tully']['zero_inds'][0],:]))
 
     burgtully_dict['burg_tully']['coeffs_lin_b'].append(calc_coeffs_lin_b(burgtully_dict['burg_tully']['xval_arrs'][0][burgtully_dict['burg_tully']['zero_inds'][0]],
                                                                           burgtully_dict['burg_tully']['yval_arrs'][0][burgtully_dict['burg_tully']['zero_inds'][0]],

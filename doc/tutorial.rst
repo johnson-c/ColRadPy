@@ -34,35 +34,49 @@ generally have rates that are supplimented with ECIP.
 Radative Recombination
 ----------------------
 
+
 Dielectronic Recombination
 ----------------------
 
 
 Three Body Recombination
 ------------------------
-
+Three body recombination is calculated from using detailed balance from the ionization
 
 
 Running ColRadPy
 ================
 ColRadPy requires multiple inputs from the user to run.
 
-Atomic data input file - currently this is limitted to an ADF04 file
+Atomic data input file - currently this is limitted to an ADF04 file but there is nothing special about it.
+
 array of metastable levels - This is an array of levels that includes the ground and any levels that could be considered metastable.
-temperature grid - This is an array of electron temperatures for the calculation to be carried out at
-Density grid     - This is an array of electron densities for the calculation to be carried out at
+
+temperature grid - This is an array of electron temperatures for the calculation in eV.
+
+Density grid     - This is an array of electron densities for the calculation in cm-3.
+
+
+
+In this example Be II (Be+) is used because it is a simple system that has a parent ion (the next charge state) that has a metastable.
+This allows all of the different functionality to be shown and tested.
+
+
+First the mode must be executed and temperature, density and metastable inputs defined. Ionization, recombination
 
 .. code-block:: python
    :linenos:
-
+      
+   %run colradpy_class.py
    fil = 'cpb03_ls#be0.dat' #adf04 file
-   temperature_arr = np.array([10,100]) #eV
-   metastable_levels = np.array([0])   #metastable level
+   temperature_arr = np.array([10,50,100]) #eV
+   metastable_levels = np.array([0])   #metastable level, just ground chosen here
    density_arr =     np.array([1.e13,4.e14]) # cm-3
    be = colradpy(fil,metastable_levels,temperature_arr,density_arr,use_recombination=True,
-                 use_recombination_three_body = True,use_ionization=True)
+                 use_recombination_three_body = True,use_ionization=True,suppliment_with_ecip=True)
 
 
+'be' is now a colradpy class, there are many different calls that could be made from the class :ref:`documented here <colradpy_class>`
 
    
 
