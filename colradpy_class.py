@@ -59,8 +59,8 @@ def convert_to_air(lam):
 class colradpy():
 
     def __init__(self,fil,metas=np.array([]),temp_grid=np.array([]),electron_den=np.array([]),
-                 use_ionization=True,suppliment_with_ecip=True,use_recombination_three_body=False,
-                 use_recombination = False, td_t = np.array([]), td_n0=np.array([]),td_source=np.array([]),
+                 use_ionization=True,suppliment_with_ecip=True,use_recombination_three_body=True,
+                 use_recombination = True, td_t = np.array([]), td_n0=np.array([]),td_source=np.array([]),
                   default_pop_norm=True):
 
         self.data = {}
@@ -170,7 +170,7 @@ class colradpy():
                                                                        len(self.data['user']['temp_grid'])))
 
         ion_excit_interp = interp1d(self.data['input_file']['temp_grid']/11604.5,
-                                    self.data['rates']['ioniz']['ion_excit'],axis=1,kind='cubic')
+                                    self.data['rates']['ioniz']['ion_excit'],axis=1,kind='slinear')
         
         ion_excit_interp_grid = ion_excit_interp(self.data['user']['temp_grid'])
 
@@ -219,12 +219,12 @@ class colradpy():
 
         recomb_excit_interp = interp1d(self.data['input_file']['temp_grid']/11604.5,
                                        self.data['rates']['recomb']['recomb_excit'],
-                                       axis=1,kind='cubic')
+                                       axis=1,kind='slinear')
         self.data['rates']['recomb']['recomb_excit_interp_grid'] =\
                                     recomb_excit_interp(self.data['user']['temp_grid'])
         #replace values lower than 1e-30 with a linear interpolation
-        #because cubic gives the the wrong answer for some reason
-        #maybe dont need this part now, 1dinterp was using kind='cubic'
+        #because slinear gives the the wrong answer for some reason
+        #maybe dont need this part now, 1dinterp was using kind='slinear'
         #changed now and hopefully wont get the errors
         a,b,c = np.unique(np.where(self.data['rates']['recomb']['recomb_excit']\
                                    <1.e-30)[0],return_inverse=True,return_counts=True)
@@ -236,7 +236,7 @@ class colradpy():
                                    self.data['input_file']['temp_grid'][c.max()]/11604.5)[0]
                     w = interp1d(self.data['input_file']['temp_grid'][0:c[v]+1]/11604.5,\
                                  self.data['rates']['recomb']['recomb_excit'][a[v],0:c[v]+1],\
-                                 kind='cubic')
+                                 kind='slinear')
 
                     self.data['rates']['recomb']['recomb_excit_interp_grid'][a[v],0:c[v]+1] =\
                                                     w(self.data['user']['temp_grid'][0:tmp+1])
@@ -292,7 +292,7 @@ class colradpy():
            extrapolation will be used. There is currently no extrapolation below the first
            calculated temperature point. THis is something to add in the future.
         """
-        tmp = interp1d(self.data['input_file']['temp_grid']/11604.5,self.data['rates']['excit']['col_excit'],axis=1,kind='cubic')
+        tmp = interp1d(self.data['input_file']['temp_grid']/11604.5,self.data['rates']['excit']['col_excit'],axis=1,kind='slinear')
 
         self.data['rates']['excit']['col_excit_interp'] = np.zeros((len(self.data['rates']['excit']['col_excit']),
                                                                          len(self.data['user']['temp_grid'])))
@@ -692,15 +692,17 @@ class colradpy():
                                       self.data['user']['td_n0'])
 
             eig_zero_ind = np.where(self.data['processed']['td']['eigenvals'] == 0)            
-            eig_non_zero = np.delete(self.data['processed']['td']['eigenvals'] ,eig_zero_ind)
-
-            amplitude_non = np.delete(V0,eig_zero_ind) + np.delete(CC,eig_zero_ind)/eig_non_zero
-            amplitude_zer = V0[eig_zero_ind]
+            eig_non_zero = np.delete(self.data['processed']['td']['eigenvals'] ,eig_zero_ind,axis=2)
+            amplitude_non = np.delete(V0,eig_zero_ind,axis=2) + np.delete(CC,eig_zero_ind,axis=2)/eig_non_zero
+            amplitude_zer = V0[:,:,eig_zero_ind[2]]
+            
             v_non = amplitude_non[:,:,:,None]*np.exp(eig_non_zero[:,:,:,None]*self.data['user']['td_t']) - \
-                                            np.delete(CC,eig_zero_ind)[:,:,:,None]/eig_non_zero[:,:,:,None]
-            v_zer = CC[eig_zero_ind]*self.data['user']['td_t'] + amplitude_zer
-            v = np.insert(v_non,eig_zero_ind,v_zer,axis=0)
-            dict['td_pop'][:,:,t,e] = np.dot(dict['eigenvectors'],v)
+                                            np.delete(CC,eig_zero_ind,axis=2)[:,:,:,None]/eig_non_zero[:,:,:,None]
+            
+            v_zer = CC[:,:,eig_zero_ind[2]][:,:,:,None]*self.data['user']['td_t'] + amplitude_zer[:,:,:,None]
+            v = np.insert(v_non,eig_zero_ind[2],v_zer,axis=2)
+            self.data['processed']['td']['td_pop'] = np.einsum('klij,kljt->itkl',
+                                                                self.data['processed']['td']['eigenvectors'],v)
 
 
         else:

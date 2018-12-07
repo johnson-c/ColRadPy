@@ -1,3 +1,4 @@
+.. _colradpy_dict:
 =============================
 ColRadPy Dictionary Structure
 =============================
