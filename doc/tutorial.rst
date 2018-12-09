@@ -75,16 +75,19 @@ This allows all of the different functionality to be shown and tested.
 
 .. code-block:: python
    :linenos:
-      
-   %run colradpy_class.py
+
+   import sys
+   sys.path.append('../')
+   from colradpy_class import colradpy
+   import numpy as np
+
    fil = 'cpb03_ls#be0.dat' #adf04 file
-   temperature_arr = np.array([10,50,100]) #eV
+   temperature_arr = np.linspace(1,100,100) #eV
    metastable_levels = np.array([0])   #metastable level, just ground chosen here
    density_arr =     np.array([1.e13,4.e14]) # cm-3
    be = colradpy(fil,metastable_levels,temperature_arr,density_arr,use_recombination=True,
-                 use_recombination_three_body = True,use_ionization=True,suppliment_with_ecip=True)
-
-
+		 use_recombination_three_body = True,use_ionization=True,suppliment_with_ecip=True)
+   
 'be' is now a colradpy class, there are many different calls that could be made from the class :ref:`documented here <colradpy>`.
 The general flow of the code goes as
 
@@ -106,7 +109,6 @@ The general flow of the code goes as
        be.make_recombination_rates_from_file()
    if(be.data['user']['use_recombination_three_body']):
        be.make_three_body_recombination()
-   be.make_electron_excitation_rates()
        
    
 .. code-block:: python
@@ -135,7 +137,7 @@ Various postpocessing can be done to now analysis the calcuation.
 
 
 Post processing analysis
-------------------------
+=========================
 
 
 
@@ -149,14 +151,37 @@ The wavelength and pec arrays share the same length.
 
 .. code-block:: python
    :linenos:
-      
+
    import matplotlib.pyplot as plt
    plt.ion()
    met = 0 #metastable 0, this corresponds to the ground state
    te = 0 #first temperature in the grid
    ne = 0 #frist density in the grid
-   plt.plot(be.data['processed']['wave_air'],be.data['processed']['PECS'][:,met,te,ne])
-   
+
+   fig, ax1 = plt.subplots(1,1,figsize=(16/3.,9/3.),dpi=300)
+   fig.subplots_adjust(bottom=0.15,top=0.92,left=0.105,right=0.965)
+   ax1.vlines(be.data['processed']['wave_air'],
+	      np.zeros_like(be.data['processed']['wave_air']),
+	      be.data['processed']['pecs'][:,met,te,ne])
+   ax1.set_xlim(0,1000)
+   ax1.set_title('PEC spectrum  T$_e$=' +str(be.data['user']['temp_grid'][te])+\
+		 ' eV  ne=' + "%0.*e"%(2,be.data['user']['dens_grid'][ne]) + ' cm$^{-3}$',size=10)
+   ax1.set_xlabel('Wavelength (nm)')
+   ax1.set_ylabel('PEC (ph cm$^{-3}$ s$^{-1}$)')
+
+
+.. figure:: be0_pec_0_1000.eps
+   :scale: 50 %
+   :alt: map to buried treasure
+
+   This is the caption of the figure (a simple paragraph).
+
+
+
+
+
+
+
    
 Often the index of a specific pec is wanted to find its temperature or density dependence.
 This can be accomplished in two basic ways.
@@ -226,35 +251,198 @@ GCR coefficients are also use as inputs to ionization balance calculations which
 later. This allows for different ionization stages to be linked.
 
 
+A physical description of the GCRs can be helpful in interpreting the meaning behind
+them. For example, the total ionization from one charge state to the other is defined as the SCD.
+The total recombination from a charge state to the charge state of interest is defined as the ACD.
+This gives the rate of population transfer from one ionization state to a lower ionization state.
+The situation for systems with metastable states requires that the effective ionization and
+recombination rates be metastable resolved.
+In addition, it requires metastable cross coupling coefficients known as QCD and XCD coefficients.
+
+Generally it is of interest to look at how the GCR coefficients change with some parameter such
+as temperature. Plots are shown below of the different GCRs.
+
+For this example we will look at Be II this is soley because Be III has two metastable states.
+This means that the XCD will have non-zero values. Remeber the call from before for Be I.
+
+.. code-block:: python
+   :linenos:
+
+   %run colradpy_class.py
+   fil = 'cpb03_ls#be1.dat' #adf04 file
+   temperature_arr = np.linspace(1,100,20) #eV
+   metastable_levels = np.array([0,1])   #ground and level 1 chosen to be metastable
+   density_arr =     np.array([1.e13,8.e13,4.e14]) # cm-3
+   beii = colradpy(fil,metastable_levels,temperature_arr,density_arr,use_recombination=True,
+                 use_recombination_three_body = True,use_ionization=True,suppliment_with_ecip=True)
+
 
 
 .. code-block:: python
    :linenos:
+      
    #plotting the QCD
    plt.figure()
-   plt.plot(be.data['user']['temp_grid'],
-            be.data['processed']['qcd'][0,0,:,0],
+   plt.plot(beii.data['user']['temp_grid'],
+            beii.data['processed']['qcd'][0,1,:,0],
 	    label = 'metastable cross coupling coefficient 1->2')
 	    
-   plt.plot(be.data['user']['temp_grid'],
-            be.data['processed']['qcd'][1,0,:,0],
+   plt.plot(beii.data['user']['temp_grid'],
+            beii.data['processed']['qcd'][1,0,:,0],
 	    label = 'metastable cross coupling coefficient 2->1')
    plt.legend()
    plt.xlabel('Temperature (eV)')
    plt.ylabel('QCD (cm-3 s-1)')
-   
 
+   
 .. code-block:: python
    :linenos:
+      
    #plotting the SCD
    plt.figure()
-   plt.plot(be.data['user']['temp_grid'],
-            be.data['processed']['scd'][0,0,:,0],
-	    label = 'metastable cross coupling coefficient 1->1')
+   plt.plot(beii.data['user']['temp_grid'],
+            beii.data['processed']['scd'][0,0,:,0],
+	    label = 'metastable cross coupling coefficient 1->1+')
 	    
-   plt.plot(be.data['user']['temp_grid'],
-            be.data['processed']['scd'][1,0,:,0],
-	    label = 'metastable cross coupling coefficient 2->1')
+   plt.plot(beii.data['user']['temp_grid'],
+            beii.data['processed']['scd'][0,1,:,0],
+	    label = 'metastable cross coupling coefficient 1->2+')
+
+   plt.plot(beii.data['user']['temp_grid'],
+            beii.data['processed']['scd'][1,0,:,0],
+	    label = 'metastable cross coupling coefficient 2->1+')
+
+   plt.plot(beii.data['user']['temp_grid'],
+            beii.data['processed']['scd'][1,1,:,0],
+	    label = 'metastable cross coupling coefficient 2->2+')
+	    
    plt.legend()
    plt.xlabel('Temperature (eV)')
    plt.ylabel('SCD (ion cm-3 s-1)')
+
+
+.. code-block:: python
+   :linenos:
+      
+   #plotting the ACD
+   plt.figure()
+   plt.plot(beii.data['user']['temp_grid'],
+            beii.data['processed']['acd'][0,0,:,0],
+	    label = 'metastable cross coupling coefficient 1+->1')
+	    
+   plt.plot(beii.data['user']['temp_grid'],
+            beii.data['processed']['acd'][0,1,:,0],
+	    label = 'metastable cross coupling coefficient 2+->1')
+
+   plt.plot(beii.data['user']['temp_grid'],
+            beii.data['processed']['acd'][1,0,:,0],
+	    label = 'metastable cross coupling coefficient 1+->2')
+
+   plt.plot(beii.data['user']['temp_grid'],
+            beii.data['processed']['acd'][1,1,:,0],
+	    label = 'metastable cross coupling coefficient 2+->2')
+	    
+   plt.legend()
+   plt.xlabel('Temperature (eV)')
+   plt.ylabel('SCD (ion cm-3 s-1)')
+
+   
+.. code-block:: python
+   :linenos:
+      
+   #plotting the XCD
+   plt.figure()
+   plt.plot(beii.data['user']['temp_grid'],
+            beii.data['processed']['xcd'][0,1,:,0],
+	    label = 'metastable cross coupling coefficient 1+->2+')
+	    
+   plt.plot(beii.data['user']['temp_grid'],
+            beii.data['processed']['scd'][1,0,:,0],
+	    label = 'metastable cross coupling coefficient 2+->1+')
+   plt.legend()
+   plt.xlabel('Temperature (eV)')
+   plt.ylabel('SCD (ion cm-3 s-1)')
+
+
+
+One feature unique to ColRadPy is the ability to determine the populating mechanism of levels.
+This allows one to see which levels in a calculation are important to modeling the spectral lines of interest.
+This allows those that generate the atomic data to know which transitions are required to accurately
+model spectral lines. With this new analysis technique, it is possible to identify transitions that are
+the most important and allow for complex systems such as high-Z near neutral systems to be simplified.
+
+
+.. code-block:: python
+   :linenos:
+      
+   #plotting the populating levels
+   plt.figure()
+   plt.figure();plt.plot(be.data['processed']['pop_lvl'][0,:,0,0,0]/\
+                         np.sum(be.data['processed']['pop_lvl'][0,:,0,0,0]))
+
+   plt.figure();plt.plot(be.data['processed']['pop_lvl'][0,:,0,10,0]/\
+                         np.sum(be.data['processed']['pop_lvl'][0,:,0,10,0]))
+
+   plt.figure();plt.plot(be.data['processed']['pop_lvl'][0,:,0,-1,0]/\
+                         np.sum(be.data['processed']['pop_lvl'][0,:,0,-1,0]))
+   
+   plt.legend()
+   plt.xlabel('Level number (#)')
+   plt.ylabel('Populating fraction (-)')
+
+   #plotting the populating fraction from the ground versus temperature
+   plt.figure()
+   plt.plot(be.data['user']['temp_grid'],
+             be.data['processed']['pop_lvl'][10,0,0,:,0]/\
+	     np.sum(be.data['processed']['pop_lvl'][10,:,0,:,0],axis=0))
+	     
+   plt.xlabel('Temperature (eV)')
+   plt.ylabel('Populating fraction from ground (-)')
+
+
+
+Advanced functionality
+=======================
+
+Time dependent CR modeling
+--------------------------
+
+
+ColRadPy is also capable of solving the full collisional radiative matrix time-dependently.
+This can be important for systems where there is significant population in
+many excited states or where ultra fast timescales need to be considered.
+Instead of the quasi-static approximation used in Equation 4 where excited states are assumed to
+have no population change, the matrix is solved as a system of ordinary differential equations n (t) = An(t).
+This method used to solve the system of equations was adapted from R. LeVeque.
+
+Case in which with and without a source term can be considered in ColRadPy.
+The case without a source term can used in a system like a linear machine with views that are
+transverse to the direction of motion of the particles.
+
+A source term can be used when the line of sight includes a source of particles.
+The source term could also be used to model the pumping of specific levels with LIF.
+
+
+.. code-block:: python
+   :linenos:
+      
+   #Time dependent CR modeling
+   td_t = np.geomspace(1.e-5,1,1000)
+   td_n0 = np.zeros(30)
+   td_n0[0] = 1.
+   td_s = np.zeros(30)
+   td_s[0] = 1.
+
+   fil = 'cpb03_ls#be0.dat' #adf04 file
+   temperature_arr = np.array([10,50,100]) #eV
+   metastable_levels = np.array([0])   #metastable level, just ground chosen here
+   density_arr =     np.array([1.e13,4.e14]) # cm-3
+   be = colradpy(fil,metastable_levels,temperature_arr,density_arr,use_recombination=True,
+                 use_recombination_three_body = True,use_ionization=True,suppliment_with_ecip=True
+		 td_t = td_t, td_n0 = td_n0, td_s = td_s)
+		 
+   be.solve_cr()
+   be.solve_time_dependent()
+
+   plt.figure()
+   plt.plot(be.data['user']['td_t'], be.data['processed']['td']['td_pop'][0,
