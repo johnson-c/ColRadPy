@@ -2,7 +2,7 @@
 Tutorial
 =============
 This tutorial will take the user through the basics of atomic data needed for CR modeling.
-Give an overview of how to run ColRadPy.
+The python scripts for these examples can be found in the 'examples' folder.
 
 Neither the local thermodynamic equilibrium (LTE) or conornal approximations are valid for fusion plasmas.
 These plasma must be modeled with a collisional radiative (CR) model which includes effects of electron density.
@@ -170,16 +170,9 @@ The wavelength and pec arrays share the same length.
    ax1.set_ylabel('PEC (ph cm$^{-3}$ s$^{-1}$)')
 
 
-.. figure:: be0_pec_0_1000.eps
+.. figure:: be0_pec_0_1000.png
    :scale: 50 %
-   :alt: map to buried treasure
-
-   This is the caption of the figure (a simple paragraph).
-
-
-
-
-
+   :alt: Be I pecs 0-1000 nm
 
 
    
@@ -197,31 +190,33 @@ the same order as .data['processed']['wave_air'] and .data['processed']['pecs'].
    :linenos:
 
    print(np.shape(be.data['processed']['wave_air']),
-         np.shape(be.data['processed']['pecs']),
+	 np.shape(be.data['processed']['pecs']),
 	 np.shape(be.data['processed']['pec_levels']))
    #(320,) (320, 3, 1, 1) (320, 2)
 
-   upper_ind = 10 #ninth excited state
+   upper_ind = 7 #ninth excited state
    lower_ind = 0  #ground state
 
    pec_ind = np.where( (be.data['processed']['pec_levels'][:,0] == upper_ind) &\
-                       (be.data['processed']['pec_levels'][:,1] == lower_ind))[0]
+		       (be.data['processed']['pec_levels'][:,1] == lower_ind))[0]
 
-   plt.figure()
    #plot the temeprature dependence of the chosen pec at first density in the grid
-   plt.title('Temperature dependence of line ' +\
-              str(be.data['processed']['wave_air'][pec_ind]) +' nm')
-   plt.plot(be.data['user']['temp_grid'],be.data['processed']['pecs'][pec_ind,met,:,ne])
-   plt.xlabel('Temperature (eV)')
-   plt.ylabel('PEC (ph cm-3 s-1)')
+   fig, ax1 = plt.subplots(1,1,figsize=(16/3.,9/3.),dpi=300)
+   fig.subplots_adjust(bottom=0.15,top=0.93,left=0.105,right=0.965)
+   ax1.set_title('Temperature dependence of line ' +\
+		 str(be.data['processed']['wave_air'][pec_ind]) +' nm',size=10)
+   ax1.plot(be.data['user']['temp_grid'],be.data['processed']['pecs'][pec_ind[0],met,:,ne])
+   ax1.set_xlabel('Temperature (eV)')
+   ax1.set_ylabel('PEC (ph cm$^{-3}$ s$^{-1}$)')
 
-   plt.figure()
    #plot the density dependence of the chosen pec at first density in the grid
-   plt.title('Density dependence of line ' +\
-              str(be.data['processed']['wave_air'][pec_ind]) +' nm')
-   plt.plot(be.data['user']['dens_grid'],be.data['processed']['pecs'][pec_ind,met,te,:])
-   plt.xlabel('Density (cm-3)')
-   plt.ylabel('PEC (ph cm-3 s-1)')   
+   fig, ax1 = plt.subplots(1,1,figsize=(16/3.,9/3.),dpi=300)
+   fig.subplots_adjust(bottom=0.15,top=0.93,left=0.125,right=0.965)
+   ax1.set_title('Density dependence of line ' +\
+		 str(be.data['processed']['wave_air'][pec_ind]) +' nm',size=10)
+   ax1.plot(be.data['user']['dens_grid'],be.data['processed']['pecs'][pec_ind[0],met,te,:])
+   ax1.set_xlabel('Density (cm$^{-3}$)')
+   ax1.set_ylabel('PEC (ph cm$^{-3}$ s$^{-1}$)')
 
 
 If the wavelength of a line of interest is known, the index can be found by looking at the
@@ -230,15 +225,29 @@ The indices of all pecs that fall within the upper and lower bound of the 'where
 returned. PECs can generally be distinguished by the actual value, large lines that are of interest
 have much large PEC values, this can allow 
 
-      
+
+.. figure:: be0_pec_temp.png
+   :scale: 50 %
+   :alt: Be I temperature
+
+
+
+.. figure:: be0_pec_dens.png
+   :scale: 50 %
+   :alt: Be I density
+
+
+
 .. code-block:: python
    :linenos:
 
    #want to find the index of Be I line at 351.55
    pec_ind = np.where( (be.data['processed']['wave_air'] <352) &\
-                       (be.data['processed']['wave_air'] >351))
+		       (be.data['processed']['wave_air'] >351))
    print('Wavelength from file ' + str(be.data['processed']['wave_air'][pec_ind[0]]))
+   #Wavelength from file [351.55028742]
    print('PEC upper and lower levels '+ str(be.data['processed']['pec_levels'][pec_ind[0]]))
+   #PEC upper and lower levels [[25  2]]
    
 
 Generalized radiative coefficients (GCRs)
@@ -268,100 +277,135 @@ This means that the XCD will have non-zero values. Remeber the call from before 
 .. code-block:: python
    :linenos:
 
-   %run colradpy_class.py
+   import sys
+   sys.path.append('../')
+   from colradpy_class import colradpy
+   import numpy as np
+
    fil = 'cpb03_ls#be1.dat' #adf04 file
    temperature_arr = np.linspace(1,100,20) #eV
    metastable_levels = np.array([0,1])   #ground and level 1 chosen to be metastable
    density_arr =     np.array([1.e13,8.e13,4.e14]) # cm-3
    beii = colradpy(fil,metastable_levels,temperature_arr,density_arr,use_recombination=True,
-                 use_recombination_three_body = True,use_ionization=True,suppliment_with_ecip=True)
-
-
+		 use_recombination_three_body = True,use_ionization=True,suppliment_with_ecip=True)
+   beii.solve_cr()
 
 .. code-block:: python
    :linenos:
       
    #plotting the QCD
-   plt.figure()
-   plt.plot(beii.data['user']['temp_grid'],
-            beii.data['processed']['qcd'][0,1,:,0],
+   import matplotlib.pyplot as plt
+   plt.ion
+   fig, ax1 = plt.subplots(1,1,figsize=(16/3.,9/3.),dpi=300)
+   fig.subplots_adjust(bottom=0.15,top=0.92,left=0.125,right=0.965)
+   ax1.plot(beii.data['user']['temp_grid'],
+	    beii.data['processed']['qcd'][0,1,:,0]*1e5,
 	    label = 'metastable cross coupling coefficient 1->2')
-	    
-   plt.plot(beii.data['user']['temp_grid'],
-            beii.data['processed']['qcd'][1,0,:,0],
-	    label = 'metastable cross coupling coefficient 2->1')
-   plt.legend()
-   plt.xlabel('Temperature (eV)')
-   plt.ylabel('QCD (cm-3 s-1)')
 
-   
+   ax1.plot(beii.data['user']['temp_grid'],
+	    beii.data['processed']['qcd'][1,0,:,0]*1e5,
+	    label = 'metastable cross coupling coefficient 2->1')
+   ax1.legend()
+   ax1.set_title('QCD plot')
+   ax1.set_xlabel('Temperature (eV)')
+   ax1.set_ylabel('QCD * 10$^5$ (cm$^{-3}$ s$^{-1}$)')
+
+
+.. figure:: be1_qcd.png
+   :scale: 50 %
+   :alt: Be II QCD
+
+	 
 .. code-block:: python
    :linenos:
       
    #plotting the SCD
-   plt.figure()
-   plt.plot(beii.data['user']['temp_grid'],
-            beii.data['processed']['scd'][0,0,:,0],
+   fig, ax1 = plt.subplots(1,1,figsize=(16/3.,9/3.),dpi=300)
+   fig.subplots_adjust(bottom=0.15,top=0.92,left=0.125,right=0.965)
+   ax1.plot(beii.data['user']['temp_grid'],
+	    beii.data['processed']['scd'][0,0,:,0],
 	    label = 'metastable cross coupling coefficient 1->1+')
-	    
-   plt.plot(beii.data['user']['temp_grid'],
-            beii.data['processed']['scd'][0,1,:,0],
+
+   ax1.plot(beii.data['user']['temp_grid'],
+	    beii.data['processed']['scd'][0,1,:,0],
 	    label = 'metastable cross coupling coefficient 1->2+')
 
-   plt.plot(beii.data['user']['temp_grid'],
-            beii.data['processed']['scd'][1,0,:,0],
+   ax1.plot(beii.data['user']['temp_grid'],
+	    beii.data['processed']['scd'][1,0,:,0],
 	    label = 'metastable cross coupling coefficient 2->1+')
 
-   plt.plot(beii.data['user']['temp_grid'],
-            beii.data['processed']['scd'][1,1,:,0],
+   ax1.plot(beii.data['user']['temp_grid'],
+	    beii.data['processed']['scd'][1,1,:,0],
 	    label = 'metastable cross coupling coefficient 2->2+')
-	    
-   plt.legend()
-   plt.xlabel('Temperature (eV)')
-   plt.ylabel('SCD (ion cm-3 s-1)')
+
+   ax1.legend(fontsize='x-small',loc='best')
+   ax1.set_title('SCD plot')
+   ax1.set_xlabel('Temperature (eV)')
+   ax1.set_ylabel('SCD (ion cm$^{-3}$ s$^{-1}$)')
+
+
+.. figure:: be1_scd.png
+   :scale: 50 %
+   :alt: Be II SCD
 
 
 .. code-block:: python
    :linenos:
-      
+
    #plotting the ACD
-   plt.figure()
-   plt.plot(beii.data['user']['temp_grid'],
-            beii.data['processed']['acd'][0,0,:,0],
+   fig, ax1 = plt.subplots(1,1,figsize=(16/3.,9/3.),dpi=300)
+   fig.subplots_adjust(bottom=0.15,top=0.92,left=0.075,right=0.965)
+   ax1.plot(beii.data['user']['temp_grid'],
+	    beii.data['processed']['acd'][0,0,:,0],
 	    label = 'metastable cross coupling coefficient 1+->1')
-	    
-   plt.plot(beii.data['user']['temp_grid'],
-            beii.data['processed']['acd'][0,1,:,0],
+
+   ax1.plot(beii.data['user']['temp_grid'],
+	    beii.data['processed']['acd'][0,1,:,0],
 	    label = 'metastable cross coupling coefficient 2+->1')
 
-   plt.plot(beii.data['user']['temp_grid'],
-            beii.data['processed']['acd'][1,0,:,0],
+   ax1.plot(beii.data['user']['temp_grid'],
+	    beii.data['processed']['acd'][1,0,:,0],
 	    label = 'metastable cross coupling coefficient 1+->2')
 
-   plt.plot(beii.data['user']['temp_grid'],
-            beii.data['processed']['acd'][1,1,:,0],
+   ax1.plot(beii.data['user']['temp_grid'],
+	    beii.data['processed']['acd'][1,1,:,0],
 	    label = 'metastable cross coupling coefficient 2+->2')
-	    
-   plt.legend()
-   plt.xlabel('Temperature (eV)')
-   plt.ylabel('SCD (ion cm-3 s-1)')
+
+   ax1.legend(fontsize='x-small',loc='best')
+   ax1.set_title('ACD plot')
+   ax1.set_xlabel('Temperature (eV)')
+   ax1.set_ylabel('ACD (rec cm$^{-3}$ s$^{-1}$)')
+
+
+
+.. figure:: be1_acd.png
+   :scale: 50 %
+   :alt: Be II ACD
 
    
 .. code-block:: python
    :linenos:
-      
+
    #plotting the XCD
-   plt.figure()
-   plt.plot(beii.data['user']['temp_grid'],
-            beii.data['processed']['xcd'][0,1,:,0],
+   fig, ax1 = plt.subplots(1,1,figsize=(16/3.,9/3.),dpi=300)
+   fig.subplots_adjust(bottom=0.15,top=0.92,left=0.12,right=0.965)
+   ax1.plot(beii.data['user']['temp_grid'],
+	    beii.data['processed']['xcd'][0,1,:,0],
 	    label = 'metastable cross coupling coefficient 1+->2+')
-	    
-   plt.plot(beii.data['user']['temp_grid'],
-            beii.data['processed']['scd'][1,0,:,0],
+
+   ax1.plot(beii.data['user']['temp_grid'],
+	    beii.data['processed']['scd'][1,0,:,0],
 	    label = 'metastable cross coupling coefficient 2+->1+')
-   plt.legend()
-   plt.xlabel('Temperature (eV)')
-   plt.ylabel('SCD (ion cm-3 s-1)')
+   ax1.legend(fontsize='x-small',loc='best')
+   ax1.set_title('XCD plot')
+   ax1.set_xlabel('Temperature (eV)')
+   ax1.set_ylabel('XCD (cm$^{-3}$ s$^{-1}$)')
+
+
+
+.. figure:: be1_xcd.png
+   :scale: 50 %
+   :alt: Be II XCD
 
 
 
@@ -401,6 +445,24 @@ the most important and allow for complex systems such as high-Z near neutral sys
 
 
 
+.. figure:: be0_pop_lvl.png
+   :scale: 50 %
+   :alt: Be I populating levels
+
+   This shows that as temperature increase other excited levels contributed more and more
+   to the first excited state
+
+	 
+.. figure:: be0_ground_contribution.png
+   :scale: 50 %
+   :alt: Be I ground contriubtion
+
+   This shows that as the temperature increases the ground tributes less to the total population
+   of level 1.
+   
+
+   
+
 Advanced functionality
 =======================
 
@@ -426,23 +488,94 @@ The source term could also be used to model the pumping of specific levels with 
 .. code-block:: python
    :linenos:
       
+   import sys
+   sys.path.append('../')
+   from colradpy_class import colradpy
+   import numpy as np
+   import matplotlib.pyplot as plt
+
    #Time dependent CR modeling
+   td_t = np.geomspace(1.e-5,.1,1000)
+   td_n0 = np.zeros(30)
+   td_n0[0] = 1.
+
+   fil = 'cpb03_ls#be0.dat' #adf04 file
+   temperature_arr = np.array([10]) #eV
+   metastable_levels = np.array([0])   #metastable level, just ground chosen here
+   density_arr =     np.array([1.e9]) # cm-3
+   be = colradpy(fil,metastable_levels,temperature_arr,density_arr,use_recombination=True,
+		 use_recombination_three_body = True,use_ionization=True,suppliment_with_ecip=True,
+		 td_t=td_t,td_n0=td_n0,td_source=td_s)
+   be.solve_cr()
+   be.solve_time_dependent()
+
+   fig, ax1 = plt.subplots(1,1,figsize=(16/3.,9/3.),dpi=300)
+   fig.subplots_adjust(bottom=0.15,top=0.92,left=0.1,right=0.965)
+   plt.plot(be.data['user']['td_t'],
+	    be.data['processed']['td']['td_pop'][0,:,0,0],
+	    label='Ground')
+   plt.plot(be.data['user']['td_t'],
+	    be.data['processed']['td']['td_pop'][1,:,0,0],
+	    label='level 1')
+   plt.plot(be.data['user']['td_t'],
+	    be.data['processed']['td']['td_pop'][-1,:,0,0],
+	    label='ion')
+   ax1.legend(fontsize='x-small',loc='best')
+   ax1.set_title('Time dependent solution of CR Be I no source term')
+   ax1.set_xlabel('Time (s)')
+   ax1.set_ylabel('Population (-)')
+
+
+
+.. figure:: be0_time_dep_no_source.png
+   :scale: 50 %
+   :alt: Be I time dependence no source
+
+
+
+.. code-block:: python
+   :linenos:
+
    td_t = np.geomspace(1.e-5,1,1000)
    td_n0 = np.zeros(30)
    td_n0[0] = 1.
    td_s = np.zeros(30)
    td_s[0] = 1.
-
    fil = 'cpb03_ls#be0.dat' #adf04 file
-   temperature_arr = np.array([10,50,100]) #eV
+   temperature_arr = np.array([10]) #eV
    metastable_levels = np.array([0])   #metastable level, just ground chosen here
-   density_arr =     np.array([1.e13,4.e14]) # cm-3
+   density_arr =     np.array([1.e8]) # cm-3
    be = colradpy(fil,metastable_levels,temperature_arr,density_arr,use_recombination=True,
-                 use_recombination_three_body = True,use_ionization=True,suppliment_with_ecip=True
-		 td_t = td_t, td_n0 = td_n0, td_s = td_s)
-		 
+		 use_recombination_three_body = True,use_ionization=True,suppliment_with_ecip=True,
+		 td_t=td_t,td_n0=td_n0,td_source=td_s)
+
    be.solve_cr()
    be.solve_time_dependent()
 
-   plt.figure()
-   plt.plot(be.data['user']['td_t'], be.data['processed']['td']['td_pop'][0,
+   fig, ax1 = plt.subplots(1,1,figsize=(16/3.,9/3.),dpi=300)
+   fig.subplots_adjust(bottom=0.15,top=0.92,left=0.115,right=0.965)
+   plt.plot(be.data['user']['td_t'],
+	    be.data['processed']['td']['td_pop'][0,:,0,0],
+	    label='Ground')
+   plt.plot(be.data['user']['td_t'],
+	    be.data['processed']['td']['td_pop'][1,:,0,0],
+	    label='level 1')
+   plt.plot(be.data['user']['td_t'],
+	    be.data['processed']['td']['td_pop'][-1,:,0,0],
+	    label='ion')
+   ax1.legend(fontsize='x-small',loc='best')
+   ax1.set_title('Time dependent solution of CR Be I with source term')
+   ax1.set_xlabel('Time (s)')
+   ax1.set_ylabel('Population (-)')
+   
+
+.. figure:: be0_time_dep_source.png
+   :scale: 50 %
+   :alt: Be I time dependence with source
+
+
+   
+Error bar analysis from atomic data
+-----------------------------------
+
+   

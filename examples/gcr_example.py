@@ -12,6 +12,8 @@ beii = colradpy(fil,metastable_levels,temperature_arr,density_arr,use_recombinat
 beii.solve_cr()
 
 #plotting the QCD
+import matplotlib.pyplot as plt
+plt.ion
 fig, ax1 = plt.subplots(1,1,figsize=(16/3.,9/3.),dpi=300)
 fig.subplots_adjust(bottom=0.15,top=0.92,left=0.125,right=0.965)
 ax1.plot(beii.data['user']['temp_grid'],
