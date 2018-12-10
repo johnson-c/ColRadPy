@@ -531,6 +531,12 @@ The source term could also be used to model the pumping of specific levels with 
    :scale: 50 %
    :alt: Be I time dependence no source
 
+   This time dependent collisional radiative model shows the time history for all Be I levels and
+   the ground sate of Be II. This is the non-quasistatic solution, for a light system like Be the
+   which only has one metastable the quasistatic approximation and non-quastatic solutions will
+   give similiar results it is only for heavy species such as Mo and W where the quasistatic
+   approximation starts to break down that this non-quasistatic solution is required.
+   
 
 
 .. code-block:: python
@@ -573,7 +579,9 @@ The source term could also be used to model the pumping of specific levels with 
    :scale: 50 %
    :alt: Be I time dependence with source
 
-
+   Time dependent solution with a constant source term of particles in the ground state.
+   This could be used to model spectra where there is a constant erosion term from the
+   wall. This could also be use to model level pumping in LIF systems.
    
 Error bar analysis from atomic data
 -----------------------------------

@@ -27,6 +27,14 @@ plt.plot(be.data['user']['td_t'],
 plt.plot(be.data['user']['td_t'],
          be.data['processed']['td']['td_pop'][1,:,0,0],
          label='level 1')
+
+plt.plot(be.data['user']['td_t'],
+         (be.data['processed']['td']['td_pop'][2,:,0,0]/ be.data['processed']['td']['td_pop'][0,:,0,0])/np.sum((be.data['processed']['td']['td_pop'][2,:,0,0]/ be.data['processed']['td']['td_pop'][0,:,0,0])),
+         label='level 1')
+
+
+
+
 plt.plot(be.data['user']['td_t'],
          be.data['processed']['td']['td_pop'][-1,:,0,0],
          label='ion')

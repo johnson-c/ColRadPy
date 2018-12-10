@@ -12,6 +12,7 @@ Welcome to ColRadPy's documentation!
    release
    tutorial
    dictionary
+   citing_colradpy
    :caption: Contents:
 
 
