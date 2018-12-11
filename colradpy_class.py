@@ -611,13 +611,19 @@ class colradpy():
                                             self.data['rates']['ioniz']['ionization'][self.data['atomic']['metas'],:,:,None]
 
 
-
-        if(self.data['user']['use_recombination'] or self.data['user']['use_recombination_three_body']):            
+        if(self.data['user']['use_recombination'] and self.data['user']['use_recombination_three_body']):
             #this is the total recombination with three body and the rates that in included in the adf04 file
             recomb_coeff = np.einsum('ijk,l->ijkl',
                                      self.data['rates']['recomb']['recomb_three_body'],
                                      self.data['user']['dens_grid']) + \
                                      self.data['rates']['recomb']['recombination'][:,:,:,None]
+        elif(self.data['user']['use_recombination']):
+            recomb_coeff = self.data['rates']['recomb']['recombination'][:,:,:,None]
+        elif(self.data['user']['use_recombination_three_body']):            
+            recomb_coeff = np.einsum('ijk,l->ijkl',
+                                     self.data['rates']['recomb']['recomb_three_body'],
+                                     self.data['user']['dens_grid'])
+        if(self.data['user']['use_recombination'] or self.data['user']['use_recombination_three_body']):
             #effective recombination rate
             self.data['processed']['acd'] = -np.einsum('njkl,jmkl->nmkl',
 
