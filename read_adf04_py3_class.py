@@ -59,7 +59,8 @@ def read_adf04(fil):
             ion_term.append(re.split(
                 '[)]',re.split('[(]',first_linep[first_linep_inds[i+3]])[1])[0])
 
-        adf04['atomic']['ion_term'] = np.asarray(ion_term)            
+        adf04['atomic']['ion_term'] = np.asarray(ion_term)
+
     except:
         print("**Failed first line of the adf04**\n\n"+first_line+"\n\nfile is formatted incorrectly failed line.\nCHECK WHITE SPACE.\nIt should be formatted as below (Neutral Tungsten example). \nIf more than one ionization metastable,\nadd more ionization potentials and terms after the first\nW+ 0        74         1       63427.7(6D3)")
         sys.exit(1)
@@ -81,10 +82,12 @@ def read_adf04(fil):
         tmp_line =   first_line
         zpla = []
         zpla1 = []
+        zz_check = np.array([-1])
         while('-1' not in tmp_line or '-1\n' not in tmp_line):
             level_num = level_num + 1
             tmp_line = f.readline()
             tmp = np.asarray(re.split('[  ]',tmp_line))
+
             if('-1' in tmp or '-1\n' in tmp):
                 break
             else:
@@ -104,15 +107,24 @@ def read_adf04(fil):
                     offset=0
                     
                 energy.append(float(tmp[tmp_inds[config_stop+2+offset]]))
-                zz = np.array([-1,-1])
-                zz1 = np.array([-1.,-1.])
+                zz = np.ones(len(adf04['atomic']['ion_pot']))*-1
+                zz1 = np.ones(len(adf04['atomic']['ion_pot']))*-1
+                
+
                 for i in range(config_stop+3+offset,len(tmp_inds)):
                     if ('X' not in tmp[tmp_inds[i]]):
                         zpla1_line = int(re.split('[}]',tmp[tmp_inds[i]])[0][1])
                         zpla_line = float(re.split('[}]',tmp[tmp_inds[i]])[1])
-                        zz[zpla1_line-1] = zpla1_line
-                        zz1[zpla1_line-1] = zpla_line
+                        if(zpla1_line not in zz_check):
+                            if(zz_check[0] < 0):
+                                zz_check[0] = int(zpla1_line)
+                            else:
+                                zz_check = np.append(zz_check,zpla1_line)
+
                         
+                        zz[np.where(zz_check==zpla1_line)[0]] = zpla1_line
+                        zz1[np.where(zz_check==zpla1_line)[0]] = zpla_line
+
                 zpla.append(zz1)
                 zpla1.append(zz)
 
@@ -122,7 +134,8 @@ def read_adf04(fil):
         adf04['atomic']['w'] = np.asarray(w)
         adf04['atomic']['energy'] = np.asarray(energy)
         adf04['atomic']['zpla'] = np.asarray(zpla)
-        adf04['atomic']['zpla1'] = np.asarray(zpla1)    
+        adf04['atomic']['zpla1'] = np.asarray(zpla1)
+        adf04['atomic']['ion_pot_lvl'] = zz_check
     except:
         print("\n**FAILED LEVEL " +str(level_num)+"**\n\n"+"\n\nOne or more configuration/energy lines in the adf04 file are formatted incorrectly.\nIt should be formatted as below (C+3 example). \nIf more than one ionization metastable,\nadd more apla,zpla after the first ie. {2}1.00\n      2 1S2 2P1           (2)1( 2.5)    64555.4   {1}1.000")
         sys.exit(1)
