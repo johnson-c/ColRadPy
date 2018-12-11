@@ -488,10 +488,12 @@ class colradpy():
         self.data['cr_matrix']['beta']= \
                                           -self.data['cr_matrix']['cr'][levels_to_keep][:,self.data['atomic']['metas']]
         aa_tmp = self.data['cr_matrix']['cr'][levels_to_keep][:,levels_to_keep]
-
+        import pdb
+        pdb.set_trace()
         if(self.data['user']['use_recombination']):
+            num_recombs = np.shape(self.data['rates']['recomb']['recombination'])[1]
             recomb_driving_lvls = len(self.data['atomic']['energy']) + \
-                                  np.unique(self.data['rates']['recomb']['recomb_transitions'][:,0]) - 1
+                                  np.linspace(0,num_recombs-1,num_recombs,dtype=int)
             self.data['cr_matrix']['beta'] = np.append(self.data['cr_matrix']['beta'],
                                                    -self.data['cr_matrix']['cr'][levels_to_keep][:,recomb_driving_lvls],axis=1)
 
