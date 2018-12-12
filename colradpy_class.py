@@ -647,15 +647,14 @@ class colradpy():
                                           self.data['atomic']['metas'][n])
             #calculate the metastable cross coupling coefficent, this the number of atoms that start in one
             #metastable and then end up in a different metastable
-            self.data['processed']['qcd'][metas_to_keep,n,:,:] = np.einsum('nkl,l->nkl',
+            metas_to_keep_ind = np.where(self.data['atomic']['metas'] == metas_to_keep)[0]
+            self.data['processed']['qcd'][metas_to_keep_ind,n,:,:] = np.einsum('nkl,l->nkl',
                                                                            
                                     self.data['cr_matrix']['cr'][self.data['atomic']['metas'][n],metas_to_keep,:,:] +\
                                     np.einsum('mkl,mnkl->nkl', self.data['cr_matrix']['cr'][self.data['atomic']['metas'][n],
                                     levels_to_keep,:,:],
-                                    self.data['processed']['F'][:,metas_to_keep,:,:]
+                                    self.data['processed']['F'][:,metas_to_keep_ind,:,:]
                                     ),1/self.data['user']['dens_grid'])
-
-
 
 
         if(self.data['user']['use_recombination'] or self.data['user']['use_recombination_three_body']):            
