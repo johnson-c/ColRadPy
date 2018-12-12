@@ -647,7 +647,8 @@ class colradpy():
                                           self.data['atomic']['metas'][n])
             #calculate the metastable cross coupling coefficent, this the number of atoms that start in one
             #metastable and then end up in a different metastable
-            metas_to_keep_ind = np.where(self.data['atomic']['metas'] == metas_to_keep)[0]
+            metas_to_keep_ind = np.arange(self.data['atomic']['metas'].shape[0])\
+                                     [np.in1d(self.data['atomic']['metas'], metas_to_keep)]
             self.data['processed']['qcd'][metas_to_keep_ind,n,:,:] = np.einsum('nkl,l->nkl',
                                                                            
                                     self.data['cr_matrix']['cr'][self.data['atomic']['metas'][n],metas_to_keep,:,:] +\
@@ -662,9 +663,11 @@ class colradpy():
 
                 metasplus_to_keep = np.setdiff1d( np.linspace(0,len(self.data['atomic']['ion_pot'])-1,
                                                               len(self.data['atomic']['ion_pot']),dtype='int'),m)
+                metasplus_to_keep_ind = np.arange(self.data['atomic']['ion_pot'].shape[0])\
+                                     [np.in1d(self.data['atomic']['ion_pot'], metas_to_keep)]
                 #parent cross coupling coefficient, start in the parent atom, recombine get redistrubted then
                 #ionize back into the parent but into a different parent metastable
-                self.data['processed']['xcd'][metasplus_to_keep,np.array([m]),:,:] =-np.einsum('ik,imkl->mkl',
+                self.data['processed']['xcd'][metasplus_to_keep_ind,np.array([m]),:,:] =-np.einsum('ik,imkl->mkl',
 
                         self.data['rates']['ioniz']['ionization'][levels_to_keep,m,:],np.einsum('ijkl,jmkl->imkl',
                         self.data['cr_matrix']['aa_inv'][0:len(self.data['atomic']['energy']),0:len(self.data['atomic']['energy']),:,:],
