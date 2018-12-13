@@ -1,0 +1,203 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>r8yip &#8212; ColRadPy 0.9 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ColRadPy 0.9 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for r8yip</h1><div class="highlight"><pre>
+<span></span><span class="c1">################################################################################</span>
+<span class="c1"># file name         : r8yip.py</span>
+<span class="c1"># author            : Curt Johnson</span>
+<span class="c1"># description       : This code uses the ECIP forumula to calculate ionization</span>
+<span class="c1"># version           : 0.1</span>
+<span class="c1"># python version    : 2.7.12 ipython 2.4.1</span>
+<span class="c1"># dependencies      : numpy</span>
+<span class="c1"># license           : to be freed after code is stable and papers are published</span>
+<span class="c1">#</span>
+<span class="c1"># This code was entirely based on the ADAS fortran routine r8ecip.for and</span>
+<span class="c1"># r8yip.for. They will be included in the SVN for refence. I did not think about</span>
+<span class="c1"># the theory here, this is a str8 copy. Was checked for He I and gives the same</span>
+<span class="c1"># results.</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1">################################################################################</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<div class="viewcode-block" id="R8YIP"><a class="viewcode-back" href="../r8yip.html#r8yip.R8YIP">[docs]</a><span class="k">def</span> <span class="nf">R8YIP</span><span class="p">(</span><span class="n">XI</span><span class="p">,</span><span class="n">DELTA</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;This code was entirely based on the ADAS fortran routine r8ecip.for and</span>
+<span class="sd"> r8yip.for. They will be included in the SVN for refence. I did not think about</span>
+<span class="sd"> the theory here, this is a str8 copy. Was checked for He I and gives the same</span>
+<span class="sd"> results.</span>
+
+
+<span class="sd">    :param XI: -</span>
+<span class="sd">    :type XI: -</span>
+
+<span class="sd">    :param DELTA: -</span>
+<span class="sd">    :type DELTA:  - </span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">P1</span> <span class="o">=</span> <span class="mf">5.0E0</span> <span class="o">/</span> <span class="mf">30.0E0</span> 
+    <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="mf">2.3916E0</span>  <span class="p">,</span> <span class="mf">1.6742E0</span>  <span class="p">,</span> <span class="mf">1.2583E0</span>  <span class="p">,</span> <span class="mf">9.738E-1</span>  <span class="p">,</span>
+                        <span class="mf">7.656E-1</span>  <span class="p">,</span> <span class="mf">6.078E-1</span>  <span class="p">,</span> <span class="mf">4.8561E-1</span> <span class="p">,</span> <span class="mf">3.8976E-1</span> <span class="p">,</span>
+                        <span class="mf">3.1388E-1</span> <span class="p">,</span> <span class="mf">2.5342E-1</span> <span class="p">,</span> <span class="mf">2.0501E-1</span> <span class="p">,</span> <span class="mf">1.6610E-1</span> <span class="p">,</span>
+                        <span class="mf">1.3476E-1</span> <span class="p">,</span> <span class="mf">1.0944E-1</span> <span class="p">,</span> <span class="mf">8.896E-2</span>  <span class="p">,</span> <span class="mf">7.237E-2</span>  <span class="p">,</span>
+                        <span class="mf">5.8903E-2</span> <span class="p">,</span> <span class="mf">4.7971E-2</span> <span class="p">,</span> <span class="mf">3.9086E-2</span> <span class="p">,</span> <span class="mf">3.1860E-2</span><span class="p">])</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="mf">1.0091E0</span>  <span class="p">,</span> <span class="mf">3.015E-1</span>  <span class="p">,</span> <span class="mf">1.314E-1</span>  <span class="p">,</span> <span class="mf">7.63E-2</span>   <span class="p">,</span>
+                        <span class="mf">5.04E-2</span>   <span class="p">,</span> <span class="mf">3.561E-2</span>  <span class="p">,</span> <span class="mf">2.634E-2</span>  <span class="p">,</span> <span class="mf">1.997E-2</span>  <span class="p">,</span>
+                        <span class="mf">1.542E-2</span>  <span class="p">,</span> <span class="mf">1.205E-2</span>  <span class="p">,</span> <span class="mf">9.50E-3</span>   <span class="p">,</span> <span class="mf">7.57E-3</span>   <span class="p">,</span>
+                        <span class="mf">6.02E-3</span>   <span class="p">,</span> <span class="mf">4.84E-3</span>   <span class="p">,</span> <span class="mf">3.89E-3</span>   <span class="p">,</span> <span class="mf">3.12E-3</span>   <span class="p">,</span>
+                        <span class="mf">2.535E-3</span>  <span class="p">,</span> <span class="mf">2.047E-3</span>  <span class="p">,</span> <span class="mf">1.659E-3</span>  <span class="p">,</span> <span class="mf">1.344E-3</span><span class="p">])</span> 
+    <span class="n">W1</span> <span class="o">=</span> <span class="mf">0.0E0</span>
+    <span class="n">W2</span> <span class="o">=</span> <span class="mf">0.0E0</span>
+    <span class="n">W3</span> <span class="o">=</span> <span class="mf">0.0E0</span>
+
+    <span class="n">XM</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span> <span class="n">XI</span> <span class="p">)</span>
+    <span class="n">X</span>  <span class="o">=</span> <span class="n">XM</span> <span class="o">+</span> <span class="n">DELTA</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">X</span> <span class="o">&lt;=</span> <span class="mf">0.1E0</span><span class="p">):</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span> <span class="mf">1.1229E0</span> <span class="o">/</span> <span class="n">X</span> <span class="p">)</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">T</span> <span class="o">+</span> <span class="mf">0.25E0</span> <span class="o">*</span> <span class="n">X</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span> <span class="mf">1.0E0</span> <span class="o">-</span> <span class="mf">2.0E0</span> <span class="o">*</span> <span class="n">T</span><span class="o">**</span><span class="mi">2</span> <span class="p">)</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">X</span> <span class="o">&gt;=</span> <span class="mf">2.0E0</span><span class="p">):</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="mf">1.0E0</span> <span class="o">/</span> <span class="n">X</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="mf">1.5707963E0</span> <span class="o">*</span> <span class="p">(</span> <span class="mf">1.0E0</span> <span class="o">+</span> <span class="n">T</span> <span class="o">*</span> <span class="p">(</span> <span class="mf">0.25E0</span> <span class="o">+</span> <span class="n">T</span>
+                <span class="o">*</span> <span class="p">(</span> <span class="o">-</span><span class="mf">0.09375E0</span> <span class="o">+</span> <span class="n">T</span> <span class="o">*</span> <span class="p">(</span> <span class="mf">0.0703125E0</span> <span class="o">-</span> <span class="n">T</span> <span class="o">*</span> <span class="mf">0.0472E0</span> <span class="p">)</span> <span class="p">)</span> <span class="p">)</span> <span class="p">)</span>
+        <span class="n">W1</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0E0</span> <span class="o">*</span> <span class="n">X</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">J</span>  <span class="o">=</span> <span class="nb">int</span><span class="p">(</span> <span class="mf">10.0E0</span> <span class="o">*</span> <span class="n">X</span> <span class="p">)</span>
+        <span class="n">X0</span> <span class="o">=</span> <span class="mf">0.1E0</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span> <span class="n">J</span> <span class="p">)</span>
+        <span class="n">R</span>  <span class="o">=</span> <span class="mf">10.0E0</span> <span class="o">*</span> <span class="p">(</span> <span class="n">X</span> <span class="o">-</span> <span class="n">X0</span> <span class="p">)</span>
+        <span class="n">S</span>  <span class="o">=</span> <span class="mf">1.0E0</span> <span class="o">-</span> <span class="n">R</span>
+        <span class="n">J</span><span class="o">=</span><span class="n">J</span><span class="o">-</span><span class="mi">1</span>
+        <span class="n">Y</span>  <span class="o">=</span> <span class="n">R</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="n">J</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">S</span> <span class="o">*</span> <span class="n">A</span><span class="p">[</span><span class="n">J</span><span class="p">]</span> <span class="o">+</span> <span class="n">P1</span> <span class="o">*</span> <span class="p">(</span> <span class="n">R</span> <span class="o">*</span> <span class="p">(</span> <span class="n">R</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">1.0E0</span> <span class="p">)</span>
+                 <span class="o">*</span> <span class="n">B</span><span class="p">[</span><span class="n">J</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">S</span> <span class="o">*</span> <span class="p">(</span> <span class="n">S</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">1.0E0</span> <span class="p">)</span> <span class="o">*</span> <span class="n">B</span><span class="p">[</span><span class="n">J</span><span class="p">]</span> <span class="p">)</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">X</span> <span class="o">&lt;=</span> <span class="mf">0.1E0</span><span class="p">)</span> <span class="ow">or</span>  <span class="p">(</span><span class="n">X</span> <span class="o">&gt;=</span> <span class="mf">2.0E0</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">XM</span> <span class="o">&gt;</span> <span class="mf">0.01E0</span><span class="p">)):</span>
+        <span class="n">X</span>  <span class="o">=</span> <span class="n">XM</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span> <span class="n">XM</span> <span class="o">+</span> <span class="n">DELTA</span> <span class="p">)</span>
+        <span class="n">X2</span> <span class="o">=</span> <span class="mf">0.125E0</span> <span class="o">*</span> <span class="n">XM</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span> <span class="n">XM</span> <span class="o">+</span> <span class="mf">3.0E0</span> <span class="o">*</span> <span class="n">DELTA</span> <span class="p">)</span>
+        <span class="n">R8YIP</span> <span class="o">=</span> <span class="n">Y</span> <span class="o">/</span> <span class="p">(</span> <span class="mf">1.0E0</span> <span class="o">+</span> <span class="n">X2</span><span class="o">**</span><span class="mi">2</span> <span class="p">)</span>
+        <span class="n">W2</span> <span class="o">=</span> <span class="mf">3.1416E0</span> <span class="o">*</span> <span class="n">XM</span> <span class="o">-</span> <span class="mf">0.9442E0</span> <span class="o">*</span> <span class="n">X</span> <span class="o">*</span> <span class="p">(</span> <span class="mf">1.0E0</span> <span class="o">+</span> <span class="n">X</span> <span class="o">*</span> <span class="p">(</span> <span class="mf">2.14E0</span> <span class="o">+</span> <span class="mf">14.2E0</span> <span class="o">*</span> <span class="n">X</span> <span class="p">)</span> <span class="p">)</span><span class="o">/</span> <span class="p">(</span> <span class="mf">1.0E0</span> <span class="o">+</span> <span class="n">X</span> <span class="o">*</span> <span class="p">(</span> <span class="mf">2.44E0</span> <span class="o">+</span> <span class="mf">12.8E0</span> <span class="o">*</span> <span class="n">X</span> <span class="p">)</span> <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">R8YIP</span> <span class="o">=</span> <span class="n">Y</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">XI</span> <span class="o">&lt;</span> <span class="mf">0.0E0</span><span class="p">):</span>
+        <span class="n">W3</span> <span class="o">=</span> <span class="mf">6.283E0</span> <span class="o">*</span> <span class="n">XI</span>
+
+    <span class="n">W</span> <span class="o">=</span> <span class="n">W1</span> <span class="o">+</span> <span class="n">W2</span> <span class="o">+</span> <span class="n">W3</span>
+    <span class="n">R8YIP</span> <span class="o">=</span> <span class="n">R8YIP</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span> <span class="n">W</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="n">R8YIP</span></div>
+
+<div class="viewcode-block" id="r8ecip"><a class="viewcode-back" href="../r8yip.html#r8yip.r8ecip">[docs]</a><span class="k">def</span> <span class="nf">r8ecip</span><span class="p">(</span><span class="n">IZC</span><span class="p">,</span> <span class="n">ion_pot</span><span class="p">,</span> <span class="n">energy</span><span class="p">,</span> <span class="n">zpla</span><span class="p">,</span> <span class="n">temperature_grid</span><span class="p">):</span>
+
+    <span class="n">MXT</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="n">P1</span> <span class="o">=</span> <span class="mf">157890.0</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="mf">0.26356E0</span>  <span class="p">,</span> <span class="mf">1.41340E0</span>  <span class="p">,</span> <span class="mf">3.59643E0</span>  <span class="p">,</span>
+                        <span class="mf">7.08581E0</span>  <span class="p">,</span> <span class="mf">12.6408E0</span><span class="p">])</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="mf">5.21756E-1</span> <span class="p">,</span> <span class="mf">3.98667E-1</span> <span class="p">,</span> <span class="mf">7.59424E-2</span> <span class="p">,</span>
+                        <span class="mf">3.61176E-3</span> <span class="p">,</span> <span class="mf">2.337E-5</span><span class="p">])</span>
+    <span class="n">Z</span>   <span class="o">=</span> <span class="nb">float</span><span class="p">(</span> <span class="n">IZC</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">)</span>    
+    <span class="n">XI_arr</span> <span class="o">=</span> <span class="n">ion_pot</span> <span class="o">-</span> <span class="n">energy</span>
+    <span class="n">ecip</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">energy</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">temperature_grid</span><span class="p">)))</span>
+    <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">XI_arr</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">zz</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">temperature_grid</span><span class="p">)):</span>
+            <span class="n">TE</span> <span class="o">=</span> <span class="n">temperature_grid</span><span class="p">[</span><span class="n">zz</span><span class="p">]</span>
+            <span class="n">XI</span> <span class="o">=</span> <span class="n">XI_arr</span><span class="p">[</span><span class="n">z</span><span class="p">]</span><span class="o">*</span> <span class="mf">9.11269E-06</span>
+            <span class="n">ZETA</span> <span class="o">=</span> <span class="n">zpla</span><span class="p">[</span><span class="n">z</span><span class="p">]</span>
+            <span class="n">ATE</span> <span class="o">=</span> <span class="n">P1</span> <span class="o">/</span> <span class="n">TE</span>
+            <span class="n">EN</span>  <span class="o">=</span> <span class="n">Z</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span> <span class="n">XI</span> <span class="p">)</span>
+            <span class="n">Y</span>   <span class="o">=</span> <span class="n">XI</span> <span class="o">*</span> <span class="n">ATE</span>
+            <span class="n">AI</span> <span class="o">=</span> <span class="mf">0.0E0</span>
+            
+            <span class="k">for</span> <span class="n">J</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">MXT</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">B</span>  <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">J</span><span class="p">]</span> <span class="o">/</span> <span class="n">Y</span>
+                <span class="n">B1</span> <span class="o">=</span> <span class="n">B</span> <span class="o">+</span> <span class="mf">1.0E0</span>
+                <span class="n">C</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span> <span class="n">B1</span> <span class="p">)</span>
+                <span class="n">R</span>  <span class="o">=</span> <span class="p">(</span> <span class="mf">1.25E0</span> <span class="o">*</span> <span class="n">EN</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">0.25E0</span> <span class="p">)</span> <span class="o">/</span> <span class="n">Z</span>
+
+                <span class="n">D</span>  <span class="o">=</span> <span class="p">(</span> <span class="n">Z</span> <span class="o">/</span> <span class="n">EN</span> <span class="p">)</span> <span class="o">*</span> <span class="p">(</span> <span class="n">R</span> <span class="o">+</span> <span class="mf">2.0E0</span> <span class="o">*</span> <span class="n">EN</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">C</span> <span class="o">/</span> <span class="p">(</span> <span class="p">(</span> <span class="n">B</span> <span class="o">+</span> <span class="mf">2.0E0</span> <span class="p">)</span> <span class="o">*</span> <span class="n">Z</span><span class="o">**</span><span class="mi">2</span> <span class="p">)</span> <span class="p">)</span> <span class="o">/</span> <span class="p">(</span> <span class="n">C</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span> <span class="n">B</span> <span class="p">)</span> <span class="p">)</span>
+
+                <span class="n">C1</span> <span class="o">=</span> <span class="mf">1.0E0</span> <span class="o">/</span> <span class="p">(</span> <span class="n">B</span> <span class="o">+</span> <span class="mf">2.0E0</span> <span class="p">)</span>
+                <span class="n">F</span>  <span class="o">=</span> <span class="mf">1.0E0</span>
+                <span class="n">C4</span> <span class="o">=</span> <span class="n">R8YIP</span><span class="p">(</span> <span class="mf">0.0E0</span> <span class="p">,</span> <span class="n">D</span> <span class="p">)</span>
+                <span class="n">C2</span> <span class="o">=</span> <span class="p">(</span> <span class="n">C1</span> <span class="o">*</span> <span class="p">(</span> <span class="n">B</span> <span class="o">-</span> <span class="n">B1</span> <span class="o">*</span> <span class="n">C1</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span> <span class="n">B1</span> <span class="p">)</span> <span class="p">)</span> <span class="o">+</span> <span class="mf">0.65343E0</span> <span class="o">*</span> <span class="p">(</span> <span class="mf">1.0E0</span> <span class="o">-</span> <span class="mf">1.0E0</span> <span class="o">/</span> <span class="n">B1</span><span class="o">**</span><span class="mi">3</span> <span class="p">)</span> <span class="o">*</span> <span class="n">C4</span> <span class="o">/</span> <span class="n">EN</span> <span class="p">)</span> <span class="o">*</span> <span class="n">F</span>
+                <span class="n">AI</span> <span class="o">=</span> <span class="n">AI</span> <span class="o">+</span> <span class="n">W</span><span class="p">[</span><span class="n">J</span><span class="p">]</span> <span class="o">*</span> <span class="n">C2</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">Y</span> <span class="o">&gt;</span> <span class="mf">180.0E0</span><span class="p">):</span>
+                <span class="n">R8ECIP</span> <span class="o">=</span> <span class="mf">0.0E0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">R8ECIP</span> <span class="o">=</span> <span class="mf">8.68811E-8</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span> <span class="n">ATE</span> <span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span> <span class="o">-</span><span class="n">Y</span> <span class="p">)</span> <span class="o">*</span> <span class="n">ZETA</span> <span class="o">*</span> <span class="n">AI</span> <span class="o">/</span> <span class="n">XI</span>
+            <span class="n">ecip</span><span class="p">[</span><span class="n">z</span><span class="p">,</span><span class="n">zz</span><span class="p">]</span> <span class="o">=</span> <span class="n">R8ECIP</span>
+    <span class="k">return</span> <span class="n">ecip</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ColRadPy 0.9 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Curtis Johnson.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.
+    </div>
+  </body>
+</html>
