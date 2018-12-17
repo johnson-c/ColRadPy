@@ -431,14 +431,27 @@ class colradpy():
                                                  len(self.data['user']['temp_grid']),
                                                  len(self.data['user']['dens_grid'])))
 
+        self.data['cr_matrix']['cr_loss'] = np.zeros((len(self.data['atomic']['energy'])+nsigmaplus,
+                                                 len(self.data['atomic']['energy'])+nsigmaplus,
+                                                 len(self.data['user']['temp_grid']),
+                                                 len(self.data['user']['dens_grid'])))
+
+
+        
         for i in range(0,len(self.data['atomic']['energy'])):
             #level i depopulating mechanisms
             #these are all the transitions from the level
 
             self.data['cr_matrix']['cr'][i,i,:,:]  =  -1*np.sum(self.data['cr_matrix']['A_ji'][i,:])
-            
+            self.data['cr_matrix']['cr_loss'][i,i,:,:]  =  -1*np.sum(self.data['cr_matrix']['A_ji'][i,:])
             #these are all the excitation and dexcitation bringing you out of the level
             self.data['cr_matrix']['cr'][i,i,:,:] = self.data['cr_matrix']['cr'][i,i,:,:] - \
+            np.sum(np.einsum('ij,k->ijk',self.data['cr_matrix']['q_ji'][i,:,:],
+                             self.data['user']['dens_grid']),axis=0)-\
+            np.sum(np.einsum('ij,k->ijk',self.data['cr_matrix']['q_ij'][i,:,:],
+                             self.data['user']['dens_grid']),axis=0)
+
+            self.data['cr_matrix']['cr_loss'][i,i,:,:] = self.data['cr_matrix']['cr'][i,i,:,:] - \
             np.sum(np.einsum('ij,k->ijk',self.data['cr_matrix']['q_ji'][i,:,:],
                              self.data['user']['dens_grid']),axis=0)-\
             np.sum(np.einsum('ij,k->ijk',self.data['cr_matrix']['q_ij'][i,:,:],
@@ -450,6 +463,10 @@ class colradpy():
                                       np.sum(np.einsum('ij,k->ijk',self.data['rates']['ioniz']['ionization'][i,:,:],
                                                        self.data['user']['dens_grid']),axis=0)
 
+                self.data['cr_matrix']['cr_loss'][i,i,:,:] = self.data['cr_matrix']['cr'][i,i,:,:] - \
+                                      np.sum(np.einsum('ij,k->ijk',self.data['rates']['ioniz']['ionization'][i,:,:],
+                                                       self.data['user']['dens_grid']),axis=0)
+                
             #level i populating mechanisms
             #these are the transition rates from higher levels into the level i
             self.data['cr_matrix']['cr'][i,0:len(self.data['atomic']['energy']),:,:] = \
@@ -521,7 +538,6 @@ class colradpy():
         
         if('cr_matrix' not in self.data.keys()):
             self.populate_cr_matrix()
-        print('here')
         levels_to_keep = np.setdiff1d( np.linspace(0,len(self.data['atomic']['energy'])-1,
                                               len(self.data['atomic']['energy']) ,dtype='int64'),
                                        self.data['atomic']['metas'])
@@ -586,7 +602,6 @@ class colradpy():
                           not self.data['processed']['driving_populations_norm']
 
         if(self.data['processed']['driving_populations_norm']):
-            print('normed')
             self.data['processed']['pops'] = self.data['processed']['pops'] /\
                                              (1 + np.sum(self.data['processed']['pops'],axis=0))
 
@@ -741,7 +756,7 @@ class colradpy():
 
         #check if a source term has been provided, if a source term has been provided solve the problem with s asource
         if(self.data['user']['td_source'].any()):
-            print('here')
+
             self.data['processed']['td']['eigenvals'], \
             self.data['processed']['td']['eigenvectors'] = np.linalg.eig(self.data['cr_matrix']['cr'].transpose(2,3,0,1))
 

@@ -3,15 +3,16 @@ from colradpy_class import colradpy
 
 class ionization_balance():
 
-    def __init__(self, fils,metas,temp_grid, dens_grid):
+    def __init__(self, fils,metas,temp_grid, dens_grid,use_ionization=True,
+                suppliment_with_ecip=True, use_recombination_three_body=True,use_recombination=True):
 
         self.ion = []
         self.metas_tot = 0
         self.temp_grid = temp_grid
         self.dens_grid = dens_grid
         for i in range(0,len(fils)):
-            self.ion.append(colradpy(fils[i],metas[i],temp_grid,dens_grid,use_ionization=True,
-                suppliment_with_ecip=True, use_recombination_three_body=True,use_recombination=True))
+            self.ion.append(colradpy(fils[i],metas[i],temp_grid,dens_grid,use_ionization=use_ionization,
+                                     suppliment_with_ecip=suppliment_with_ecip, use_recombination_three_body=use_recombination_three_body,use_recombination=use_recombination))
             self.ion[i].solve_cr()
             #self.metas_tot = self.metas_tot + self.ion[i].data['atomic']['metas']
         self.populate_ion_matrix()
