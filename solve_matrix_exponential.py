@@ -33,13 +33,14 @@ def solve_matrix_exponential_source(matrix, td_n0, source, td_t):
     V0 = np.dot(np.linalg.inv(eigenvectors),td_n0)
 
     eig_zero_ind = np.where(eigenvals == 0)            
-    eig_non_zero = np.delete(eigenvals ,eig_zero_ind)
+    eig_non_zero = np.delete(eigenvals, eig_zero_ind, axis=2)
 
-    amplitude_non = np.delete(V0,eig_zero_ind) + np.delete(CC,eig_zero_ind)/eig_non_zero
-    amplitude_zer = V0[eig_zero_ind]
+    amplitude_non = np.delete(V0,eig_zero_ind,axis=2) + np.delete(CC,eig_zero_ind,axis=2)/eig_non_zero
+    amplitude_zer = V0[:,:,eig_zero_ind[2]]
+    
     v_non = amplitude_non[:,:,:,None]*np.exp(eig_non_zero[:,:,:,None]*td_t) - \
-                                    np.delete(CC,eig_zero_ind)[:,:,:,None]/eig_non_zero[:,:,:,None]
-    v_zer = CC[eig_zero_ind]*td_t + amplitude_zer
-    v = np.insert(v_non,eig_zero_ind,v_zer,axis=0)
-    td_pop[:,:,t,e] = np.dot(eigenvectors,v)
+                               np.delete(CC,eig_zero_ind,axis=2)[:,:,:,None]/eig_non_zero[:,:,:,None]
+    v_zer = CC[:,:,eig_zero_ind[2]][:,:,:,None]*td_t + amplitude_zer[:,:,:,None]
+    v = np.insert(v_non,eig_zero_ind[2],v_zer,axis=2)
+    td_pop = np.einsum('klij,kljt->itkl', eigenvectors,v)
     return td_pop, eigenvals,eigenvectors
