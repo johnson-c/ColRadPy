@@ -61,7 +61,7 @@ def split_multiplet(s_low,l_low,s_up,l_up):
 
 
 
-he2 = colradpy('/home/curtis/spirit/adas_adf04/adf04/adas#2/mom97_ls#he1.dat',[0],np.array([100]),np.array([1.e13]),use_recombination=False,use_recombination_three_body = False,use_ionization=True)
+he2 = colradpy('/home/curtis/adf04_files/mom97_ls#he1.dat',[0],np.array([100]),np.array([1.e13]),use_recombination=False,use_recombination_three_body = False,use_ionization=True)
 he2.solve_cr()
 config_l = []
 config_u = []    
@@ -77,6 +77,17 @@ for i in range(0,len(he2.data['processed']['pec_levels'])):
     up = he2.data['processed']['pec_levels'][i,0]
     low = he2.data['processed']['pec_levels'][i,1]
     ju,jl,res = split_multiplet( (he2.data['atomic']['S'][up]-1)/2.,he2.data['atomic']['L'][up],(he2.data['atomic']['S'][low]-1)/2.,he2.data['atomic']['L'][low])
+    j_l.append(jl)
+    j_u.append(ju)
+    ress.append(res)
+    if(res.size>0):
+        if( -1 not in res):
+            pecs.append(np.einsum('ijk,l->lijk',he2.data['processed']['pecs'][i],res/np.sum(res)))
+        else:
+            pecs.append(he2.data['processed']['pecs'][i])
+    else:
+        pecs.append(he2.data['processed']['pecs'][i])    
+    '''
     ress.append(res)
     if(res.size>0):
         if(-1 not in res):
@@ -111,5 +122,5 @@ for i in range(0,len(he2.data['processed']['pec_levels'])):
         S_u.append(he2.data['atomic']['S'][up])
         S_l.append(he2.data['atomic']['S'][low])
         
-    pecs = np.asarray(pecs)
-    
+pecs = np.asarray(pecs)
+    '''
