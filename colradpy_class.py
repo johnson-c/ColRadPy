@@ -37,6 +37,7 @@ from r8necip import *
 from read_adf04_py3_class import *
 from ecip_rates import *
 from burgess_tully_rates import *
+from split_multiplet import *
 import collections
 
 def convert_to_air(lam):
@@ -790,7 +791,41 @@ class colradpy():
                                                                self.data['processed']['td']['eigenvectors'], vt)
             self.data['processed']['td']['eigenvals'] = self.data['processed']['td']['eigenvals'].transpose(2,0,1)
             self.data['processed']['td']['eigenvectors'] = self.data['processed']['td']['eigenvectors'].transpose(2,3,0,1)
+
+
+    def split_pec_multiplet(self):
+        """This function will solve take LS resolved PECs and split them statistically among the j levels
+
+        """
+        if('processed' not in self.data.keys()):
+            self.solve_quasi_static()
             
+        self.data['processed']['split'] = {}
+        self.data['processed']['split']['j_up'] = []
+        self.data['processed']['split']['j_low'] = []
+        self.data['processed']['split']['pecs'] = []
+        self.data['processed']['split']['relative_inten'] = []
+
+        for i in range(0,len(self.data['processed']['pec_levels'])):
+            up = self.data['processed']['pec_levels'][i,0]
+            low = self.data['processed']['pec_levels'][i,1]
+            
+            ju,jl,res = split_multiplet( (self.data['atomic']['S'][up]-1)/2.,
+                                         self.data['atomic']['L'][up],
+                                         (self.data['atomic']['S'][low]-1)/2.,
+                                         self.data['atomic']['L'][low])
+            
+            self.data['processed']['split']['j_low'].append(jl)
+            self.data['processed']['split']['j_up'].append(ju)
+            self.data['processed']['split']['relative_inten'].append(res)
+
+            if(res.size>0):
+                self.data['processed']['split']['pecs'].append(np.einsum('ijk,l->lijk',
+                                                                         self.data['processed']['pecs'][i],
+                                                                         res/np.sum(res)))
+            else:
+                self.data['processed']['split']['pecs'].append(self.data['processed']['pecs'][i])
+        
     def solve_cr(self):
         if(self.data['user']['use_ionization']):
             self.make_ioniz_from_reduced_ionizrates()
