@@ -22,9 +22,9 @@ def split_condon_shortley(s1,l1,j1,s2,l2,j2):
     elif((j1 == j2+1) and (l1 == l2-1)):
         res = (j1+s1-l1+1) * (l1+s1-j1) * (j1+s1-l1+2)  * (l1+s1-j1-1) / (4.0 * (j1+1) )
     else:
-        res = -1.
+        res = []
     if(res ==0.0):
-        res=-1.
+        res=[]
     return res
 
 
@@ -54,12 +54,13 @@ def split_multiplet(s_low,l_low,s_up,l_up):
                 j_up.append(j1)
                 j_low.append(j2)
                 res.append( split_condon_shortley(s_up,l_up,j1,s_low,l_low,j2))
+            
 
     return np.asarray(j_up),np.asarray(j_low),np.asarray(res)
 
 
 
-
+'''
 
 he2 = colradpy('/home/curtis/adf04_files/mom97_ls#he1.dat',[0],np.array([100]),np.array([1.e13]),use_recombination=False,use_recombination_three_body = False,use_ionization=True)
 he2.solve_cr()
@@ -87,7 +88,7 @@ for i in range(0,len(he2.data['processed']['pec_levels'])):
             pecs.append(he2.data['processed']['pecs'][i])
     else:
         pecs.append(he2.data['processed']['pecs'][i])    
-    '''
+
     ress.append(res)
     if(res.size>0):
         if(-1 not in res):
