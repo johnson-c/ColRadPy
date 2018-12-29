@@ -237,10 +237,16 @@ class colradpy():
                    " from inside 'suppliment_with_ecip'")
             self.make_ecip()
 
-        if('ionization' not in self.data['rates']['ioniz']):
+        if(('ionization' not in self.data['rates']['ioniz']) and (self.data['user']['use_ionization'])):
             print('No ionization rates from files were calculated,'+\
                   ' try to calculate them')
             self.make_ioniz_from_reduced_ionizrates()
+
+        #added for the case that ionization is turned off and 
+        if('ionization' not in self.data['rates']['ioniz']):
+            self.data['rates']['ioniz']['ionization'] = np.zeros((len(self.data['atomic']['energy']),
+                                                                  len(self.data['atomic']['ion_pot']),
+                                                                  len(self.data['user']['temp_grid'])))
         
         for p in range(0,len(self.data['atomic']['ion_pot'])):
             #there was a stupid problem beacuse {X} only designates ecip not other ionization   
@@ -459,7 +465,7 @@ class colradpy():
                              self.data['user']['dens_grid']),axis=0)
             
             #these are the ways to ionize out of ion
-            if(self.data['user']['use_ionization']):
+            if(self.data['rates']['ioniz']['ionization'].size > 0):
                 self.data['cr_matrix']['cr'][i,i,:,:] = self.data['cr_matrix']['cr'][i,i,:,:] - \
                                       np.sum(np.einsum('ij,k->ijk',self.data['rates']['ioniz']['ionization'][i,:,:],
                                                        self.data['user']['dens_grid']),axis=0)
@@ -520,7 +526,7 @@ class colradpy():
                 np.sum(np.einsum('ij,k->ijk',self.data['rates']['recomb']['recomb_three_body'][:,p,:],
                                       self.data['user']['dens_grid']**2),axis=0)
                 
-        if(self.data['user']['use_ionization']):
+        if(self.data['rates']['ioniz']['ionization'].size > 0):                
             for p in range(0,nsigmaplus):
                 self.data['cr_matrix']['cr'][len(self.data['atomic']['energy'])+ p,
                                                  0:len(self.data['atomic']['energy']),:,:] = \
@@ -621,9 +627,9 @@ class colradpy():
                     self.data['processed']['pecs'].append( self.data['cr_matrix']['A_ji'][levels_to_keep[j],i]*\
                                                         self.data['processed']['pops'][j]/ \
                                                         self.data['user']['dens_grid'])
-                    self.data['processed']['wave_vac'].append( 1.e7/abs(self.data['atomic']['energy'][levels_to_keep[j]] - \
+                    self.data['processed']['wave_vac'].append( 1.e7/abs(self.data['atomic']['energy'][[levels_to_keep[j]]] - \
                                                                                       self.data['atomic']['energy'][i]))
-                    self.data['processed']['pec_levels'].append( np.array([j,i]))
+                    self.data['processed']['pec_levels'].append( np.array([levels_to_keep[j],i]))
         
         self.data['processed']['pecs'] = np.asarray(self.data['processed']['pecs'])
 
@@ -662,8 +668,7 @@ class colradpy():
         #the F matrix
         self.data['processed']['F'] = np.sum(self.data['processed']['pop_lvl'][:,:,0:len(self.data['atomic']['metas']),:,:],axis=1)
         #effective ionization rate
-
-        if(self.data['user']['use_ionization']):
+        if(self.data['rates']['ioniz']['ionization'].size > 0):
             self.data['processed']['scd'] = np.einsum('ipk,imkl->mpkl',
                                                       self.data['rates']['ioniz']['ionization'][levels_to_keep,:,:],
                                                       self.data['processed']['F'])
