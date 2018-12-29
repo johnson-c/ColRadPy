@@ -1,5 +1,5 @@
 import numpy  as np
-from colradpy_class import colradpy
+
 def split_condon_shortley(s1,l1,j1,s2,l2,j2):
 
     if( (j1 == j2-1) and (l1 == l2+1)):
