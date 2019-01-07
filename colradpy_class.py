@@ -106,16 +106,16 @@ class colradpy():
         self.data = {}
         self.processed = {} 
         self.data['user'] = {}
-        self.data['user']['temp_grid'] = temp_grid
-        self.data['user']['dens_grid'] = electron_den
+        self.data['user']['temp_grid'] = np.asarray(temp_grid)
+        self.data['user']['dens_grid'] = np.asarray(electron_den)
         self.data['user']['use_ionization'] = use_ionization
         self.data['user']['suppliment_with_ecip'] = suppliment_with_ecip
         self.data['user']['use_recombination_three_body'] = use_recombination_three_body
         self.data['user']['use_recombination'] = use_recombination
         self.data['user']['metas'] = 'look at [atomic][metas] for values'
-        self.data['user']['td_t'] = td_t
-        self.data['user']['td_n0'] = td_n0
-        self.data['user']['td_source'] = td_source
+        self.data['user']['td_t'] = np.asarray(td_t)
+        self.data['user']['td_n0'] = np.asarray(td_n0)
+        self.data['user']['td_source'] = np.asarray(td_source)
         self.data['user']['default_pop_norm'] = default_pop_norm
         self.populate_data(fil)
         self.data['atomic']['metas'] = np.asarray(metas)
@@ -618,17 +618,17 @@ class colradpy():
         self.data['processed']['pecs'] = [] 
         self.data['processed']['pec_levels'] = [] 
         self.data['processed']['wave_vac'] = [] 
-
         for i in range(0,len(self.data['cr_matrix']['A_ji'])):
             for j in range(0,len(levels_to_keep)):
                 #if statement here because there will be a number of transitions that have zero
                 #for the PEC value and don't want to have to keep track of these.
-                if(levels_to_keep[j] > i and self.data['cr_matrix']['A_ji'][j,i] > 1E-31):
+                if(levels_to_keep[j] > i ):#and self.data['cr_matrix']['A_ji'][j,i] > 1E-31):
                     self.data['processed']['pecs'].append( self.data['cr_matrix']['A_ji'][levels_to_keep[j],i]*\
                                                         self.data['processed']['pops'][j]/ \
                                                         self.data['user']['dens_grid'])
-                    self.data['processed']['wave_vac'].append( 1.e7/abs(self.data['atomic']['energy'][[levels_to_keep[j]]] - \
+                    self.data['processed']['wave_vac'].append( 1.e7/abs(self.data['atomic']['energy'][levels_to_keep[j]] - \
                                                                                       self.data['atomic']['energy'][i]))
+                
                     self.data['processed']['pec_levels'].append( np.array([levels_to_keep[j],i]))
         
         self.data['processed']['pecs'] = np.asarray(self.data['processed']['pecs'])
@@ -677,7 +677,7 @@ class colradpy():
                 self.data['processed']['scd'] = self.data['processed']['scd'] + \
                                               np.einsum('ipk,ikl->ipkl',
                                               self.data['rates']['ioniz']['ionization'][self.data['atomic']['metas'],:,:],
-                                              1/(1+np.sum(self.data['processed']['pops_no_norm'],axis=0)))
+                                              1/(1+np.sum(self.data['processed']['pops_no_norm'][:,self.data['atomic']['metas'],:,:],axis=0)))
 
             else:
                 self.data['processed']['scd'] = self.data['processed']['scd'] + \
