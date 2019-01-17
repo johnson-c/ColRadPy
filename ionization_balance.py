@@ -77,4 +77,7 @@ class ionization_balance():
         self.pops,self.eigen_val,self.eigen_vec = solve_matrix_exponential(
                                        np.einsum('ijkl,l->ijkl',self.ion_matrix,self.dens_grid),n0,td_t)
 
+    def solve_source(self,n0,s0,td_t):
+        self.pops,self.eigen_val,self.eigen_vec = solve_matrix_exponential_source(
+                                       np.einsum('ijkl,l->ijkl',self.ion_matrix,self.dens_grid),n0,s0,td_t)
 

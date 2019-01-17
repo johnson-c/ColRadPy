@@ -762,7 +762,7 @@ class colradpy():
 
         #check if a source term has been provided, if a source term has been provided solve the problem with s asource
         if(self.data['user']['td_source'].any()):
-
+            print('here')
             self.data['processed']['td']['eigenvals'], \
             self.data['processed']['td']['eigenvectors'] = np.linalg.eig(self.data['cr_matrix']['cr'].transpose(2,3,0,1))
 
