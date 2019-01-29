@@ -39,6 +39,7 @@ from ecip_rates import *
 from burgess_tully_rates import *
 from split_multiplet import *
 import collections
+from solve_matrix_exponential import *
 
 def convert_to_air(lam):
     """This function converts the vacuum wavelength of spectral lines to 
@@ -106,14 +107,14 @@ class colradpy():
         self.data = {}
         self.processed = {} 
         self.data['user'] = {}
-        self.data['user']['temp_grid'] = np.asarray(temp_grid)
-        self.data['user']['dens_grid'] = np.asarray(electron_den)
+        self.data['user']['temp_grid'] = np.asarray(temp_grid) #eV
+        self.data['user']['dens_grid'] = np.asarray(electron_den)#cm-3
         self.data['user']['use_ionization'] = use_ionization
         self.data['user']['suppliment_with_ecip'] = suppliment_with_ecip
         self.data['user']['use_recombination_three_body'] = use_recombination_three_body
         self.data['user']['use_recombination'] = use_recombination
         self.data['user']['metas'] = 'look at [atomic][metas] for values'
-        self.data['user']['td_t'] = np.asarray(td_t)
+        self.data['user']['td_t'] = np.asarray(td_t)# seconds
         self.data['user']['td_n0'] = np.asarray(td_n0)
         self.data['user']['td_source'] = np.asarray(td_source)
         self.data['user']['default_pop_norm'] = default_pop_norm
@@ -338,7 +339,8 @@ class colradpy():
            extrapolation will be used. There is currently no extrapolation below the first
            calculated temperature point. THis is something to add in the future.
         """
-        tmp = interp1d(self.data['input_file']['temp_grid']/11604.5,self.data['rates']['excit']['col_excit'],axis=1,kind='slinear')
+        tmp = interp1d(self.data['input_file']['temp_grid']/11604.5,
+                       self.data['rates']['excit']['col_excit'],axis=1,kind='slinear')
 
         self.data['rates']['excit']['col_excit_interp'] = np.zeros((len(self.data['rates']['excit']['col_excit']),
                                                                          len(self.data['user']['temp_grid'])))
@@ -422,6 +424,7 @@ class colradpy():
                 self.data['cr_matrix']['A_ji'][self.data['rates']['excit']['col_transitions'][i,0]-1,
                                                self.data['rates']['excit']['col_transitions'][i,1]-1] = \
                                                                                             self.data['rates']['a_val'][i]
+
         #transpose the self.data['cr_matrix']['q_ij'] matrix so the indexes make sense
         self.data['cr_matrix']['q_ij'] = self.data['cr_matrix']['q_ij'].transpose(1,0,2)
 
@@ -536,7 +539,7 @@ class colradpy():
                                                    self.data['user']['dens_grid'])
 
 
-        
+
     def solve_quasi_static(self):
         """This function will solve the CR matrix using the quasistatic approximation after solving this problem
            the generalized radiative coefficients GCRs will be calculated other claculated quanities such as 
@@ -560,20 +563,12 @@ class colradpy():
             recomb_driving_lvls = len(self.data['atomic']['energy']) + \
                                   np.linspace(0,num_recombs-1,num_recombs,dtype=int)
             self.data['cr_matrix']['beta'] = np.append(self.data['cr_matrix']['beta'],
-                                                   -self.data['cr_matrix']['cr'][levels_to_keep][:,recomb_driving_lvls],axis=1)
-
-
-
+                                            -self.data['cr_matrix']['cr'][levels_to_keep][:,recomb_driving_lvls],axis=1)
             
 
         self.data['cr_matrix']['aa_inv'] = np.zeros((len(aa_tmp),len(aa_tmp), len(self.data['user']['temp_grid']),
                                len(self.data['user']['dens_grid'])))
-        '''
-        if(self.data['user']['use_ionization']):
-            for p in range(0,len(self.data['atomic']['energy'])):
-                np.einsum('ij,k->ijk',self.data['rates']['ioniz']['ionization'][p,:,:],
-                                                                         self.data['user']['dens_grid'])
-        '''
+        
         self.data['cr_matrix']['aa_inv'] = np.linalg.inv(aa_tmp.transpose(2,3,0,1)).transpose(2,3,0,1)
 
         self.data['processed'] = {}
@@ -626,9 +621,9 @@ class colradpy():
                     self.data['processed']['pecs'].append( self.data['cr_matrix']['A_ji'][levels_to_keep[j],i]*\
                                                         self.data['processed']['pops'][j]/ \
                                                         self.data['user']['dens_grid'])
-                    self.data['processed']['wave_vac'].append( 1.e7/abs(self.data['atomic']['energy'][levels_to_keep[j]] - \
-                                                                                      self.data['atomic']['energy'][i]))
-                
+                    self.data['processed']['wave_vac'].append(1.e7/abs(self.data['atomic']['energy'][levels_to_keep[j]]\
+                                                                        - self.data['atomic']['energy'][i]))
+
                     self.data['processed']['pec_levels'].append( np.array([levels_to_keep[j],i]))
         
         self.data['processed']['pecs'] = np.asarray(self.data['processed']['pecs'])
@@ -666,7 +661,9 @@ class colradpy():
             self.data['processed']['pop_lvl'] = self.data['processed']['pop_lvl']/   \
                                             (1+np.sum(np.sum(self.data['processed']['pop_lvl'],axis=1),axis=0))
         #the F matrix
-        self.data['processed']['F'] = np.sum(self.data['processed']['pop_lvl'][:,:,0:len(self.data['atomic']['metas']),:,:],axis=1)
+
+        self.data['processed']['F'] = np.sum(self.data['processed']['pop_lvl']\
+                                             [:,:,0:len(self.data['atomic']['metas']),:,:],axis=1)
         #effective ionization rate
         if(self.data['rates']['ioniz']['ionization'].size > 0):
             self.data['processed']['scd'] = np.einsum('ipk,imkl->mpkl',
@@ -762,41 +759,21 @@ class colradpy():
 
         #check if a source term has been provided, if a source term has been provided solve the problem with s asource
         if(self.data['user']['td_source'].any()):
-            print('here')
-            self.data['processed']['td']['eigenvals'], \
-            self.data['processed']['td']['eigenvectors'] = np.linalg.eig(self.data['cr_matrix']['cr'].transpose(2,3,0,1))
-
-            CC = np.dot(np.linalg.inv(self.data['processed']['td']['eigenvectors']),
-                                      self.data['user']['td_source'])
-            V0 = np.dot(np.linalg.inv(self.data['processed']['td']['eigenvectors']),
-                                      self.data['user']['td_n0'])
-
-            eig_zero_ind = np.where(self.data['processed']['td']['eigenvals'] == 0)            
-            eig_non_zero = np.delete(self.data['processed']['td']['eigenvals'] ,eig_zero_ind,axis=2)
-            amplitude_non = np.delete(V0,eig_zero_ind,axis=2) + np.delete(CC,eig_zero_ind,axis=2)/eig_non_zero
-            amplitude_zer = V0[:,:,eig_zero_ind[2]]
-            
-            v_non = amplitude_non[:,:,:,None]*np.exp(eig_non_zero[:,:,:,None]*self.data['user']['td_t']) - \
-                                            np.delete(CC,eig_zero_ind,axis=2)[:,:,:,None]/eig_non_zero[:,:,:,None]
-            
-            v_zer = CC[:,:,eig_zero_ind[2]][:,:,:,None]*self.data['user']['td_t'] + amplitude_zer[:,:,:,None]
-            v = np.insert(v_non,eig_zero_ind[2],v_zer,axis=2)
-            self.data['processed']['td']['td_pop'] = np.einsum('klij,kljt->itkl',
-                                                                self.data['processed']['td']['eigenvectors'],v)
-
-
+            #solve the matrix with a source term
+            self.data['processed']['td']['td_pop'],self.data['processed']['td']['eigenvals'],
+            self.data['processed']['td']['eigenvectors'] =\
+            solve_matrix_exponential_source(self.data['cr_matrix']['cr'],
+                                            self.data['user']['td_n0'],
+                                            self.data['user']['td_source'],
+                                            self.data['user']['td_t'])
         else:
             #no source term was provided solve just the normal matrix
-            self.data['processed']['td']['eigenvals'], \
-            self.data['processed']['td']['eigenvectors'] = np.linalg.eig(self.data['cr_matrix']['cr'].transpose(2,3,0,1))
-            
-            v0 = np.dot(np.linalg.inv(self.data['processed']['td']['eigenvectors']),self.data['user']['td_n0'])
-            vt = v0[:,:,:,None]*np.exp(self.data['processed']['td']['eigenvals'][:,:,:,None]*self.data['user']['td_t'])
-            self.data['processed']['td']['td_pop'] = np.einsum('klij,kljt->itkl',
-                                                               self.data['processed']['td']['eigenvectors'], vt)
-            self.data['processed']['td']['eigenvals'] = self.data['processed']['td']['eigenvals'].transpose(2,0,1)
-            self.data['processed']['td']['eigenvectors'] = self.data['processed']['td']['eigenvectors'].transpose(2,3,0,1)
 
+            self.data['processed']['td']['td_pop'],self.data['processed']['td']['eigenvals'],\
+            self.data['processed']['td']['eigenvectors'] = \
+            solve_matrix_exponential(self.data['cr_matrix']['cr'],
+                                            self.data['user']['td_n0'],
+                                            self.data['user']['td_t'])
 
     def split_pec_multiplet(self):
         """This function will solve take LS resolved PECs and split them statistically among the j levels
@@ -845,3 +822,31 @@ class colradpy():
         self.make_electron_excitation_rates()
         self.populate_cr_matrix()
         self.solve_quasi_static()
+
+    def plot_pec_sticks(self,ss_t=[],ss_n=[],ss_m=[]):
+
+        p_t = np.arange(0,len(self.data['user']['temp_grid']))
+        p_n = np.arange(0,len(self.data['user']['dens_grid']))
+        p_m = np.arange(0,len(self.data['atomic']['metas']))
+        if(np.asarray(ss_t).size>0):
+            p_t = p_t[ss_t]
+        if(np.asarray(ss_n).size>0):
+            p_n = p_n[ss_n]
+        if(np.asarray(ss_m).size>0):
+            p_m = p_m[ss_m]
+        import pdb
+        pdb.set_trace()
+        for i in p_n:
+            for j in p_t:
+                for k in p_m:
+                    plt.figure()
+                    plt.vlines(self.data['processed']['wave_air'],
+                           np.zeros_like(self.data['processed']['wave_air']),
+                                         self.data['processed']['pecs'][:,k,j,i])
+
+                    plt.xlabel('Wavelength in air (nm)',weight='semibold')
+                    plt.ylabel('PEC (ph cm$^{-1}$ s$^{-1}$)',weight='semibold')
+                    plt.title('Temperature ' + str(self.data['user']['temp_grid'][j]) + ' eV,  '+\
+                              'Density ' + str(self.data['user']['dens_grid'][i]) + ' cm$^{-3}$, '+\
+                              'Metastable ' + str(self.data['atomic']['metas'][k]))
+                    plt.xlim(100,1300)
