@@ -383,10 +383,31 @@ class colradpy():
         """This function will populate the collision radiative matrix with all the rates that
            user asks to be included into the calculation.
         """
-
+        #add in the excitation/de-excitation if they are not already calculated
         if('col_excit_interp' not in self.data['rates']['excit'].keys()):
-            print('Electron collisional rates have not yet been made on the user defined temperature grid. Doing that now')
+            print('Electron collisional rates have not yet been made on '+\
+                  'the user defined temperature grid. Doing that now')
             self.make_electron_excitation_rates()
+        #add in ecip ionization if not already included
+        if('ecip' not in self.data['rates']['ioniz'] and \
+                                         self.data['user']['suppliment_with_ecip']):
+            self.suppliment_with_ecip()
+        #add in ionization if it was not already included
+        if('ionization' not in self.data['rates']['ioniz'] and \
+                                               self.data['user']['use_ionization']):
+            self.make_ioniz_from_reduced_ionizrates()
+        #add in threebody recombination if it was not already included
+        if(self.data['user']['use_recombination_three_body'] and \
+                                 'recomb_three_body' not in self.data['rates']['recomb']):
+            self.make_three_body_recombination()
+        #add in recombination if present and it was not already calculated
+        if(self.data['user']['use_recombination'] and \
+           (np.size(self.data['rates']['recomb']['recomb_excit'] > 0)) and \
+                       'recomb_excit_interp_grid' not in self.data['rates']['recomb']):
+            self.make_recombination_rates_from_file()
+
+        
+            
         self.data['cr_matrix'] = {}
         self.data['cr_matrix']['q_ji'] = np.zeros((len(self.data['atomic']['energy']),
                                                    len(self.data['atomic']['energy']),
@@ -551,7 +572,8 @@ class colradpy():
         levels_to_keep = np.setdiff1d( np.linspace(0,len(self.data['atomic']['energy'])-1,
                                               len(self.data['atomic']['energy']) ,dtype='int64'),
                                        self.data['atomic']['metas'])
-        
+
+
         #[:,0:len(self.data['atomic']['metas']),:,:] 
         self.data['cr_matrix']['beta']= \
                                           -self.data['cr_matrix']['cr'][levels_to_keep][:,self.data['atomic']['metas']]
@@ -787,7 +809,10 @@ class colradpy():
         self.data['processed']['split']['j_low'] = []
         self.data['processed']['split']['pecs'] = []
         self.data['processed']['split']['relative_inten'] = []
-
+        self.data['processed']['split']['config'] = []
+        self.data['processed']['split']['L'] = []
+        self.data['processed']['split']['S'] = []
+        
         for i in range(0,len(self.data['processed']['pec_levels'])):
             up = self.data['processed']['pec_levels'][i,0]
             low = self.data['processed']['pec_levels'][i,1]
@@ -796,11 +821,11 @@ class colradpy():
                                          self.data['atomic']['L'][up],
                                          (self.data['atomic']['S'][low]-1)/2.,
                                          self.data['atomic']['L'][low])
-            
+            L_tmp = np.zeros_like(ju)
             self.data['processed']['split']['j_low'].append(jl)
             self.data['processed']['split']['j_up'].append(ju)
             self.data['processed']['split']['relative_inten'].append(res)
-
+            
             if(res.size>0):
                 self.data['processed']['split']['pecs'].append(np.einsum('ijk,l->lijk',
                                                                          self.data['processed']['pecs'][i],
