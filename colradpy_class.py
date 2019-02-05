@@ -399,11 +399,13 @@ class colradpy():
         #add in threebody recombination if it was not already included
         if(self.data['user']['use_recombination_three_body'] and \
                                  'recomb_three_body' not in self.data['rates']['recomb']):
+            print('Three body recombination was not previously calculated. Doing that now')
             self.make_three_body_recombination()
         #add in recombination if present and it was not already calculated
         if(self.data['user']['use_recombination'] and \
            (np.size(self.data['rates']['recomb']['recomb_excit'] > 0)) and \
                        'recomb_excit_interp_grid' not in self.data['rates']['recomb']):
+            print('Recombination from file was not previously calculated. Doing that now')            
             self.make_recombination_rates_from_file()
 
         
