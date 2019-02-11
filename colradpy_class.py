@@ -64,45 +64,49 @@ class colradpy():
        the collisional radiative set of equations. A full tutorial is provided in the 
        documentation.
    
+    Args:
+      :param fil: the file path to the input file
+      :type fil: string
 
-    :param fil: the file path to the input file
-    :type fil: string
+      :param metas: array of the levels that metastable
+      :type metas: integer array
 
-    :param metas: array of the levels that metastable
-    :type metas: integer array
+      :param temp_grid: array of temperature for calculation (eV)
+      :type metas: float array
 
-    :param temp_grid: array of temperature for calculation (eV)
-    :type metas: float array
+      :param dens_grid: array of temperature for calculation (cm-3)
+      :type metas: float array
 
-    :param dens_grid: array of temperature for calculation (cm-3)
-    :type metas: float array
+      :param use_ionization: Flag to turn on ionization in calculation, default = True
+      :type metas: bool
 
-    :param use_ionization: Flag to turn on ionization in calculation, default = True
-    :type metas: bool
+      :param suppliment_with_ecip: Flag to turn on ECIP supplimentation to ionization rates, default = Tue
+      :type metas: bool
 
-    :param suppliment_with_ecip: Flag to turn on ECIP supplimentation to ionization rates, default = Tue
-    :type metas: bool
+      :param use_recombination_three_body: Flag to turn 3 body recombination on,  default = True
+      :type metas: bool
 
-    :param use_recombination_three_body: Flag to turn 3 body recombination on,  default = True
-    :type metas: bool
+      :param use_recombination: Flag to turn recombination on, default = True
+      :type metas: bool
 
-    :param use_recombination: Flag to turn recombination on, default = True
-    :type metas: bool
+      :param td_t: Time array for time dependent solution to CR equations
+      :type metas: float array
 
-    :param td_t: Time array for time dependent solution to CR equations
-    :type metas: float array
+      :param td_n0: Initial populations of levels at time t=0 for TD CR equations
+      :type metas: float array
 
-    :param td_n0: Initial populations of levels at time t=0 for TD CR equations
-    :type metas: float array
-
-    :param td_source: source term for populations in the TD CR equations
-    :type metas: float array
+      :param td_source: source term for populations in the TD CR equations
+      :type metas: float array
 
     """
     def __init__(self,fil,metas=np.array([]),temp_grid=np.array([]),electron_den=np.array([]),
                  use_ionization=True,suppliment_with_ecip=True,use_recombination_three_body=True,
                  use_recombination = True, td_t = np.array([]), td_n0=np.array([]),td_source=np.array([]),
                   default_pop_norm=True):
+        """The initializing method. Sets up the nested list for data storage and starts to populate with user data
+           as well as reading in the adf04 file
+
+        """
 
         self.data = {}
         self.processed = {} 
@@ -492,6 +496,7 @@ class colradpy():
             
             #these are the ways to ionize out of ion
             if(self.data['rates']['ioniz']['ionization'].size > 0):
+
                 self.data['cr_matrix']['cr'][i,i,:,:] = self.data['cr_matrix']['cr'][i,i,:,:] - \
                                       np.sum(np.einsum('ij,k->ijk',self.data['rates']['ioniz']['ionization'][i,:,:],
                                                        self.data['user']['dens_grid']),axis=0)
@@ -499,7 +504,6 @@ class colradpy():
                 self.data['cr_matrix']['cr_loss'][i,i,:,:] = self.data['cr_matrix']['cr'][i,i,:,:] - \
                                       np.sum(np.einsum('ij,k->ijk',self.data['rates']['ioniz']['ionization'][i,:,:],
                                                        self.data['user']['dens_grid']),axis=0)
-                
             #level i populating mechanisms
             #these are the transition rates from higher levels into the level i
             self.data['cr_matrix']['cr'][i,0:len(self.data['atomic']['energy']),:,:] = \
@@ -513,8 +517,7 @@ class colradpy():
                                self.data['user']['dens_grid']) + \
                      np.einsum('ij,k->ijk',self.data['cr_matrix']['q_ji'][:,i,:],
                                self.data['user']['dens_grid'])
-
-
+            
         #recombination out of plus ion to current
         if(self.data['user']['use_recombination']):
             for p in range(0,nsigmaplus):
@@ -534,7 +537,6 @@ class colradpy():
                                              len(self.data['atomic']['energy'])+p,:,:] - \
                 np.sum(np.einsum('ij,k->ijk',self.data['rates']['recomb']['recombination'][:,p,:],
                                              self.data['user']['dens_grid']),axis=0)
-
 
         if(self.data['user']['use_recombination_three_body']):
             for p in range(0,nsigmaplus):
@@ -561,12 +563,17 @@ class colradpy():
                                np.einsum('ij,k->ijk',self.data['rates']['ioniz']['ionization'][:,p,:],
                                                    self.data['user']['dens_grid'])
 
-
-
+                
     def solve_quasi_static(self):
-        """This function will solve the CR matrix using the quasistatic approximation after solving this problem
+        """This function will solve the CR matrix using the quasistatic approximation, after solving this problem
            the generalized radiative coefficients GCRs will be calculated other claculated quanities such as 
            PEC and SXB are also calculated. This function is analgous to ADAS208.
+
+
+           creates the 
+
+           Creates the ['processed'] dictionary which will hold all of the quanties that require the CR
+           matrix to be solved in order to be obtained.
         """
         
         if('cr_matrix' not in self.data.keys()):
@@ -579,7 +586,7 @@ class colradpy():
         #[:,0:len(self.data['atomic']['metas']),:,:] 
         self.data['cr_matrix']['beta']= \
                                           -self.data['cr_matrix']['cr'][levels_to_keep][:,self.data['atomic']['metas']]
-        aa_tmp = self.data['cr_matrix']['cr'][levels_to_keep][:,levels_to_keep]
+        cr_red = self.data['cr_matrix']['cr'][levels_to_keep][:,levels_to_keep]
 
         if(self.data['user']['use_recombination'] or self.data['user']['use_recombination_three_body']):
             #num_recombs = np.shape(self.data['rates']['recomb']['recombination'])[1]
@@ -590,21 +597,21 @@ class colradpy():
                                             -self.data['cr_matrix']['cr'][levels_to_keep][:,recomb_driving_lvls],axis=1)
             
 
-        self.data['cr_matrix']['aa_inv'] = np.zeros((len(aa_tmp),len(aa_tmp), len(self.data['user']['temp_grid']),
+        self.data['cr_matrix']['aa_inv'] = np.zeros((len(cr_red),len(cr_red), len(self.data['user']['temp_grid']),
                                len(self.data['user']['dens_grid'])))
         
-        self.data['cr_matrix']['aa_inv'] = np.linalg.inv(aa_tmp.transpose(2,3,0,1)).transpose(2,3,0,1)
-
+        self.data['cr_matrix']['aa_inv'] = np.linalg.inv(cr_red.transpose(2,3,0,1)).transpose(2,3,0,1)
+        
         self.data['processed'] = {}
-        self.data['processed']['aa_tmp'] = aa_tmp
+        self.data['cr_matrix']['cr_red'] = cr_red
         self.data['processed']['excited_levels'] = levels_to_keep
         if(self.data['user']['use_recombination'] or self.data['user']['use_recombination_three_body']):
-            self.data['processed']['pops'] = np.zeros((len(aa_tmp),
+            self.data['processed']['pops'] = np.zeros((len(cr_red),
                                             len(self.data['atomic']['metas'])+len(self.data['atomic']['ion_pot']),
                                             len(self.data['user']['temp_grid']),
                                             len(self.data['user']['dens_grid'])))
         else:
-            self.data['processed']['pops'] = np.zeros((len(aa_tmp),
+            self.data['processed']['pops'] = np.zeros((len(cr_red),
                                             len(self.data['atomic']['metas']),
                                             len(self.data['user']['temp_grid']),
                                             len(self.data['user']['dens_grid'])))
@@ -698,11 +705,11 @@ class colradpy():
                 self.data['processed']['scd'] = self.data['processed']['scd'] + \
                                               np.einsum('ipk,ikl->ipkl',
                                               self.data['rates']['ioniz']['ionization'][self.data['atomic']['metas'],:,:],
-                                              1/(1+np.sum(self.data['processed']['pops_no_norm'][:,self.data['atomic']['metas'],:,:],axis=0)))
+                          1/(1+np.sum(self.data['processed']['pops_no_norm'][:,self.data['atomic']['metas'],:,:],axis=0)))
 
             else:
                 self.data['processed']['scd'] = self.data['processed']['scd'] + \
-                                                self.data['rates']['ioniz']['ionization'][self.data['atomic']['metas'],:,:,None]
+                                         self.data['rates']['ioniz']['ionization'][self.data['atomic']['metas'],:,:,None]
 
 
         if(self.data['user']['use_recombination'] and self.data['user']['use_recombination_three_body']):
@@ -770,6 +777,12 @@ class colradpy():
         """This function will solve the CR matrix with no assumptions. A matrix expoential is used to solve this problem.
            A source term can be included to mimick erosion of fresh atoms or injection of neutral gas or maybe even LIF
 
+           Uses same CR matrix ".data['cr_matrix']['cr']" used to define the reduced CR matrix that the quasistatic solution solves.
+           
+           Creates a new dictionary under ['processed'] call ['td']
+           Stores eigenvalues and eigenvectors that were required for the solution (Theres also physics there see ColRadPy paper).
+           Stores the time changing populations.
+        
            R. LeVeque, Finite Difference Methods for Ordinary and Par-
            tial Differential Equations: Steady-State and Time-Dependent
            Problems (Classics in Applied Mathematics Classics in Applied
@@ -836,6 +849,18 @@ class colradpy():
                 self.data['processed']['split']['pecs'].append(self.data['processed']['pecs'][i])
         
     def solve_cr(self):
+        """Solve_cr automates the calls to various function to make the data for
+           need to solve the CR equations and get to the quanties that users want.
+           This can be thought of as a basic mode for the user doesn't want to mess
+           with the default rates that are made.
+
+           Generally what a user just wanting basic output should use.
+           Makes ionization if requested
+           Makes recombination if requested
+           Makes excitation rates
+           Populates the CR matrix
+           Solve the CR matrix using the quasistatic approximation
+        """
         if(self.data['user']['use_ionization']):
             self.make_ioniz_from_reduced_ionizrates()
         if(self.data['user']['suppliment_with_ecip']):
@@ -961,7 +986,6 @@ class colradpy():
 
         :param scale: scale for the density axis default is log
         :type scale: str
-
 
         """
         temp = np.array(temp)
