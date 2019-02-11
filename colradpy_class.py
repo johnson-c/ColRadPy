@@ -597,10 +597,10 @@ class colradpy():
                                             -self.data['cr_matrix']['cr'][levels_to_keep][:,recomb_driving_lvls],axis=1)
             
 
-        self.data['cr_matrix']['aa_inv'] = np.zeros((len(cr_red),len(cr_red), len(self.data['user']['temp_grid']),
+        self.data['cr_matrix']['cr_red_inv'] = np.zeros((len(cr_red),len(cr_red), len(self.data['user']['temp_grid']),
                                len(self.data['user']['dens_grid'])))
         
-        self.data['cr_matrix']['aa_inv'] = np.linalg.inv(cr_red.transpose(2,3,0,1)).transpose(2,3,0,1)
+        self.data['cr_matrix']['cr_red_inv'] = np.linalg.inv(cr_red.transpose(2,3,0,1)).transpose(2,3,0,1)
         
         self.data['processed'] = {}
         self.data['cr_matrix']['cr_red'] = cr_red
@@ -617,7 +617,7 @@ class colradpy():
                                             len(self.data['user']['dens_grid'])))
         
         self.data['processed']['pops'] = np.einsum('ijkl,jnkl->inkl',
-                                                   self.data['cr_matrix']['aa_inv'],
+                                                   self.data['cr_matrix']['cr_red_inv'],
                                                    self.data['cr_matrix']['beta'])
         #normalization of populations is done here. Quasistatic approximation assumes that
         #there is a small population in 'excited' states, this is sometimes not the case
@@ -676,14 +676,14 @@ class colradpy():
                                                   len(self.data['atomic']['ion_pot']),
                                                   len(self.data['user']['temp_grid']),
                                                   len(self.data['user']['dens_grid'])))
-        self.data['processed']['pop_lvl'] = np.zeros((len(self.data['cr_matrix']['aa_inv']),
-                                                       len(self.data['cr_matrix']['aa_inv']),
+        self.data['processed']['pop_lvl'] = np.zeros((len(self.data['cr_matrix']['cr_red_inv']),
+                                                       len(self.data['cr_matrix']['cr_red_inv']),
                                                        len(self.data['atomic']['metas']),
                                                        len(self.data['user']['temp_grid']),
                                                        len(self.data['user']['dens_grid'])))
         #these are how levels get populated
         self.data['processed']['pop_lvl'] = np.einsum('ijkl,jmkl->ijmkl',
-                                                      self.data['cr_matrix']['aa_inv'],
+                                                      self.data['cr_matrix']['cr_red_inv'],
                                                       self.data['cr_matrix']['beta'][:,:,:,:])
         #population of levels with no normalization
         self.data['processed']['pops_no_norm'] = np.sum(self.data['processed']['pop_lvl'],axis=1)
@@ -729,7 +729,7 @@ class colradpy():
             self.data['processed']['acd'] = -np.einsum('njkl,jmkl->nmkl',
 
                            self.data['cr_matrix']['cr'][np.c_[self.data['atomic']['metas']], levels_to_keep,:,:],
-                           np.einsum('ijkl,jmkl->imkl', self.data['cr_matrix']['aa_inv'][0:len(self.data['atomic']['energy']),
+                           np.einsum('ijkl,jmkl->imkl', self.data['cr_matrix']['cr_red_inv'][0:len(self.data['atomic']['energy']),
                            0:len(self.data['atomic']['energy']),:,:],
                            recomb_coeff[levels_to_keep,:,:,:])
                            )
@@ -769,7 +769,7 @@ class colradpy():
                 self.data['processed']['xcd'][metasplus_to_keep_ind,np.array([m]),:,:] =-np.einsum('ik,imkl->mkl',
 
                         self.data['rates']['ioniz']['ionization'][levels_to_keep,m,:],np.einsum('ijkl,jmkl->imkl',
-                        self.data['cr_matrix']['aa_inv'][0:len(self.data['atomic']['energy']),0:len(self.data['atomic']['energy']),:,:],
+                        self.data['cr_matrix']['cr_red_inv'][0:len(self.data['atomic']['energy']),0:len(self.data['atomic']['energy']),:,:],
                         recomb_coeff[len(self.data['atomic']['metas']):len(self.data['atomic']['energy']),metasplus_to_keep,:,:])
                         )
 
