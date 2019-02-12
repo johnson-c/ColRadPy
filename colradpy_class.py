@@ -386,6 +386,15 @@ class colradpy():
     def populate_cr_matrix(self):
         """This function will populate the collision radiative matrix with all the rates that
            user asks to be included into the calculation.
+
+           Ionization is included from the ADF04 file, there is a user option to suppliment with ECIP
+           rates that ColRadPy will make
+
+           Recombination is included from the ADF04 file.
+           Three-body recombination can also be made from ColRadPy through detailed balance
+           Excitation rates are included from the ADF04 file.
+
+           The dictionary ['cr_matrix'] is made in this definition mostly from rates in the ['rates'] dictionary.
         """
         #add in the excitation/de-excitation if they are not already calculated
         if('col_excit_interp' not in self.data['rates']['excit'].keys()):
@@ -537,7 +546,7 @@ class colradpy():
                                              len(self.data['atomic']['energy'])+p,:,:] - \
                 np.sum(np.einsum('ij,k->ijk',self.data['rates']['recomb']['recombination'][:,p,:],
                                              self.data['user']['dens_grid']),axis=0)
-
+        #three body recombination out of plus ion to current ion
         if(self.data['user']['use_recombination_three_body']):
             for p in range(0,nsigmaplus):
                 self.data['cr_matrix']['cr'][0:len(self.data['atomic']['energy']),
@@ -570,10 +579,9 @@ class colradpy():
            PEC and SXB are also calculated. This function is analgous to ADAS208.
 
 
-           creates the 
-
            Creates the ['processed'] dictionary which will hold all of the quanties that require the CR
-           matrix to be solved in order to be obtained.
+           matrix to be solved in order to be obtained. 
+           
         """
         
         if('cr_matrix' not in self.data.keys()):
@@ -769,7 +777,8 @@ class colradpy():
                 self.data['processed']['xcd'][metasplus_to_keep_ind,np.array([m]),:,:] =-np.einsum('ik,imkl->mkl',
 
                         self.data['rates']['ioniz']['ionization'][levels_to_keep,m,:],np.einsum('ijkl,jmkl->imkl',
-                        self.data['cr_matrix']['cr_red_inv'][0:len(self.data['atomic']['energy']),0:len(self.data['atomic']['energy']),:,:],
+                        self.data['cr_matrix']['cr_red_inv'][0:len(self.data['atomic']['energy']),
+                                                             0:len(self.data['atomic']['energy']),:,:],
                         recomb_coeff[len(self.data['atomic']['metas']):len(self.data['atomic']['energy']),metasplus_to_keep,:,:])
                         )
 
@@ -892,7 +901,6 @@ class colradpy():
         :type metas: int array
 
         """
-
         p_t = np.arange(0,len(self.data['user']['temp_grid']))
         p_n = np.arange(0,len(self.data['user']['dens_grid']))
         p_m = np.arange(0,len(self.data['atomic']['metas']))
