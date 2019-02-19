@@ -28,7 +28,6 @@ grid provided.
 
     """
     ecip = np.zeros((len(energy),len(ion_pot),len(temp_grid)))
-    print(len(ion_pot))
     for p in range(0,len(ion_pot)):
         #there was a stupid problem beacuse {X} only designates ecip not other ionization        
         ion_inds = np.where( zpla[:,p] > -1)[0]
