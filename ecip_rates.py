@@ -28,12 +28,14 @@ grid provided.
 
     """
     ecip = np.zeros((len(energy),len(ion_pot),len(temp_grid)))
+    print(len(ion_pot))
     for p in range(0,len(ion_pot)):
-            #there was a stupid problem beacuse {X} only designates ecip not other ionization        
-            ion_inds = np.where( zpla[:,p] > -1)[0]
-            ion_inds2 = np.where( zpla1 == p +1)[0]
-            ion_inds = np.intersect1d(ion_inds,ion_inds2)
-            ecip[ion_inds,p,:] = r8ecip(charge_state, ion_pot[p],
+        #there was a stupid problem beacuse {X} only designates ecip not other ionization        
+        ion_inds = np.where( zpla[:,p] > -1)[0]
+        ion_inds2 = np.where( zpla1 == p +1)[0]
+        ion_inds = np.intersect1d(ion_inds,ion_inds2)
+
+        ecip[ion_inds,p,:] = r8ecip(charge_state, ion_pot[p],
                          energy[ion_inds],zpla[ion_inds,p],
                           temp_grid*11604.5)
-            return ecip
+    return ecip
