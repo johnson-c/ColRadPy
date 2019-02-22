@@ -1,11 +1,10 @@
 import numpy as np
 import re
 
-f = open('/home/curtis/Downloads/scd96r_he.dat')
+fil = '/home/curtis/Downloads/qcd96r_he.dat'
+f = open(fil)
 adf11 = {}
 adf11['input_file'] = {}
-
-
 
 #reading the first line
 tmp = re.findall('(\d+)',f.readline())
@@ -29,3 +28,52 @@ adf11['input_file']['temp'] = np.array([])
 while adf11['input_file']['temp'].size <adf11['input_file']['num_temp']:
     adf11['input_file']['temp'] = np.append(adf11['input_file']['temp'],np.array(list(map(float,re.findall('(.\d*\.\d+)',f.readline())))))
     
+#setting up the GCR stages
+if(adf11['input_file']['nuc_charge'] == len(adf11['input_file']['metas'])-1):
+    num_stages = adf11['input_file']['nuc_charge']
+else:
+    num_stages = len(adf11['input_file']['metas'])
+for i in range(0,num_stages):
+    adf11['input_file'][str(i)] = {}
+    if( ('scd' or 'acd') in fil):
+        adf11['input_file'][str(i)] = np.zeros((adf11['input_file']['metas'][i],
+                                                 adf11['input_file']['metas'][i+1],
+                                         len(adf11['input_file']['temp']),
+                                         len(adf11['input_file']['dens'])))
+    if 'qcd' in fil:
+        adf11['input_file'][str(i)] = np.zeros((adf11['input_file']['metas'][i],
+                                                 adf11['input_file']['metas'][i],
+                                         len(adf11['input_file']['temp']),
+                                         len(adf11['input_file']['dens'])))
+
+
+    
+#Reading the GCR value portion
+gcr_line = f.readline()
+ii = 0
+while 'C' not in gcr_line:
+    #look for the stage identifying line
+    if('---' in gcr_line):
+        dens_count = 0
+        temp_count = 0
+        stage_id = np.array(list(map(int,re.findall('( \d+ )',gcr_line))))
+        print(stage_id)
+        if(('scd' or 'acd')  in fil):
+            tmp = stage_id[0]
+            stage_id[0] = stage_id[1]
+            stage_id[1] = tmp
+            print('here')
+        ii = ii+1
+
+    else:
+        
+        gcr_vals = np.array(list(map(float,re.findall('(-\d+.\d+)',gcr_line))))
+        adf11['input_file'][str(stage_id[2]-1)][stage_id[0]-1,stage_id[1]-1,
+                                       temp_count,dens_count:dens_count+len(gcr_vals)] = gcr_vals
+        dens_count = dens_count + len(gcr_vals)
+        if(dens_count == len(adf11['input_file']['dens'])):
+            temp_count = temp_count + 1
+            dens_count = 0
+    gcr_line = f.readline()
+
+
