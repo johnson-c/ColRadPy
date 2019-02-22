@@ -229,7 +229,6 @@ class colradpy():
                     ['ion_transitions'][i,1]-1] - self.data['atomic']['energy']\
                     [self.data['rates']['ioniz']['ion_transitions'][i,0] -1 ])\
                     *0.00012398774011749576/self.data['user']['temp_grid'][j])
-
     def suppliment_with_ecip(self):
         """This function will suppliment the ionization that is to be used in the CR matrix
            with ECIP ionization if there is no ionization that is provided. While ECIP ionization
@@ -771,7 +770,7 @@ class colradpy():
                 metasplus_to_keep = np.setdiff1d( np.linspace(0,len(self.data['atomic']['ion_pot'])-1,
                                                               len(self.data['atomic']['ion_pot']),dtype='int'),m)
                 metasplus_to_keep_ind = np.arange(self.data['atomic']['ion_pot'].shape[0])\
-                                     [np.in1d(self.data['atomic']['ion_pot'], metas_to_keep)]
+                                     [np.in1d(self.data['atomic']['ion_pot_lvl']-1, metasplus_to_keep)]
                 #parent cross coupling coefficient, start in the parent atom, recombine get redistrubted then
                 #ionize back into the parent but into a different parent metastable
                 self.data['processed']['xcd'][metasplus_to_keep_ind,np.array([m]),:,:] =-np.einsum('ik,imkl->mkl',
