@@ -40,6 +40,7 @@ from burgess_tully_rates import *
 from split_multiplet import *
 import collections
 from solve_matrix_exponential import *
+from matplotlib import rc,rcParams
 
 def convert_to_air(lam):
     """This function converts the vacuum wavelength of spectral lines to 
@@ -173,10 +174,17 @@ class colradpy():
                                                         len(self.data['atomic']['ion_pot']),
                                                         len(self.data['user']['temp_grid'])))
         #there was a stupid problem beacuse {X} only designates ecip not other ionization
+        
+        #2/28/18 In solving this problem I introduced another problem. The code was using the {X}
+        #for levels that are also over the ionizaton potential. and then there wasn't a check
+        #so ECIP was made for levels above ionization potential which it should be.
 
-        self.data['rates']['ioniz']['ecip'] = ecip_rates(self.data['atomic']['energy'],
-                                                  self.data['atomic']['ion_pot'],self.data['atomic']['zpla'],
-                                                  self.data['atomic']['zpla1'],self.data['atomic']['charge_state'],
+
+        inds_below = np.where( self.data['atomic']['energy'] < self.data['atomic']['ion_pot'][0])
+        
+        self.data['rates']['ioniz']['ecip'][inds_below] = ecip_rates(self.data['atomic']['energy'][inds_below],
+                                                  self.data['atomic']['ion_pot'],self.data['atomic']['zpla'][inds_below],
+                                                  self.data['atomic']['zpla1'][inds_below],self.data['atomic']['charge_state'],
                                                   self.data['user']['temp_grid'])
         
     def make_burgess_tully(self):
@@ -805,7 +813,7 @@ class colradpy():
         #check if a source term has been provided, if a source term has been provided solve the problem with s asource
         if(self.data['user']['td_source'].any()):
             #solve the matrix with a source term
-            self.data['processed']['td']['td_pop'],self.data['processed']['td']['eigenvals'],
+            self.data['processed']['td']['td_pop'],self.data['processed']['td']['eigenvals'],\
             self.data['processed']['td']['eigenvectors'] =\
             solve_matrix_exponential_source(self.data['cr_matrix']['cr'],
                                             self.data['user']['td_n0'],
@@ -900,6 +908,16 @@ class colradpy():
         :type metas: int array
 
         """
+
+        rc('axes', linewidth=2)
+        rc('font', weight='semibold')
+
+
+        
+        if('processed' not in self.data.keys()):
+            self.solve_cr()
+
+        
         p_t = np.arange(0,len(self.data['user']['temp_grid']))
         p_n = np.arange(0,len(self.data['user']['dens_grid']))
         p_m = np.arange(0,len(self.data['atomic']['metas']))
@@ -914,15 +932,16 @@ class colradpy():
             for j in p_t:
                 for k in p_m:
                     plt.figure()
+                    scaling = int(np.floor(np.log2(np.max(self.data['processed']['pecs'][:,k,j,i]))/np.log2(10)))
                     plt.vlines(self.data['processed']['wave_air'],
                            np.zeros_like(self.data['processed']['wave_air']),
-                                         self.data['processed']['pecs'][:,k,j,i])
+                                         self.data['processed']['pecs'][:,k,j,i]*10**np.abs(scaling))
 
                     plt.xlabel('Wavelength in air (nm)',weight='semibold')
-                    plt.ylabel('PEC (ph cm$^{-1}$ s$^{-1}$)',weight='semibold')
+                    plt.ylabel('PEC X 1E' +str(scaling) + ' (ph cm$^{-1}$ s$^{-1}$)',weight='semibold')
                     plt.title('Temperature ' + str(self.data['user']['temp_grid'][j]) + ' eV,  '+\
                               'Density ' + format(self.data['user']['dens_grid'][i],'.2e') + ' cm$^{-3}$, '+\
-                              'Metastable ' + str(self.data['atomic']['metas'][k]))
+                              'Metastable ' + str(self.data['atomic']['metas'][k]),weight='semibold')
                     plt.xlim(0,1300)
 
     def plot_pec_ratio_temp(self,pec1,pec2,dens=np.array([0]),meta = np.array([0])):
@@ -946,6 +965,11 @@ class colradpy():
         :type metas: int array
 
         """
+
+        if('processed' not in self.data.keys()):
+            self.solve_cr()
+
+        
         dens = np.array(dens)
         p_n = np.arange(0,len(self.data['user']['dens_grid']),dtype=int)
         p_m = np.arange(0,len(self.data['atomic']['metas']),dtype=int)
@@ -968,7 +992,7 @@ class colradpy():
                 plt.ylabel('Ratio (-)',weight='semibold')
                 plt.title('Ratio of PEC '+str(pec1)+', ' + format(self.data['processed']['wave_air'][pec1],'.2f') + ' nm'+\
                           ' to PEC '+str(pec2)+', ' + format(self.data['processed']['wave_air'][pec2],'.2f') + ' nm, '+\
-                              'Metastable ' + str(self.data['atomic']['metas'][k]))
+                              'Metastable ' + str(self.data['atomic']['metas'][k]),weight='semibold')
                 plt.legend(loc='best')
                 
     def plot_pec_ratio_dens(self,pec1,pec2,temp=np.array([0]),meta = np.array([0]),scale='log'):
@@ -1017,7 +1041,7 @@ class colradpy():
                 plt.ylabel('Ratio (-)',weight='semibold')
                 plt.title('Ratio of PEC '+str(pec1)+', ' + format(self.data['processed']['wave_air'][pec1],'.2f') + ' nm'+\
                           ' to PEC '+str(pec2)+', ' + format(self.data['processed']['wave_air'][pec2],'.2f') + ' nm, '+\
-                              'Metastable ' + str(self.data['atomic']['metas'][k]))
+                              'Metastable ' + str(self.data['atomic']['metas'][k]),weight='semibold')
                 if(scale=='log'):
                     plt.semilogx()
                 plt.legend(loc='best')

@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../')
+sys.path.append('../') #starting in 'examples' so need to go up one
 from colradpy_class import colradpy
 import numpy as np
 
@@ -7,9 +7,15 @@ fil = 'cpb03_ls#be0.dat' #adf04 file
 temperature_arr = np.linspace(1,100,100) #eV
 metastable_levels = np.array([0])   #metastable level, just ground chosen here
 density_arr =     np.array([1.e13,4.e14]) # cm-3
-be = colradpy(fil,metastable_levels,temperature_arr,density_arr,use_recombination=True,
+
+#calling the colradpy class with the various inputs
+be = colradpy(fil,metastable_levels,temperature_arr,density_arr,use_recombination=True, 
               use_recombination_three_body = True,use_ionization=True,suppliment_with_ecip=True)
 
+be.solve_cr() #solve the CR equations with the quasistatic method
+
+
+#the block of code below is what 'solve_cr()' is doing
 if(be.data['user']['use_ionization']):
     be.make_ioniz_from_reduced_ionizrates()
 if(be.data['user']['suppliment_with_ecip']):
@@ -22,8 +28,22 @@ if(be.data['user']['use_recombination_three_body']):
 be.make_electron_excitation_rates()
 be.populate_cr_matrix()
 be.solve_quasi_static()
+#end of solve_cr()
 
-#be.solve_cr_qausistatic()
+
+
+
+
+
+
+
+
+
+
+
+'''
+
+
 
 import matplotlib.pyplot as plt
 plt.ion()
@@ -81,3 +101,4 @@ print('Wavelength from file ' + str(be.data['processed']['wave_air'][pec_ind[0]]
 #Wavelength from file [351.55028742]
 print('PEC upper and lower levels '+ str(be.data['processed']['pec_levels'][pec_ind[0]]))
 #PEC upper and lower levels [[25  2]]
+'''
