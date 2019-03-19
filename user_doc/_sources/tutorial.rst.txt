@@ -1,8 +1,11 @@
 =============
 Tutorial
 =============
-This tutorial will take the user through the basics of atomic data needed for CR modeling.
+This tutorial will take the user through the basics of atomic data needed for Collisional Radiative (CR) modeling.
 The python scripts for these examples can be found in the 'examples' folder.
+
+For a detailed introduction to CR theory see the ColRadPy paper included in the 'user_doc' folder.
+Summers 2006 also provides a more detailed overview of CR theory.
 
 Neither the local thermodynamic equilibrium (LTE) or conornal approximations are valid for fusion plasmas.
 These plasma must be modeled with a collisional radiative (CR) model which includes effects of electron density.
@@ -12,17 +15,20 @@ outlined in (Summers 2006).
 Atomic Data and the ADF04 File
 ==============================
 Atomic data is generally made by calculating cross-sections (probablity) of transitions.
-From these cross-sections rates and then made by convolving with a maxwellian temperature distriubtion of electron
-energies with the cross section. The rates are what is used in the CR model.
+From these cross-sections rates and then made by convolving with a maxwellian temperature distriubtion (or some of distribution) of electron
+energies with the cross section.
+The rates are what is used in the CR model.
 
-The ADF04 file format from ADAS that is used to hold atomic data for input into the CR model. The ADF04 file is supported as
-an input to colradpy.
+The ADF04 file format from ADAS that is used to hold atomic rate data for input into the CR model.
+The ADF04 file is supported as an input to colradpy.
+
 
 Electron impact de/excitation
 -----------------------------
 Electron impact excitation and deexcitation is what causes transitions be the ground and excited states and within excited
-states. There rates are stored as "effective collisional strengths" in the adf04 file. These can then be converted to the
-excitiation and deexcitation rates that are needed for CR modeling.
+states. There rates are stored as "effective collisional strengths" in the adf04 file.
+These can then be converted to the excitiation and deexcitation rates that are needed for CR modeling.
+
 
 Electron ionization
 -------------------
@@ -42,6 +48,25 @@ Dielectronic Recombination
 Three Body Recombination
 ------------------------
 Three body recombination is calculated from using detailed balance from the ionization
+
+Solutions
+---------
+
+There are two ways that ColRadPy can solve the CR set of equations.
+The general user will probably be interested in the first way of solving the CR equations, this is same way ADAS solve the equations.
+The Quasistatic approximation solves the equations assuming that excited states do not have
+time changing populations. It assumes that these populations and in their equilbrium values with the
+ground and any metastable levels. This is the way that ADAS solves the CR set of equations.
+
+ColRadPy is also capable of solving the system of equations time dependently using the matrix exponentialation method.
+This solution makes no assumptions of equilbrium time scales for excited states.
+This is an excact solution.
+In equilbrium, the non-quasistatic and quastistic solutions will be the same.
+
+
+
+
+
 
 
 Running ColRadPy
@@ -73,62 +98,87 @@ This allows all of the different functionality to be shown and tested.
 #. Ionization, recombination options chosen default values are true
 
 
-.. code-block:: python
-   :linenos:
-
-   import sys
-   sys.path.append('../')
-   from colradpy_class import colradpy
-   import numpy as np
-
-   fil = 'cpb03_ls#be0.dat' #adf04 file
-   temperature_arr = np.linspace(1,100,100) #eV
-   metastable_levels = np.array([0])   #metastable level, just ground chosen here
-   density_arr =     np.array([1.e13,4.e14]) # cm-3
-   be = colradpy(fil,metastable_levels,temperature_arr,density_arr,use_recombination=True,
-		 use_recombination_three_body = True,use_ionization=True,suppliment_with_ecip=True)
-   
-'be' is now a colradpy class, there are many different calls that could be made from the class :ref:`documented here <colradpy>`.
-The general flow of the code goes as
 
 
-#. create rates
-#. populate matrix
-#. solve matrix and create post processed data.
+There are are highlevel class definitions that a general user can use.
+These high level definitions will be show as well as the more basic definitions that
+the high level definitions call.
+A basic user needs to only care about the high level definitions
 
-   
-.. code-block:: python
-   :linenos:
+Below is an example of running ColRadPy.
+The user chooses an input adf04 file, temperature and density grids as well as the number of metastables.
+If you don't know how many metastables exist only choose level '0' (the ground) as being metastable.
+Choices were also made to include ionization and recombination.
 
-   if(be.data['user']['use_ionization']):
-       be.make_ioniz_from_reduced_ionizrates()
-   if(be.data['user']['suppliment_with_ecip']):
-       be.make_ecip()
-       be.suppliment_with_ecip()
-   if(be.data['user']['use_recombination']):
-       be.make_recombination_rates_from_file()
-   if(be.data['user']['use_recombination_three_body']):
-       be.make_three_body_recombination()
-       
-   
-.. code-block:: python
-   :linenos:
+The 'use_recombination' flag when true will use any recombination rates that are included in the adf04 file.
 
-   be.populate_cr_matrix()
+The 'use_recombination_three_body' flag when true will have ColRadPy make and include three body recombination rates.
+Note inorder to have three body recombination there must be some ionization included in the calculation.
+
+The 'use_ionization' flag when true will use any ionization rates that are included in the adf04 file.
+
+The 'suppliment_with_ecip' when true will have ColRadPy make ECIP ionization rates and include these rates anywhere
+that there are no ionization rates included in the adf04 file.
 
 
 .. code-block:: python
    :linenos:
 
-   be.solve_quasi_static()
-   
-   
-This can be done from one call to colradpy. Which does the procedure above.
+    import sys
+    sys.path.append('../') #starting in 'examples' so need to go up one
+    from colradpy_class import colradpy
+    import numpy as np
 
-.. code-block:: python
-   :linenos:
+    fil = 'cpb03_ls#be0.dat' #adf04 file
+    temperature_arr = np.linspace(1,100,100) #eV
+    metastable_levels = np.array([0])   #metastable level, just ground chosen here
+    density_arr =     np.array([1.e13,4.e14]) # cm-3
 
-   be.solve_cr_qausistatic()
+    #calling the colradpy class with the various inputs
+    be = colradpy(fil,metastable_levels,temperature_arr,density_arr,use_recombination=True, 
+		  use_recombination_three_body = True,use_ionization=True,suppliment_with_ecip=True)
+
+    be.solve_cr() #solve the CR equations with the quasistatic method
+    
+
+'be' is now a colradpy class that has been solved. There are various methods for getting the data out.
+Data that required ColRadPy to solve the CR set of equations is now stored in the 'processed' sub dictionary.
+There are many different calls that could be made from the class :ref:`documented here <colradpy>`.
+
+
+
+.. hidden-code-block:: python
+    :linenos:
+    :label: --- Show/details of solve_cr()---
+
+	    
+    #The flow of the code is below
+    # 1. create rates from adf04 or internal
+    # 2. populate matrix
+    # 3. solve matrix and create post processed data.
+	    
+    #the block of code below is what 'solve_cr()' is doing
+    if(be.data['user']['use_ionization']):
+	be.make_ioniz_from_reduced_ionizrates()
+    if(be.data['user']['suppliment_with_ecip']):
+	be.make_ecip()
+	be.suppliment_with_ecip()
+    if(be.data['user']['use_recombination']):
+	be.make_recombination_rates_from_file()
+    if(be.data['user']['use_recombination_three_body']):
+	be.make_three_body_recombination()
+    be.make_electron_excitation_rates()
+
+    # This call takes in all of the rates that were provided by
+    # the adf04 file as well as any rates that were bade in
+    # ColRadPy and puts them into the matrix.
+    
+    be.populate_cr_matrix()
+
+    # This call solves the CR matrix and creates the 'processed'
+    # sub dictionary with all of the processed data.
+    
+    be.solve_quasi_static()
 
 
 Data from the calculation is now avaible in the '.data' dictionary.

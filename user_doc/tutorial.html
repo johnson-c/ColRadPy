@@ -9,11 +9,12 @@
     <title>Tutorial &#8212; ColRadPy 0.9 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="ColRadPy Dictionary Structure" href="dictionary.html" />
@@ -45,8 +46,10 @@
             
   <div class="section" id="tutorial">
 <h1>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h1>
-<p>This tutorial will take the user through the basics of atomic data needed for CR modeling.
+<p>This tutorial will take the user through the basics of atomic data needed for Collisional Radiative (CR) modeling.
 The python scripts for these examples can be found in the ‘examples’ folder.</p>
+<p>For a detailed introduction to CR theory see the ColRadPy paper included in the ‘user_doc’ folder.
+Summers 2006 also provides a more detailed overview of CR theory.</p>
 <p>Neither the local thermodynamic equilibrium (LTE) or conornal approximations are valid for fusion plasmas.
 These plasma must be modeled with a collisional radiative (CR) model which includes effects of electron density.
 Collisional Radiative theory has been updated to included general collisional radiative (GCR) theory, this is
@@ -54,15 +57,16 @@ outlined in (Summers 2006).</p>
 <div class="section" id="atomic-data-and-the-adf04-file">
 <h2>Atomic Data and the ADF04 File<a class="headerlink" href="#atomic-data-and-the-adf04-file" title="Permalink to this headline">¶</a></h2>
 <p>Atomic data is generally made by calculating cross-sections (probablity) of transitions.
-From these cross-sections rates and then made by convolving with a maxwellian temperature distriubtion of electron
-energies with the cross section. The rates are what is used in the CR model.</p>
-<p>The ADF04 file format from ADAS that is used to hold atomic data for input into the CR model. The ADF04 file is supported as
-an input to colradpy.</p>
+From these cross-sections rates and then made by convolving with a maxwellian temperature distriubtion (or some of distribution) of electron
+energies with the cross section.
+The rates are what is used in the CR model.</p>
+<p>The ADF04 file format from ADAS that is used to hold atomic rate data for input into the CR model.
+The ADF04 file is supported as an input to colradpy.</p>
 <div class="section" id="electron-impact-de-excitation">
 <h3>Electron impact de/excitation<a class="headerlink" href="#electron-impact-de-excitation" title="Permalink to this headline">¶</a></h3>
 <p>Electron impact excitation and deexcitation is what causes transitions be the ground and excited states and within excited
-states. There rates are stored as “effective collisional strengths” in the adf04 file. These can then be converted to the
-excitiation and deexcitation rates that are needed for CR modeling.</p>
+states. There rates are stored as “effective collisional strengths” in the adf04 file.
+These can then be converted to the excitiation and deexcitation rates that are needed for CR modeling.</p>
 </div>
 <div class="section" id="electron-ionization">
 <h3>Electron ionization<a class="headerlink" href="#electron-ionization" title="Permalink to this headline">¶</a></h3>
@@ -80,6 +84,18 @@ generally have rates that are supplimented with ECIP.</p>
 <div class="section" id="three-body-recombination">
 <h3>Three Body Recombination<a class="headerlink" href="#three-body-recombination" title="Permalink to this headline">¶</a></h3>
 <p>Three body recombination is calculated from using detailed balance from the ionization</p>
+</div>
+<div class="section" id="solutions">
+<h3>Solutions<a class="headerlink" href="#solutions" title="Permalink to this headline">¶</a></h3>
+<p>There are two ways that ColRadPy can solve the CR set of equations.
+The general user will probably be interested in the first way of solving the CR equations, this is same way ADAS solve the equations.
+The Quasistatic approximation solves the equations assuming that excited states do not have
+time changing populations. It assumes that these populations and in their equilbrium values with the
+ground and any metastable levels. This is the way that ADAS solves the CR set of equations.</p>
+<p>ColRadPy is also capable of solving the system of equations time dependently using the matrix exponentialation method.
+This solution makes no assumptions of equilbrium time scales for excited states.
+This is an excact solution.
+In equilbrium, the non-quasistatic and quastistic solutions will be the same.</p>
 </div>
 </div>
 <div class="section" id="running-colradpy">
@@ -102,6 +118,20 @@ This allows all of the different functionality to be shown and tested.</p>
 <li>Input file, temperature, density and metastable inputs defined.</li>
 <li>Ionization, recombination options chosen default values are true</li>
 </ol>
+<p>There are are highlevel class definitions that a general user can use.
+These high level definitions will be show as well as the more basic definitions that
+the high level definitions call.
+A basic user needs to only care about the high level definitions</p>
+<p>Below is an example of running ColRadPy.
+The user chooses an input adf04 file, temperature and density grids as well as the number of metastables.
+If you don’t know how many metastables exist only choose level ‘0’ (the ground) as being metastable.
+Choices were also made to include ionization and recombination.</p>
+<p>The ‘use_recombination’ flag when true will use any recombination rates that are included in the adf04 file.</p>
+<p>The ‘use_recombination_three_body’ flag when true will have ColRadPy make and include three body recombination rates.
+Note inorder to have three body recombination there must be some ionization included in the calculation.</p>
+<p>The ‘use_ionization’ flag when true will use any ionization rates that are included in the adf04 file.</p>
+<p>The ‘suppliment_with_ecip’ when true will have ColRadPy make ECIP ionization rates and include these rates anywhere
+that there are no ionization rates included in the adf04 file.</p>
 <div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
  3
@@ -112,35 +142,74 @@ This allows all of the different functionality to be shown and tested.</p>
  8
  9
 10
-11</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
-<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;../&#39;</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">colradpy_class</span> <span class="kn">import</span> <span class="n">colradpy</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+11
+12
+13
+14
+15</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="kn">import</span> <span class="nn">sys</span>
+ <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;../&#39;</span><span class="p">)</span> <span class="c1">#starting in &#39;examples&#39; so need to go up one</span>
+ <span class="kn">from</span> <span class="nn">colradpy_class</span> <span class="kn">import</span> <span class="n">colradpy</span>
+ <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
-<span class="n">fil</span> <span class="o">=</span> <span class="s1">&#39;cpb03_ls#be0.dat&#39;</span> <span class="c1">#adf04 file</span>
-<span class="n">temperature_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">)</span> <span class="c1">#eV</span>
-<span class="n">metastable_levels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">])</span>   <span class="c1">#metastable level, just ground chosen here</span>
-<span class="n">density_arr</span> <span class="o">=</span>     <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.e13</span><span class="p">,</span><span class="mf">4.e14</span><span class="p">])</span> <span class="c1"># cm-3</span>
-<span class="n">be</span> <span class="o">=</span> <span class="n">colradpy</span><span class="p">(</span><span class="n">fil</span><span class="p">,</span><span class="n">metastable_levels</span><span class="p">,</span><span class="n">temperature_arr</span><span class="p">,</span><span class="n">density_arr</span><span class="p">,</span><span class="n">use_recombination</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-              <span class="n">use_recombination_three_body</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span><span class="n">use_ionization</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span><span class="n">suppliment_with_ecip</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+ <span class="n">fil</span> <span class="o">=</span> <span class="s1">&#39;cpb03_ls#be0.dat&#39;</span> <span class="c1">#adf04 file</span>
+ <span class="n">temperature_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">)</span> <span class="c1">#eV</span>
+ <span class="n">metastable_levels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">])</span>   <span class="c1">#metastable level, just ground chosen here</span>
+ <span class="n">density_arr</span> <span class="o">=</span>     <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.e13</span><span class="p">,</span><span class="mf">4.e14</span><span class="p">])</span> <span class="c1"># cm-3</span>
+
+ <span class="c1">#calling the colradpy class with the various inputs</span>
+ <span class="n">be</span> <span class="o">=</span> <span class="n">colradpy</span><span class="p">(</span><span class="n">fil</span><span class="p">,</span><span class="n">metastable_levels</span><span class="p">,</span><span class="n">temperature_arr</span><span class="p">,</span><span class="n">density_arr</span><span class="p">,</span><span class="n">use_recombination</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+               <span class="n">use_recombination_three_body</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span><span class="n">use_ionization</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span><span class="n">suppliment_with_ecip</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+ <span class="n">be</span><span class="o">.</span><span class="n">solve_cr</span><span class="p">()</span> <span class="c1">#solve the CR equations with the quasistatic method</span>
 </pre></div>
 </td></tr></table></div>
-<p>‘be’ is now a colradpy class, there are many different calls that could be made from the class <a class="reference internal" href="colradpy_class.html#colradpy"><span class="std std-ref">documented here</span></a>.
-The general flow of the code goes as</p>
-<ol class="arabic simple">
-<li>create rates</li>
-<li>populate matrix</li>
-<li>solve matrix and create post processed data.</li>
-</ol>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
-2
-3
-4
-5
-6
-7
-8
-9</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="k">if</span><span class="p">(</span><span class="n">be</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">][</span><span class="s1">&#39;use_ionization&#39;</span><span class="p">]):</span>
+<p>‘be’ is now a colradpy class that has been solved. There are various methods for getting the data out.
+Data that required ColRadPy to solve the CR set of equations is now stored in the ‘processed’ sub dictionary.
+There are many different calls that could be made from the class <a class="reference internal" href="colradpy_class.html#colradpy"><span class="std std-ref">documented here</span></a>.</p>
+<script type="text/javascript">
+    function showhide(element){
+        if (!document.getElementById)
+            return
+
+        if (element.style.display == "block")
+            element.style.display = "none"
+        else
+            element.style.display = "block"
+    };
+</script>
+<a href="javascript:showhide(document.getElementById('hiddencodeblock1'))">--- Show/details of solve_cr()---</a><br /><div id="hiddencodeblock1" style="display: none"><div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="c1">#The flow of the code is below</span>
+<span class="c1"># 1. create rates from adf04 or internal</span>
+<span class="c1"># 2. populate matrix</span>
+<span class="c1"># 3. solve matrix and create post processed data.</span>
+
+<span class="c1">#the block of code below is what &#39;solve_cr()&#39; is doing</span>
+<span class="k">if</span><span class="p">(</span><span class="n">be</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">][</span><span class="s1">&#39;use_ionization&#39;</span><span class="p">]):</span>
     <span class="n">be</span><span class="o">.</span><span class="n">make_ioniz_from_reduced_ionizrates</span><span class="p">()</span>
 <span class="k">if</span><span class="p">(</span><span class="n">be</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">][</span><span class="s1">&#39;suppliment_with_ecip&#39;</span><span class="p">]):</span>
     <span class="n">be</span><span class="o">.</span><span class="n">make_ecip</span><span class="p">()</span>
@@ -149,19 +218,21 @@ The general flow of the code goes as</p>
     <span class="n">be</span><span class="o">.</span><span class="n">make_recombination_rates_from_file</span><span class="p">()</span>
 <span class="k">if</span><span class="p">(</span><span class="n">be</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">][</span><span class="s1">&#39;use_recombination_three_body&#39;</span><span class="p">]):</span>
     <span class="n">be</span><span class="o">.</span><span class="n">make_three_body_recombination</span><span class="p">()</span>
+<span class="n">be</span><span class="o">.</span><span class="n">make_electron_excitation_rates</span><span class="p">()</span>
+
+<span class="c1"># This call takes in all of the rates that were provided by</span>
+<span class="c1"># the adf04 file as well as any rates that were bade in</span>
+<span class="c1"># ColRadPy and puts them into the matrix.</span>
+
+<span class="n">be</span><span class="o">.</span><span class="n">populate_cr_matrix</span><span class="p">()</span>
+
+<span class="c1"># This call solves the CR matrix and creates the &#39;processed&#39;</span>
+<span class="c1"># sub dictionary with all of the processed data.</span>
+
+<span class="n">be</span><span class="o">.</span><span class="n">solve_quasi_static</span><span class="p">()</span>
 </pre></div>
 </td></tr></table></div>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="n">be</span><span class="o">.</span><span class="n">populate_cr_matrix</span><span class="p">()</span>
-</pre></div>
-</td></tr></table></div>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="n">be</span><span class="o">.</span><span class="n">solve_quasi_static</span><span class="p">()</span>
-</pre></div>
-</td></tr></table></div>
-<p>This can be done from one call to colradpy. Which does the procedure above.</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="n">be</span><span class="o">.</span><span class="n">solve_cr_qausistatic</span><span class="p">()</span>
-</pre></div>
-</td></tr></table></div>
-<p>Data from the calculation is now avaible in the ‘.data’ dictionary.
+</div><p>Data from the calculation is now avaible in the ‘.data’ dictionary.
 Various postpocessing can be done to now analysis the calcuation.</p>
 </div>
 <div class="section" id="post-processing-analysis">
@@ -753,7 +824,7 @@ wall. This could also be use to model level pumping in LIF systems.</span></p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
+  <h3><a href="index.html">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Tutorial</a><ul>
 <li><a class="reference internal" href="#atomic-data-and-the-adf04-file">Atomic Data and the ADF04 File</a><ul>
@@ -762,6 +833,7 @@ wall. This could also be use to model level pumping in LIF systems.</span></p>
 <li><a class="reference internal" href="#radative-recombination">Radative Recombination</a></li>
 <li><a class="reference internal" href="#dielectronic-recombination">Dielectronic Recombination</a></li>
 <li><a class="reference internal" href="#three-body-recombination">Three Body Recombination</a></li>
+<li><a class="reference internal" href="#solutions">Solutions</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#running-colradpy">Running ColRadPy</a></li>
@@ -828,7 +900,7 @@ wall. This could also be use to model level pumping in LIF systems.</span></p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Curtis Johnson.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.2.
     </div>
   </body>
 </html>
