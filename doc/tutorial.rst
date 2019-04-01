@@ -12,6 +12,24 @@ These plasma must be modeled with a collisional radiative (CR) model which inclu
 Collisional Radiative theory has been updated to included general collisional radiative (GCR) theory, this is
 outlined in (Summers 2006).
 
+
+
+The tutrial will go over the major topics
+
+The atomic data input for colradpy is overviewed in `Atomic Data and the ADF04 File`_
+
+Running ColRadPy will be outlined in `Running ColRadPy`_
+
+Built in post processes in ColRadPy is described in `Post processing analysis built in functions`_
+
+Posted processing for advanced users will be outlined in `Post processing analysis advanced`_
+
+The generalized collisional radiative coefficients will be discussed in `Generalized radiative coefficients (GCRs)`_
+
+Functionality for advanced users is outlined in `Advanced functionality`_
+
+
+
 Atomic Data and the ADF04 File
 ==============================
 Atomic data is generally made by calculating cross-sections (probablity) of transitions.
@@ -38,19 +56,19 @@ and should be avoid if possible. Ground and metastable states generally have cal
 generally have rates that are supplimented with ECIP.
 
 Radative Recombination
-----------------------
+-------------------------
 
 
 Dielectronic Recombination
-----------------------
+----------------------------
 
 
 Three Body Recombination
-------------------------
+--------------------------
 Three body recombination is calculated from using detailed balance from the ionization
 
 Solutions
----------
+-----------
 
 There are two ways that ColRadPy can solve the CR set of equations.
 The general user will probably be interested in the first way of solving the CR equations, this is same way ADAS solve the equations.
@@ -70,7 +88,7 @@ In equilbrium, the non-quasistatic and quastistic solutions will be the same.
 
 
 Running ColRadPy
-================
+===================
 
 :ref:`ColRadPy <colradpy>` requires multiple inputs from the user to run.
 The basic quasistatic run will be discussed first. This should be sufficient for most users.
@@ -186,19 +204,25 @@ Various postpocessing can be done to now analysis the calcuation.
 
 
 
-Post processing analysis
-=========================
-There are some options avaible for post processing analysis.
-ColRadPy has a few function built in for the general user that requires
-minimal knowelge of the underlying datastructure.
-These basic functions will be overviewed first then a more complex analysis after.
+Post processing analysis built in functions
+=============================================
+There are some built in functions avaible for post processing analysis
+these will of use for the general user.
+The basic functions  require minimal knowelge of the underlying datastructure.
+These basic functions will be overviewed first then a more complex analysis will be presented after.
+
+The theorical spectrum can be plotted describe in `Plotting Theorical Spectrum (PEC sticks)`_
+
+The line ratios versus temperature and density is describe in `Plotting PEC ratios`_
 
 
-Plotting PEC sticks
--------------------
-The theorical spectrum from the adf04 file can be plotted with the below command
-Where the parameters are the lists or arrays of the index of the metastable,
-temperature and density grids. Note that wavelengths will not match NIST wavelengths
+
+Plotting Theorical Spectrum (PEC sticks)
+------------------------------------------
+The theorical spectral spectrum from the adf04 file can be plotted with the below command.
+The parameters are the lists or arrays of the index of the metastable,
+temperature and density grids.
+*WARNING* Note that wavelengths will not match NIST wavelengths
 unless the adf04 energy levels have been shifted to the NIST values.
 This generally hasn't been done in the past so there are many adf04 files that don't
 use NIST energy values.
@@ -209,17 +233,102 @@ use NIST energy values.
       
       be.plot_pec_sticks([0],[0],[0])
 
-Plotting PEC ratios
-------------------
-It might also be of interest to a user to plot line ratios from a charge state against
-temperature or density.
+      
 
+.. hidden-code-block:: python
+    :linenos:
+    :label: --- Show/details of plot_pec_sticks()---
+
+
+            
+      rc('axes', linewidth=2)
+      rc('font', weight='semibold')
+
+      if('processed' not in self.data.keys()):
+          self.solve_cr()
+
+      p_t = np.arange(0,len(self.data['user']['temp_grid']))
+      p_n = np.arange(0,len(self.data['user']['dens_grid']))
+      p_m = np.arange(0,len(self.data['atomic']['metas']))
+      if(np.asarray(temp).size>0):
+          p_t = p_t[temp]
+      if(np.asarray(dens).size>0):
+          p_n = p_n[dens]
+      if(np.asarray(meta).size>0):
+          p_m = p_m[meta]
+
+      for i in p_n:
+          for j in p_t:
+              for k in p_m:
+                  plt.figure()
+                  scaling = int(np.floor(np.log2(np.max(self.data['processed']['pecs'][:,k,j,i]))/np.log2(10)))
+                  plt.vlines(self.data['processed']['wave_air'],
+                         np.zeros_like(self.data['processed']['wave_air']),
+                                       self.data['processed']['pecs'][:,k,j,i]*10**np.abs(scaling))
+
+                  plt.xlabel('Wavelength in air (nm)',weight='semibold')
+                  plt.ylabel('PEC X 1E' +str(scaling) + ' (ph cm$^{-1}$ s$^{-1}$)',weight='semibold')
+                  plt.title('Temperature ' + str(self.data['user']['temp_grid'][j]) + ' eV,  '+\
+                            'Density ' + format(self.data['user']['dens_grid'][i],'.2e') + ' cm$^{-3}$, '+\
+                            'Metastable ' + str(self.data['atomic']['metas'][k]),weight='semibold')
+                  plt.xlim(0,1300)
+
+      
+
+Plotting PEC ratios
+---------------------
+Spectral line intenties are functions of both electron temperature and density as well as ion density.
+Different spectral lines will have different functional forms on temperature and density.
+It is therefore possible to find ratios of spectral lines that are depenended on either temperature or density as the ion density cancels out.
+It is then possible to dianose electron temperature and density from line ratios where the charge state exists in the plasma.
+
+
+
+Temperature ratios can be plotted with the below function.
+The temperature ratio of the two pecs will be plotted with new figures made for each density and metastable requested.
+The inputs are the indexes of pec1, pec2, array of densities and array of metastables
 
 .. code-block:: python
    :linenos:
 
       
-      be.plot_pec_ratio_temp([0],[0],[0])
+      be.plot_pec_ratio_temp(0,1,[0],[0])
+
+
+
+.. hidden-code-block:: python
+    :linenos:
+    :label: --- Show/details of plot_pec_ratio_temp()---
+
+
+        if('processed' not in self.data.keys()):
+            self.solve_cr()
+
+        
+        dens = np.array(dens)
+        p_n = np.arange(0,len(self.data['user']['dens_grid']),dtype=int)
+        p_m = np.arange(0,len(self.data['atomic']['metas']),dtype=int)
+        
+        if(np.asarray(dens).size>0):
+            p_n = p_n[dens]
+        if(np.asarray(meta).size>0):
+            p_m = p_m[meta]
+
+        for k in p_m:
+            plt.figure()                        
+            for i in p_n:
+                
+                plt.plot(self.data['user']['temp_grid'],
+                     self.data['processed']['pecs'][pec1,k,:,i]/ \
+                         self.data['processed']['pecs'][pec2,k,:,i],
+                         label='$n_e$ = ' + format(self.data['user']['dens_grid'][i],'.1e') + ' cm$^{-3}$')
+
+                plt.xlabel('Temperature (eV)',weight='semibold')
+                plt.ylabel('Ratio (-)',weight='semibold')
+                plt.title('Ratio of PEC '+str(pec1)+', ' + format(self.data['processed']['wave_air'][pec1],'.2f') + ' nm'+\
+                          ' to PEC '+str(pec2)+', ' + format(self.data['processed']['wave_air'][pec2],'.2f') + ' nm, '+\
+                              'Metastable ' + str(self.data['atomic']['metas'][k]),weight='semibold')
+                plt.legend(loc='best')
 
 
 .. code-block:: python
@@ -230,15 +339,49 @@ temperature or density.
       
 
 
+.. hidden-code-block:: python
+    :linenos:
+    :label: --- Show/details of plot_pec_ratio_dens()---
+
+
+        temp = np.array(temp)
+        p_n = np.arange(0,len(self.data['user']['temp_grid']),dtype=int)
+        p_m = np.arange(0,len(self.data['atomic']['metas']),dtype=int)
+        
+        if(np.asarray(temp).size>0):
+            p_n = p_n[temp]
+        if(np.asarray(meta).size>0):
+            p_m = p_m[meta]
+
+        for k in p_m:
+            plt.figure()                        
+            for i in p_n:
+                
+                plt.plot(self.data['user']['dens_grid'],
+                     self.data['processed']['pecs'][pec1,k,i,:]/ \
+                         self.data['processed']['pecs'][pec2,k,i,:],
+                         label='$T_e$ = ' + format(self.data['user']['temp_grid'][i],'.1f') + ' eV')
+
+                plt.xlabel('Density (cm$^{-3}$)',weight='semibold')
+                plt.ylabel('Ratio (-)',weight='semibold')
+                plt.title('Ratio of PEC '+str(pec1)+', ' + format(self.data['processed']['wave_air'][pec1],'.2f') + ' nm'+\
+                          ' to PEC '+str(pec2)+', ' + format(self.data['processed']['wave_air'][pec2],'.2f') + ' nm, '+\
+                              'Metastable ' + str(self.data['atomic']['metas'][k]),weight='semibold')
+                if(scale=='log'):
+                    plt.semilogx()
+                plt.legend(loc='best')
+
+
+            
 
 
 
 
 Post processing analysis advanced
-=================================
+====================================
 
 Photon emissivity coefficients (PECs)
---------------------------------------
+----------------------------------------
 
 A theortical spectrum can be made from the PEC coefficients.
 PEC coefficient are stored in array that has shape (#pecs,metastable,temperature,density).
