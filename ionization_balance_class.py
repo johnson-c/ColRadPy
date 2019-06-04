@@ -77,7 +77,8 @@ class ionization_balance():
         for i in range(1,len(self.data['gcrs'])):
             m = m + np.shape(self.data['gcrs'][str(i)]['scd'])[1]#num of metastales in the plus loop
         #create an empty matrix to hold the GCR rates
-        self.data['ion_matrix'] = np.zeros((m, m,len(self.data['user']['temp_grid']), len(self.data['user']['dens_grid'])))
+        self.data['ion_matrix'] = np.zeros((m, m,len(self.data['user']['temp_grid']),
+                                                 len(self.data['user']['dens_grid'])))
 
         m = 0
         for i in range(0,len(self.data['gcrs'])):
@@ -136,10 +137,12 @@ class ionization_balance():
         
         """
         self.data['pops'],self.data['eigen_val'],self.data['eigen_vec'] = solve_matrix_exponential(
-                                       np.einsum('ijkl,l->ijkl',self.data['ion_matrix'],self.data['user']['dens_grid']),n0,td_t)
+                                       np.einsum('ijkl,l->ijkl',self.data['ion_matrix'],
+                                                 self.data['user']['dens_grid']),n0,td_t)
 
     def solve_source(self,n0,s0,td_t):
-        """Solves the ionization balance matrix given an initial populations and times when a source term is present
+        """Solves the ionization balance matrix given an 
+             initial populations and times when a source term is present
 
         :param n0: The initial populations of levels at t=0
         :type n0: float array
@@ -157,9 +160,41 @@ class ionization_balance():
 
 
 
+    def solve_time_independent(self):
+        """Solves the ionization balance matrix for the steady-state (time-independent) solution.
 
-    def solve_time_independent(self,source=False):
+           This is going to use the time dependent method just solving at 8 e-folding times
+           for the second to smallest eigen value. Note that there are faster methods to do this
+           but its more work to code it up and the time-dependent part is already done.
+           This function is mostly a niceity for the casual user.
+           The smallest eigenvalue corresponds to the 
+           steady state so we want to wait until the second to last componet completely dies off.
+           This is done for the smallest over the given temperature and density parameter space
+           this has been tested for 17 orders of magnitude and I haven't run into overflow problems.
+           
 
-        diff = 1.
+        :param n0: The initial populations of levels at t=0
+        :type n0: float array
+
+        :param td_t: Solution times
+        :type td_t: float array
+
+        populates the pops, eigen_val and eigen_vec
+        """
+
+        #for the steady state the initial conditions don't matter so just make it simple        
+        n0 = np.zeros((len(self.data['ion_matrix'])))
+        n0[0] = 1.
         
+        #run the first time at t=0 just to get eigenvals
+        self.data['pops_ss'],self.data['eigen_val'],self.data['eigen_vec'] = solve_matrix_exponential(
+                                   np.einsum('ijkl,l->ijkl',self.data['ion_matrix'],
+                                            self.data['user']['dens_grid']),n0,np.array([0]))
+        #get the second smallest time        
+        time = np.max(8/np.abs(np.sort(self.data['eigen_val'][:,:,:],axis=0)[len(self.data['ion_matrix']) -2]))
 
+        #solve at the 8 e-fold time
+        self.data['pops_ss'],self.data['eigen_val'],self.data['eigen_vec'] = solve_matrix_exponential(
+                                   np.einsum('ijkl,l->ijkl',self.data['ion_matrix'],
+                                             self.data['user']['dens_grid']),n0,np.array([time]))
+            
