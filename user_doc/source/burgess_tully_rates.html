@@ -1,0 +1,459 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>burgess_tully_rates module &#8212; ColRadPy 0.9 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ColRadPy 0.9 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-burgess_tully_rates">
+<span id="burgess-tully-rates-module"></span><h1>burgess_tully_rates module<a class="headerlink" href="#module-burgess_tully_rates" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="burgess_tully_rates.burgess_tully_rates">
+<code class="descclassname">burgess_tully_rates.</code><code class="descname">burgess_tully_rates</code><span class="sig-paren">(</span><em>user_temp_grid</em>, <em>calc_temp_grid</em>, <em>col_transitions</em>, <em>col_excit</em>, <em>energy</em>, <em>w</em>, <em>a_val</em>, <em>S</em>, <em>L</em>, <em>inf_engy</em>, <em>c=1.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/burgess_tully_rates.html#burgess_tully_rates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#burgess_tully_rates.burgess_tully_rates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates excitation rates extrapolated to temperatures beyond the calculated
+rates in the file. If an infinite energy point in the file is present the extrapolation
+will be done between the last calculated point and the infinite energy point. A linear
+line is fit in the burgess tully space and extrapolated from there before being transformed
+back into temperature. If no infinite energy point is provided then an extrapolation is 
+provided from the last two calculated points by fitting a linear line in burgess tully
+space.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">User_temp_grid:</th><td class="field-body">array of user defined temperatures</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Calc_temp_grid:</th><td class="field-body">array of temperatures which were calculated in atomic code</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Col_transitions:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body">2d array of transitions (upper,lower)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Col_excit:</th><td class="field-body">2d array of excitations between levels</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Energy:</th><td class="field-body">array of energies for the levels</td>
+</tr>
+<tr class="field-even field"><th class="field-name">W:</th><td class="field-body">array of w (j) for the levels</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">A_val:</th><td class="field-body">array of einstien a coefficients</td>
+</tr>
+<tr class="field-even field"><th class="field-name">A_val:</th><td class="field-body">array of einstien a coefficients</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">S:</th><td class="field-body">array of spin values for the levels</td>
+</tr>
+<tr class="field-even field"><th class="field-name">L:</th><td class="field-body">array of spin values for the levels</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Inf_engy:</th><td class="field-body">array of infinite enery points for the transitions</td>
+</tr>
+<tr class="field-even field"><th class="field-name">C:</th><td class="field-body">scale value for the extrapolation, just impacts how zoomed the plot is not actual results</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">array – b coefficent</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="burgess_tully_rates.calc_coeffs_a">
+<code class="descclassname">burgess_tully_rates.</code><code class="descname">calc_coeffs_a</code><span class="sig-paren">(</span><em>coeffs_b</em>, <em>xval_arr</em>, <em>yval_arr</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/burgess_tully_rates.html#calc_coeffs_a"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#burgess_tully_rates.calc_coeffs_a" title="Permalink to this definition">¶</a></dt>
+<dd><p>For an infinite energy extrapolation temperatures and excitation rates
+are converted to burgess-tully space. A linear extrapolation in the 
+brugess-tully space is done between the last calculated point and the 
+infinite energy point. This calculates the ‘a’ in the equation y = ax+b</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>xval_arr</strong> – array of x values from calcualted points must have atleast 2</li>
+<li><strong>yval_arr</strong> – array of y values from calcualted points must have atleast 2</li>
+<li><strong>yval_inf</strong> – array of infinite energy y values from calcualtions</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array – a coefficent</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="burgess_tully_rates.calc_coeffs_b">
+<code class="descclassname">burgess_tully_rates.</code><code class="descname">calc_coeffs_b</code><span class="sig-paren">(</span><em>xval_arr</em>, <em>yval_arr</em>, <em>yval_inf</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/burgess_tully_rates.html#calc_coeffs_b"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#burgess_tully_rates.calc_coeffs_b" title="Permalink to this definition">¶</a></dt>
+<dd><p>For an infinite energy extrapolation temperatures and excitation rates
+are converted to burgess-tully space. A linear extrapolation in the 
+brugess-tully space is done between the last calculated point and the 
+infinite energy point. This calculates the ‘b’ in the equation y = ax+b</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>xval_arr</strong> – array of x values from calcualted points must have atleast 2</li>
+<li><strong>yval_arr</strong> – array of y values from calcualted points must have atleast 2</li>
+<li><strong>yval_inf</strong> – array of infinite energy y values from calcualtions</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array – b coefficent</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="burgess_tully_rates.calc_coeffs_lin_b">
+<code class="descclassname">burgess_tully_rates.</code><code class="descname">calc_coeffs_lin_b</code><span class="sig-paren">(</span><em>xval_arr</em>, <em>yval_arr</em>, <em>coeff_lin_m</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/burgess_tully_rates.html#calc_coeffs_lin_b"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#burgess_tully_rates.calc_coeffs_lin_b" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Some rates may not have infinite energy points in which case a</dt>
+<dd>linear extrapolation is done in the burgess tully space from the</dd>
+</dl>
+<p>last two calculated points this calculates the ‘b’ coefficient in the 
+equation y = mx+b</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>xval_arr</strong> – array of x values from calcualted points must have atleast 2</li>
+<li><strong>yval_arr</strong> – array of y values from calcualted points must have atleast 2</li>
+<li><strong>yval_inf</strong> – array of infinite energy y values from calcualtions</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array – b coefficent</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="burgess_tully_rates.calc_coeffs_lin_m">
+<code class="descclassname">burgess_tully_rates.</code><code class="descname">calc_coeffs_lin_m</code><span class="sig-paren">(</span><em>xval_arr</em>, <em>yval_arr</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/burgess_tully_rates.html#calc_coeffs_lin_m"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#burgess_tully_rates.calc_coeffs_lin_m" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Some rates may not have infinite energy points in which case a</dt>
+<dd>linear extrapolation is done in the burgess tully space from the</dd>
+</dl>
+<p>last two calculated points this calculates the ‘b’ coefficient in the 
+equation y = mx+b</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>xval_arr</strong> – array of x values from calcualted points must have atleast 2</li>
+<li><strong>yval_arr</strong> – array of y values from calcualted points must have atleast 2</li>
+<li><strong>yval_inf</strong> – array of infinite energy y values from calcualtions</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array – m coefficent</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="burgess_tully_rates.lin_yconvert">
+<code class="descclassname">burgess_tully_rates.</code><code class="descname">lin_yconvert</code><span class="sig-paren">(</span><em>coeff_lin_b</em>, <em>coeff_lin_m</em>, <em>xval_extrap</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/burgess_tully_rates.html#lin_yconvert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#burgess_tully_rates.lin_yconvert" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Some rates may not have infinite energy points in which case a</dt>
+<dd>linear extrapolation is done in the burgess tully space from the</dd>
+</dl>
+<p>last two calculated points</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>coeff_lin_b</strong> – coefficients of ‘b’ in the y=mx+b equation</li>
+<li><strong>coeff_lin_m</strong> – coefficients of ‘m’ in the y=mx+b equation</li>
+<li><strong>xval_extrap</strong> – xvalues for the extrapolated temperatures</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array –linear extrapolation rate  values</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="burgess_tully_rates.type1_xconvert">
+<code class="descclassname">burgess_tully_rates.</code><code class="descname">type1_xconvert</code><span class="sig-paren">(</span><em>tconvert_grid</em>, <em>energy</em>, <em>c=1.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/burgess_tully_rates.html#type1_xconvert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#burgess_tully_rates.type1_xconvert" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This function extrapolates excitation rates through the burgess-tully method</dt>
+<dd>see On the anlysis of collision strengths and rate coefficients A burgess and J.A. Tully</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tconvert_grid</strong> – Temperature grid to do transform on</li>
+<li><strong>energy</strong> (<em>array</em>) – energies of the levels that are being transformed</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array –type1 burgess x values</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="burgess_tully_rates.type1_yconvert">
+<code class="descclassname">burgess_tully_rates.</code><code class="descname">type1_yconvert</code><span class="sig-paren">(</span><em>tconvert_grid</em>, <em>energy</em>, <em>col_excit</em>, <em>direct='f'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/burgess_tully_rates.html#type1_yconvert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#burgess_tully_rates.type1_yconvert" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This function extrapolates excitation rates through the burgess-tully method</dt>
+<dd>see On the anlysis of collision strengths and rate coefficients A burgess and J.A. Tully</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tconvert_grid</strong> – Temperature grid to do transform on</li>
+<li><strong>energy</strong> (<em>array</em>) – energies of the levels that are being transformed</li>
+<li><strong>col_excit</strong> – excitation rates of the levels that are being transformed</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array –type1 burgess y values</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="burgess_tully_rates.type2_xconvert">
+<code class="descclassname">burgess_tully_rates.</code><code class="descname">type2_xconvert</code><span class="sig-paren">(</span><em>tconvert_grid</em>, <em>energy</em>, <em>c=1.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/burgess_tully_rates.html#type2_xconvert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#burgess_tully_rates.type2_xconvert" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This function extrapolates excitation rates through the burgess-tully method</dt>
+<dd>see On the anlysis of collision strengths and rate coefficients A burgess and J.A. Tully</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tconvert_grid</strong> – Temperature grid to do transform on</li>
+<li><strong>energy</strong> (<em>array</em>) – energies of the levels that are being transformed</li>
+<li><strong>c</strong> (<em>array</em>) – scaling constant doesn’t impact results</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array –type2 burgess x values</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="burgess_tully_rates.type2_yconvert">
+<code class="descclassname">burgess_tully_rates.</code><code class="descname">type2_yconvert</code><span class="sig-paren">(</span><em>col_excit</em>, <em>direct='f'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/burgess_tully_rates.html#type2_yconvert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#burgess_tully_rates.type2_yconvert" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This function extrapolates excitation rates through the burgess-tully method</dt>
+<dd>see On the anlysis of collision strengths and rate coefficients A burgess and J.A. Tully</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>col_excit</strong> – excitation rates of the levels that are being transformed</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">array –type2 burgess y values</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="burgess_tully_rates.type3_xconvert">
+<code class="descclassname">burgess_tully_rates.</code><code class="descname">type3_xconvert</code><span class="sig-paren">(</span><em>tconvert_grid</em>, <em>energy</em>, <em>c=1.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/burgess_tully_rates.html#type3_xconvert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#burgess_tully_rates.type3_xconvert" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This function extrapolates excitation rates through the burgess-tully method</dt>
+<dd>see On the anlysis of collision strengths and rate coefficients A burgess and J.A. Tully</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tconvert_grid</strong> – Temperature grid to do transform on</li>
+<li><strong>energy</strong> (<em>array</em>) – energies of the levels that are being transformed</li>
+<li><strong>c</strong> (<em>array</em>) – scaling constant doesn’t impact results</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array –type3 burgess x values</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="burgess_tully_rates.type3_yconvert">
+<code class="descclassname">burgess_tully_rates.</code><code class="descname">type3_yconvert</code><span class="sig-paren">(</span><em>tconvert_grid</em>, <em>energy</em>, <em>col_excit</em>, <em>direct='f'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/burgess_tully_rates.html#type3_yconvert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#burgess_tully_rates.type3_yconvert" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This function extrapolates excitation rates through the burgess-tully method</dt>
+<dd>see On the anlysis of collision strengths and rate coefficients A burgess and J.A. Tully</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tconvert_grid</strong> – Temperature grid to do transform on</li>
+<li><strong>energy</strong> (<em>array</em>) – energies of the levels that are being transformed</li>
+<li><strong>col_excit</strong> – excitation rates of the levels that are being transformed</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array –type3 burgess y values</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="burgess_tully_rates.type4_xconvert">
+<code class="descclassname">burgess_tully_rates.</code><code class="descname">type4_xconvert</code><span class="sig-paren">(</span><em>tconvert_grid</em>, <em>energy</em>, <em>c=1.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/burgess_tully_rates.html#type4_xconvert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#burgess_tully_rates.type4_xconvert" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This function extrapolates excitation rates through the burgess-tully method</dt>
+<dd>see On the anlysis of collision strengths and rate coefficients A burgess and J.A. Tully</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tconvert_grid</strong> – Temperature grid to do transform on</li>
+<li><strong>energy</strong> (<em>array</em>) – energies of the levels that are being transformed</li>
+<li><strong>c</strong> (<em>array</em>) – scaling constant doesn’t impact results</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array –type4 burgess x values</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="burgess_tully_rates.type4_yconvert">
+<code class="descclassname">burgess_tully_rates.</code><code class="descname">type4_yconvert</code><span class="sig-paren">(</span><em>tconvert_grid</em>, <em>energy</em>, <em>col_excit</em>, <em>c=1.5</em>, <em>direct='f'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/burgess_tully_rates.html#type4_yconvert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#burgess_tully_rates.type4_yconvert" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This function extrapolates excitation rates through the burgess-tully method</dt>
+<dd>see On the anlysis of collision strengths and rate coefficients A burgess and J.A. Tully</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tconvert_grid</strong> – Temperature grid to do transform on</li>
+<li><strong>energy</strong> (<em>array</em>) – energies of the levels that are being transformed</li>
+<li><strong>col_excit</strong> – excitation rates of the levels that are being transformed</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array –type4 burgess y values</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo.jpg" alt="Logo"/>
+            </a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/source/burgess_tully_rates.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ColRadPy 0.9 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Curtis Johnson.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.
+    </div>
+  </body>
+</html>
