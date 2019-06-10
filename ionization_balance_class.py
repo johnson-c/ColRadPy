@@ -59,7 +59,7 @@ class ionization_balance():
 
     """
  
-    def __init__(self,fils,metas,temp_grid, dens_grid, times, use_ionization=True,
+    def __init__(self,fils,metas,temp_grid, dens_grid, soln_times=np.array([]), use_ionization=True,
                  suppliment_with_ecip=True, use_recombination_three_body=True,use_recombination=True,
                  keep_charge_state_data=False,init_abund = np.array([]), source= np.array([])):
         self.data = {}
@@ -71,7 +71,7 @@ class ionization_balance():
         self.data['user']['dens_grid'] = np.asarray(dens_grid)#cm-3
         self.data['user']['fils'] = np.asarray(fils)
         self.data['user']['init_abund'] = np.asarray(init_abund)
-        self.data['user']['soln_times'] = np.asarray(times)
+        self.data['user']['soln_times'] = np.asarray(soln_times)
         self.data['user']['source'] = np.asarray(source)
         self.data['user']['metas'] = np.asarray(metas)
         
@@ -127,8 +127,12 @@ class ionization_balance():
                     meta = np.linspace(0,m-1,m,dtype=int)
             #setup the CR
 
-            tmp = colradpy(str(fils[i]),meta,temp_grid,dens_grid,use_ionization[i],
-                              suppliment_with_ecip[i],use_recombination_three_body[i],use_recombination[i])
+            tmp = colradpy(str(fils[i]),meta,temp_grid,dens_grid,
+                           self.data['user']['use_ionization'][i],
+                           self.data['user']['suppliment_with_ecip'][i],
+                           self.data['user']['use_recombination_three_body'][i],
+                           self.data['user']['use_recombination'][i])
+            
             tmp.solve_cr()
             #keep all the CR data if requested
             if(keep_charge_state_data):
