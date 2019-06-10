@@ -9,6 +9,23 @@ def solve_matrix_exponential(matrix,td_n0,td_t):
        Problems (Classics in Applied Mathematics Classics in Applied
        Mathemat), Society for Industrial and Applied Mathematics,
        Philadelphia, PA, USA, 2007.
+
+
+
+    Args:
+      :param matrix: The 4d matrix to be solved
+      :type matrix: 4d matrix x,y,temp,dens
+
+      :param td_n0: The initial fractional populations
+      :type td_n0: float array
+
+      :param td_t: array of times for the solution
+      :type metas: float array
+
+
+    Returns:
+      This returns three arrays the time dependent populations, eigenvals and eigenvectors
+
     """
     
     eigenvals, eigenvectors = np.linalg.eig(matrix.transpose(2,3,0,1))
@@ -24,7 +41,27 @@ def solve_matrix_exponential_source(matrix, td_n0, source, td_t):
     """This definition will solve a 4 dimensional matrix using the matrix expoentiaiation method
        when a source term is also included
        
-       This is a slight modification to R. LeVeque 2007
+       This is a slight modification to R. LeVeque 2007, see Johnson thesis
+
+
+    Args:
+      :param matrix: The 4d matrix to be solved
+      :type matrix: 4d matrix x,y,temp,dens
+
+      :param td_n0: The initial fractional populations
+      :type td_n0: float array
+
+      :param source: The source of particles into the different states.
+      :type source: float array
+
+
+      :param td_t: array of times for the solution
+      :type metas: float array
+
+
+    Returns:
+      This returns three arrays the time dependent populations, eigenvals and eigenvectors
+
     """
     
     eigenvals,eigenvectors = np.linalg.eig(matrix.transpose(2,3,0,1))
