@@ -7,14 +7,19 @@ The python scripts for these examples can be found in the 'examples' folder.
 For a detailed introduction to CR theory see the ColRadPy paper included in the 'user_doc' folder.
 Summers 2006 also provides a more detailed overview of CR theory.
 
-Neither the local thermodynamic equilibrium (LTE) or conornal approximations are valid for fusion plasmas.
-These plasma must be modeled with a collisional radiative (CR) model which includes effects of electron density.
-Collisional Radiative theory has been updated to included general collisional radiative (GCR) theory, this is
-outlined in (Summers 2006).
+Neither the local thermodynamic equilibrium (LTE) or conornal approximations are valid
+for fusion plasmas.
+These plasmas must be modeled with a collisional radiative (CR) model which includes effects
+of electron density.
+Collisional Radiative theory has been updated to included general collisional radiative (GCR) theory,
+this is outlined in (Summers 2006).
 
 
 
-The tutrial will go over the major topics
+The tutrial will go over the following major topics
+
+Installing ColRadPy `Installing ColRadPy`_
+
 
 The atomic data input for colradpy is overviewed in `Atomic Data and the ADF04 File`_
 
@@ -28,28 +33,39 @@ The generalized collisional radiative coefficients will be discussed in `General
 
 Functionality for advanced users is outlined in `Advanced functionality`_
 
+Ionization balance is outlined in `Ionization Balance`_
+
+
+
+Installing ColRadPy
+===================
+ColRadPy should work with any python 3.6 distribution.
+However, ColRadPy is only tested with the anaconda distribution of python 3.6.
+ColRadPy requires numpy, matplotlib, re, scipy, sys, collections packages.
+
 
 
 Atomic Data and the ADF04 File
 ==============================
 Atomic data is generally made by calculating cross-sections (probablity) of transitions.
-From these cross-sections rates and then made by convolving with a maxwellian temperature distriubtion (or some of distribution) of electron
+From these cross-sections rates are then made by convolving with a maxwellian temperature distriubtion (or some of distribution) of electron
 energies with the cross section.
-The rates are what is used in the CR model.
+The rates produced by this method are what is used in the CR model.
 
-The ADF04 file format from ADAS that is used to hold atomic rate data for input into the CR model.
-The ADF04 file is supported as an input to colradpy.
+The ADF04 file format from `ADAS <http://www.adas.ac.uk/>`_ that is used to hold atomic rate data for input into the CR model.
 
 
-Electron impact de/excitation
+
+
+Electron Impact De/Excitation
 -----------------------------
 Electron impact excitation and deexcitation is what causes transitions be the ground and excited states and within excited
 states. There rates are stored as "effective collisional strengths" in the adf04 file.
 These can then be converted to the excitiation and deexcitation rates that are needed for CR modeling.
 
 
-Electron ionization
--------------------
+Electron Impact Ionization
+----------------------------
 Electrons can also ionize atoms to the next charge state. Ionization can be stored in the adf04 file as reduced ionization
 rates. ColRadPy is also capable of making ECIP ionization rates. ECIP ionization is a very approximate way of making ionization
 and should be avoid if possible. Ground and metastable states generally have calculated ionization rates while excited states
@@ -62,16 +78,25 @@ Radative Recombination
 Dielectronic Recombination
 ----------------------------
 
+Dielectronic recombination is the dominant recombination process in many plasmas.
+Dielectronic recombination is a two step process.
+First, there is a resonance capture of a free electron.
+In this processes a bound electron gains some energy and the free electron loses some energy.
+Second, the atom radiates a phonton.
 
-Three Body Recombination
+
+Three-Body Recombination
 --------------------------
-Three body recombination is calculated from using detailed balance from the ionization
+Three-body recombination is calculated from using detailed balance from the ionization.
+In this process, free electrons and a ion recombine to produce a new ion and one free electron.
+
 
 Solutions
 -----------
-
+Once rates from the basic atomic data have been input.
+ColRadPy can then solve the set of rate equations known as the collisional radiative equations.
 There are two ways that ColRadPy can solve the CR set of equations.
-The general user will probably be interested in the first way of solving the CR equations, this is same way ADAS solve the equations.
+The general user will probably be interested in the first way of solving the CR equations, this is same way ADAS solves the equations.
 The Quasistatic approximation solves the equations assuming that excited states do not have
 time changing populations. It assumes that these populations and in their equilbrium values with the
 ground and any metastable levels. This is the way that ADAS solves the CR set of equations.
@@ -80,8 +105,6 @@ ColRadPy is also capable of solving the system of equations time dependently usi
 This solution makes no assumptions of equilbrium time scales for excited states.
 This is an excact solution.
 In equilbrium, the non-quasistatic and quastistic solutions will be the same.
-
-
 
 
 
@@ -119,24 +142,31 @@ This allows all of the different functionality to be shown and tested.
 
 
 There are are highlevel class definitions that a general user can use.
-These high level definitions will be show as well as the more basic definitions that
-the high level definitions call.
+These high level definitions will be shown as well as the more basic definitions that
+these high level definitions call.
 A basic user needs to only care about the high level definitions
 
 Below is an example of running ColRadPy.
 The user chooses an input adf04 file, temperature and density grids as well as the number of metastables.
 If you don't know how many metastables exist only choose level '0' (the ground) as being metastable.
 Choices were also made to include ionization and recombination.
+Note that metastable levels are only important if the plasma is not in equilbrium.
+In equilbrium metastable fraction is set and will not vary for a given temperature and density.
 
 The 'use_recombination' flag when true will use any recombination rates that are included in the adf04 file.
 
 The 'use_recombination_three_body' flag when true will have ColRadPy make and include three body recombination rates.
+
 Note inorder to have three body recombination there must be some ionization included in the calculation.
 
 The 'use_ionization' flag when true will use any ionization rates that are included in the adf04 file.
 
 The 'suppliment_with_ecip' when true will have ColRadPy make ECIP ionization rates and include these rates anywhere
 that there are no ionization rates included in the adf04 file.
+
+
+Note that ionization should always be included in the calculation even if it is just ECIP.
+Ionization can significantly change both absolute values of PECs as well as relative values of PECs.
 
 
 .. code-block:: python
@@ -494,13 +524,11 @@ Generalized radiative coefficients (GCRs)
 
 The generalized collsional radiative coefficients are calculated by ColRadPy as well.
 A description of these can be found in (Summers 2006), (Johnson 2019).
-GCR coefficients are often use as inputs to plasma transport codes.
-GCR coefficients are also use as inputs to ionization balance calculations which will be discussed
+GCR coefficients are often used as inputs to plasma transport codes.
+GCR coefficients are also used as inputs to ionization balance calculations which will be discussed
 later. This allows for different ionization stages to be linked.
 
-
-A physical description of the GCRs can be helpful in interpreting the meaning behind
-them. For example, the total ionization from one charge state to the other is defined as the SCD.
+For example, the total ionization from one charge state to the other is defined as the SCD.
 The total recombination from a charge state to the charge state of interest is defined as the ACD.
 This gives the rate of population transfer from one ionization state to a lower ionization state.
 The situation for systems with metastable states requires that the effective ionization and
@@ -510,6 +538,38 @@ In addition, it requires metastable cross coupling coefficients known as QCD and
 Generally it is of interest to look at how the GCR coefficients change with some parameter such
 as temperature. Plots are shown below of the different GCRs.
 
+
+A physical description of the GCRs can be helpful in interpreting the meaning behind
+them.
+
+
+Metastable Cross Coupling Coefficient (QCD)
+---------------------------------------------
+The QCD coefficient represents the transfer of population from one metastable state to another within
+the ionization state of interest and includes both direct population transfer between
+metastable states as well as the transfer via an intermediate excited state.
+
+GCR Ionization Coefficient (SCD)
+-----------------------------------------
+The total ionization from one charge state to the other is defined as the SCD.
+
+
+GCR Recombination Coefficient (ACD)
+----------------------------------------
+The total recombination from a charge state to the charge state of interest is defined as the ACD.
+
+
+Metastable Parent Cross Coupling Coefficient (XCD)
+-------------------------------------------------------
+The XCD coefficient represents the transfer of population between metastable states from
+the ionization stage just above the stage of interest. Populations in the upper ionization
+stage can recombine into the ionization state of interest from one metastable, redistribute
+through all the states and then ionize back into a different metastable state of the upper
+ionization state.
+
+
+GCR Examples
+---------------
 For this example we will look at Be II this is soley because Be III has two metastable states.
 This means that the XCD will have non-zero values. Remeber the call from before for Be I.
 
@@ -648,11 +708,22 @@ This means that the XCD will have non-zero values. Remeber the call from before 
 
 
 
+
+	 
+Determining Populating Mechanisms
+---------------------------------
 One feature unique to ColRadPy is the ability to determine the populating mechanism of levels.
 This allows one to see which levels in a calculation are important to modeling the spectral lines of interest.
 This allows those that generate the atomic data to know which transitions are required to accurately
 model spectral lines. With this new analysis technique, it is possible to identify transitions that are
 the most important and allow for complex systems such as high-Z near neutral systems to be simplified.
+
+
+
+ColRadPy also allows the user to determine which intermediate levels populate a level of interest withThis is don if the summation is not carried out from the calculation of the QCD.
+This allows one to see which levels in a calculation are important to modeling the spectral lines of interest. 
+
+
 
 
 .. code-block:: python
@@ -706,7 +777,7 @@ Advanced functionality
 =======================
 
 Time dependent CR modeling
---------------------------
+-----------------------------
 
 
 ColRadPy is also capable of solving the full collisional radiative matrix time-dependently.
@@ -821,6 +892,204 @@ The source term could also be used to model the pumping of specific levels with 
    Time dependent solution with a constant source term of particles in the ground state.
    This could be used to model spectra where there is a constant erosion term from the
    wall. This could also be use to model level pumping in LIF systems.
+
+
+
+Split LS resolved data to LSJ 
+------------------------------
+
+ColRadPy is able to split PECs from term resolved (LS) into level resolved (LSJ) values.
+This currently does put PECs at the NIST wavelengths, a user must do this manually for now.
+In the future this will be done automatically using the NIST database.
+
+
+
+.. code-block:: python
+   :linenos:
+
+
+   import sys
+   sys.path.append('../')
+   from colradpy_class import *
+   import numpy as np
+
+   he = colradpy('./mom97_ls#he1.dat',[0],np.array([20]),np.array([1.e13]),use_recombination=False,
+                  use_recombination_three_body = False,use_ionization=True)
+
+   he.solve_cr()
+   he.split_pec_multiplet()
+
+   wave_8_3 = np.array([468.5376849,468.5757974,468.5704380])
+   ind_8_3 = np.where( (he.data['processed']['pec_levels'][:,0] == 8) & \
+                       (he.data['processed']['pec_levels'][:,1] == 3))[0]
+
+   wave_6_5 = np.array([468.5407225,468.5568006])
+   ind_6_5 = np.where( (he.data['processed']['pec_levels'][:,0] == 6) & \
+                      (he.data['processed']['pec_levels'][:,1] == 5))[0]
+
+   wave_7_3 = np.array([468.5524404,468.5905553])
+   ind_7_3 = np.where( (he.data['processed']['pec_levels'][:,0] == 7) & \
+                       (he.data['processed']['pec_levels'][:,1] == 3))[0]
+
+   wave_9_4 = np.array([468.5703849, 468.5830890, 468.5804092])
+   ind_9_4 = np.where( (he.data['processed']['pec_levels'][:,0] == 9) & \
+                       (he.data['processed']['pec_levels'][:,1] == 4))[0]
+
+   wave_6_4 = np.array([ 468.5917884, 468.5757080, 468.5884123])
+   ind_6_4 = np.where( (he.data['processed']['pec_levels'][:,0] == 6) & \
+                       (he.data['processed']['pec_levels'][:,1] == 4))[0]
+
+
+   wave_468 = np.hstack((wave_8_3,wave_6_5,wave_7_3,wave_9_4,wave_6_4))
+   pecs_468 = np.vstack((he.data['processed']['split']['pecs'][ind_8_3[0]],
+			 he.data['processed']['split']['pecs'][ind_6_5[0]],
+			 he.data['processed']['split']['pecs'][ind_7_3[0]],
+			 he.data['processed']['split']['pecs'][ind_9_4[0]],
+			 he.data['processed']['split']['pecs'][ind_6_4[0]]))[np.argsort(wave_468)]
+   wave_468 = wave_468[np.argsort(wave_468)]
+
+
+
+   plt.figure()
+   plt.vlines(wave_468,np.zeros_like(wave_468),pecs_468[:,0,0,0])
+
+
+
+Ionization Balance
+====================
+An ionization balance can be used to get the relative abundances of charge states in a given species.
+The relative populations of charge states are solved using the GCR coefficient that are calculated
+from the CR set of equations. A matrix similiar to the CR matrix is assembled using the GCR rate coefficients.
+The QCD rates transfer population between metastable states in one ionization stage.
+SCD is the ionization from one charge stage to the next.
+ACD is the recombination from one charge stage to the previous stage and the XCD is population transfer between metastable
+states through the next charge state.
+
+ColRadPy is capable of preforming time dependent as well as time independent ionization balance calculations.
+The values for time independent ionization balance are solved by looking at the sencond longested lived eigenvalue of the system.
+The equations are then solved at eight times this value ensure that equilbrium of the system has been reached.
+
+
+
+An example of the ionization balance code is run for Be from the example 'example/ion_bal.py'. First for a time dependent case and then for a time independent case.
+In the plot of the time dependent abundances are shown as the solid lines and the time independent limits are shown as the dashed lines.
+
+
+
+.. code-block:: python
+   :linenos:
+
+   import sys
+   sys.path.append('../')
+   from colradpy_class import colradpy
+   import numpy as np
+   import matplotlib.pyplot as plt
+   from ionization_balance_class import ionization_balance
+
+   #the adf04 files
+   fils = np.array(['cpb03_ls#be0.dat','cpb03_ls#be1.dat','be2_adf04','be3_adf04'])
+   temp = np.linspace(5,100,5) #temp grid
+   dens = np.array([1.e11,1.e14]) #density grid
+   metas = [np.array([0,1]),np.array([0]),np.array([0,1]),np.array([0])]#number of metastable
+			      #this should match the metastables at the top of the adf04 file
+			      #this information is used to calculate the QCD values
+			      #without it only the SCD, ACD and XCD for a species will be calculated
+
+   time = np.linspace(0,.01,1.e4)
+
+   ion = ionization_balance(fils, metas, temp, dens, keep_species_data = True)
+   ion.populate_ion_matrix()
+
+   ion.solve_no_source(np.array([1,0,0,0,0,0,0]),time)
+
+   ion.solve_time_independent()
+
+   plt.ion
+   fig, ax1 = plt.subplots(1,1,figsize=(16/3.,9/3.),dpi=300)
+   fig.subplots_adjust(bottom=0.15,top=0.99,left=0.11,right=0.99)
+   ax1.plot(time*1e3,ion.data['pops'][0,:,1,1],label='be0, met0',color='b')
+   ax1.hlines(ion.data['pops_ss'][0,0,1,1],0,10,color='b',linestyle=':')
+
+   ax1.plot(time*1e3,ion.data['pops'][1,:,1,1],label='be0, met1',color='g')
+   ax1.hlines(ion.data['pops_ss'][1,0,1,1],0,10,color='g',linestyle=':')
+
+   ax1.plot(time*1e3,ion.data['pops'][2,:,1,1],label='be1, met0',color='r')
+   ax1.hlines(ion.data['pops_ss'][2,0,1,1],0,10,color='r',linestyle=':')
+
+   ax1.plot(time*1e3,ion.data['pops'][3,:,1,1],label='be2, met0',color='c')
+   ax1.hlines(ion.data['pops_ss'][3,0,1,1],0,10,color='c',linestyle=':')
+
+   ax1.plot(time*1e3,ion.data['pops'][4,:,1,1],label='be2, met1',color='m')
+   ax1.hlines(ion.data['pops_ss'][4,0,1,1],0,10,color='m',linestyle=':')
+
+   ax1.plot(time*1e3,ion.data['pops'][5,:,1,1],label='be3, met0',color='y')
+   ax1.hlines(ion.data['pops_ss'][5,0,1,1],0,10,color='y',linestyle=':')
+
+   ax1.plot(time*1e3,ion.data['pops'][6,:,1,1],label='be4',color='k')
+   ax1.hlines(ion.data['pops_ss'][6,0,1,1],0,10,color='k',linestyle=':')
+
+   ax1.legend(fontsize='x-small')
+
+   ax1.set_xlabel('Time (ms)')
+   ax1.set_ylabel('Fractional Abundance (-)')
+
+
+
+
+
+.. figure:: be_ion_bal_time.png   
+   :scale: 50 %
+   :alt: Be time dependent ionization balance
+
+
+
+
+
+The time independent solution as a function of electron temperature is shown below.
+
+
+
+.. code-block:: python
+   :linenos:
+
+   temp = np.linspace(2,100,200) #temp grid
+   ion = ionization_balance(fils, metas, temp, dens, keep_species_data = False)
+   ion.populate_ion_matrix()
+   ion.solve_time_independent()
+
+
+   fig, ax1 = plt.subplots(1,1,figsize=(16/3.,9/3.),dpi=300)
+   fig.subplots_adjust(bottom=0.15,top=0.99,left=0.11,right=0.99)
+
+   ax1.plot(temp,ion.data['pops_ss'][0,0,:,1],label='be0, met0',color='b')
+
+   ax1.plot(temp,ion.data['pops_ss'][1,0,:,1],label='be0, met1',color='g')
+
+   ax1.plot(temp,ion.data['pops_ss'][2,0,:,1],label='be1, met0',color='r')
+
+   ax1.plot(temp,ion.data['pops_ss'][3,0,:,1],label='be2, met0',color='c')
+
+   ax1.plot(temp,ion.data['pops_ss'][4,0,:,1],label='be2, met1',color='m')
+
+   ax1.plot(temp,ion.data['pops_ss'][5,0,:,1],label='be3, met0',color='y')
+
+   ax1.plot(temp,ion.data['pops_ss'][6,0,:,1],label='be4',color='k')
+
+   ax1.legend(fontsize='x-small')
+
+   ax1.set_xlabel('Temperature (eV)')
+   ax1.set_ylabel('Fractional Abundance (-)')
+
+
+
+.. figure:: be_ion_bal_ind_time.png   
+   :scale: 50 %
+   :alt: Be time dependent ionization balance
+
+
+	 
+
+	    
    
 Error bar analysis from atomic data
 -----------------------------------

@@ -12,9 +12,12 @@ Welcome to ColRadPy's documentation!
    release
    tutorial
    dictionary
+   ioniz_dictionary
    citing_colradpy
    :caption: Contents:
 
+.. autoclass:: colradpy_class
+.. autoclass:: ionization_balance_class
 
 Indices and tables
 ==================
