@@ -511,7 +511,7 @@ class colradpy():
                              self.data['user']['dens_grid']),axis=0)
             
             #these are the ways to ionize out of ion
-            if(self.data['rates']['ioniz']['ionization'].size > 0):
+            if(self.data['user']['use_ionization']):
 
                 self.data['cr_matrix']['cr'][i,i,:,:] = self.data['cr_matrix']['cr'][i,i,:,:] - \
                                       np.sum(np.einsum('ij,k->ijk',self.data['rates']['ioniz']['ionization'][i,:,:],
@@ -570,7 +570,7 @@ class colradpy():
                 np.sum(np.einsum('ij,k->ijk',self.data['rates']['recomb']['recomb_three_body'][:,p,:],
                                       self.data['user']['dens_grid']**2),axis=0)
                 
-        if(self.data['rates']['ioniz']['ionization'].size > 0):                
+        if(self.data['user']['use_ionization']):
             for p in range(0,nsigmaplus):
                 self.data['cr_matrix']['cr'][len(self.data['atomic']['energy'])+ p,
                                                  0:len(self.data['atomic']['energy']),:,:] = \
@@ -711,7 +711,7 @@ class colradpy():
         self.data['processed']['F'] = np.sum(self.data['processed']['pop_lvl']\
                                              [:,:,0:len(self.data['atomic']['metas']),:,:],axis=1)
         #effective ionization rate
-        if(self.data['rates']['ioniz']['ionization'].size > 0):
+        if(self.data['user']['use_ionization']):
             self.data['processed']['scd'] = np.einsum('ipk,imkl->mpkl',
                                                       self.data['rates']['ioniz']['ionization'][levels_to_keep,:,:],
                                                       self.data['processed']['F'])
@@ -819,6 +819,7 @@ class colradpy():
                                             self.data['user']['td_n0'],
                                             self.data['user']['td_source'],
                                             self.data['user']['td_t'])
+
         else:
             #no source term was provided solve just the normal matrix
 
