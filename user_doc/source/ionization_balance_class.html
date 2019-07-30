@@ -1,0 +1,292 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>ionization_balance_class module &#8212; ColRadPy 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ColRadPy 1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-ionization_balance_class">
+<span id="ionization-balance-class-module"></span><h1>ionization_balance_class module<a class="headerlink" href="#module-ionization_balance_class" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="ionization_balance_class.ionization_balance">
+<em class="property">class </em><code class="descclassname">ionization_balance_class.</code><code class="descname">ionization_balance</code><span class="sig-paren">(</span><em>fils</em>, <em>metas</em>, <em>temp_grid</em>, <em>dens_grid</em>, <em>soln_times=array([]</em>, <em>dtype=float64)</em>, <em>use_ionization=True</em>, <em>suppliment_with_ecip=True</em>, <em>use_recombination_three_body=True</em>, <em>use_recombination=True</em>, <em>keep_charge_state_data=False</em>, <em>init_abund=array([]</em>, <em>dtype=float64)</em>, <em>source=array([]</em>, <em>dtype=float64)</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ionization_balance_class.html#ionization_balance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ionization_balance_class.ionization_balance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="docutils">
+<dt>The ionization balance class takes adf04 file inputs runs CR calcualations</dt>
+<dd>‘colradpy_class.py’ to get GCR coefficients. The GCR coefficients are then
+assemble into the ionization balance matrix. This matrix is solved in the 
+same way as the time dependent CR problem with ‘solve_matrix_exponential.py’.
+The matrix can be solved time dependently with and without a source.
+The time-independent solution can also be solved. See dictionary structure documentation.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Args:</th><td class="field-body"><table class="first last docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">param fils:</th><td class="field-body"><p class="first">Array of the input adf04 file</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type fils:</th><td class="field-body"><p class="first">string array</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param temp_grid:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><p class="first">Array of the temperatures in eV</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type temp_grid:</th><td class="field-body"><p class="first">float array</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param dens_grid:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><p class="first">Array of the densities in cm-3</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type dens_grid:</th><td class="field-body"><p class="first">float array</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param use_ionization:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><p class="first">Choose if ionization will be use. This will proced the SCD rates.
+This should probably always be true if running an ionization balance but the option is there.</p>
+<blockquote>
+<div><p>Can be array of bools or just a single bool,
+if just a single bool is supplied then all
+charge states will have the same value.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">type use_ionization:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><p class="first">bool array or bool</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param suppliment_with_ecip:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><dl class="first docutils">
+<dt>Suppliments ionization rates with ECIP when ionization rates are not </dt>
+<dd><blockquote class="first">
+<div><p>present in the adf04 file.</p>
+</div></blockquote>
+<p class="last">Can be array of bools or just a single bool,</p>
+</dd>
+</dl>
+<p>if just a single bool is supplied then all
+charge states will have the same value.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">type suppliment_with_ecip:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><p class="first">bool array or bool</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param use_recombination_three_body:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><dl class="first docutils">
+<dt>Adds in three body recombination, there must be ionization present for this to work</dt>
+<dd><p class="first last">Can be array of bools or just a single bool,</p>
+</dd>
+</dl>
+<p>if just a single bool is supplied then all
+charge states will have the same value.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">type use_recombination_three_body:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><p class="first">bool array or bool</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param use_recombination:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><dl class="first docutils">
+<dt>Use recombination in the ionization balance. THis will produce the ACD and possible XCD rates</dt>
+<dd><p class="first last">Can be array of bools or just a single bool,</p>
+</dd>
+</dl>
+<p>if just a single bool is supplied then all
+charge states will have the same value.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">type use_recombination:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><p class="first">bool array or bool</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param keep_species_data:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><p class="first">When True this will keep all of the data associated with the CR solutions for each charge state.
+The can potentially take up lots of memory, the default is False</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">type use_recombination:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><p class="first last">bool</p>
+</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="ionization_balance_class.ionization_balance.populate_ion_matrix">
+<code class="descname">populate_ion_matrix</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ionization_balance_class.html#ionization_balance.populate_ion_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ionization_balance_class.ionization_balance.populate_ion_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>This will populate the ionization matrix from the various GCR coefficients
+for all of the ionization stages</p>
+<p>This matrix in mostly zeros because we don’t have ways to connect charge states
+that are more than one change away. For example if only ground states are included
+this matrix becomes diagonal.</p>
+<p>QCDs bring the atom between metastables states in a charge state
+SCDS bring the atom to the next charge state
+ACDS bring the atom to the previous charge state
+XCDS bring the atom to next charge state between the metastables of that level,
+through the previous charge state</p>
+<p>The columns of this matrix sum to zero</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ionization_balance_class.ionization_balance.solve_no_source">
+<code class="descname">solve_no_source</code><span class="sig-paren">(</span><em>n0=array([]</em>, <em>dtype=float64)</em>, <em>td_t=array([]</em>, <em>dtype=float64)</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ionization_balance_class.html#ionization_balance.solve_no_source"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ionization_balance_class.ionization_balance.solve_no_source" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solves the ionization balance matrix given an initial populations and times</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>n0</strong> (<em>float array</em>) – The initial populations of levels at t=0</li>
+<li><strong>td_t</strong> (<em>float array</em>) – Solution times</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>populates the pops, eigen_val and eigen_vec</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ionization_balance_class.ionization_balance.solve_source">
+<code class="descname">solve_source</code><span class="sig-paren">(</span><em>n0=array([]</em>, <em>dtype=float64)</em>, <em>s0=array([]</em>, <em>dtype=float64)</em>, <em>td_t=array([]</em>, <em>dtype=float64)</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ionization_balance_class.html#ionization_balance.solve_source"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ionization_balance_class.ionization_balance.solve_source" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Solves the ionization balance matrix given an</dt>
+<dd>initial populations and times when a source term is present</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>n0</strong> (<em>float array</em>) – The initial populations of levels at t=0</li>
+<li><strong>td_t</strong> (<em>float array</em>) – Solution times</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>populates the pops, eigen_val and eigen_vec</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ionization_balance_class.ionization_balance.solve_time_independent">
+<code class="descname">solve_time_independent</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ionization_balance_class.html#ionization_balance.solve_time_independent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ionization_balance_class.ionization_balance.solve_time_independent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solves the ionization balance matrix for the steady-state (time-independent) solution.</p>
+<blockquote>
+<div>This is going to use the time dependent method just solving at 8 e-folding times
+for the second to smallest eigen value. Note that there are faster methods to do this
+but its more work to code it up and the time-dependent part is already done.
+This function is mostly a niceity for the casual user.
+The smallest eigenvalue corresponds to the
+steady state so we want to wait until the second to last componet completely dies off.
+This is done for the smallest over the given temperature and density parameter space
+this has been tested for 17 orders of magnitude and I haven’t run into overflow problems.</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>n0</strong> (<em>float array</em>) – The initial populations of levels at t=0</li>
+<li><strong>td_t</strong> (<em>float array</em>) – Solution times</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>populates the pops, eigen_val and eigen_vec</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo.jpg" alt="Logo"/>
+            </a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/source/ionization_balance_class.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ColRadPy 1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Curtis Johnson.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.
+    </div>
+  </body>
+</html>

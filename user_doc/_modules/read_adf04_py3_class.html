@@ -1,0 +1,362 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>read_adf04_py3_class &#8212; ColRadPy 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ColRadPy 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for read_adf04_py3_class</h1><div class="highlight"><pre>
+<span></span><span class="c1">################################################################################</span>
+<span class="c1"># file name         : read_adf04_py3.py</span>
+<span class="c1"># author            : Curt Johnson</span>
+<span class="c1"># description       : This code reads adf04 formatted files</span>
+<span class="c1"># version           : 0.9</span>
+<span class="c1"># python version    : 3.6.5 |Anaconda, INC.| ipython 6.4.0</span>
+<span class="c1"># dependencies      : numpy, re, sys</span>
+<span class="c1"># license           : to be freed after code is stable and papers are published</span>
+<span class="c1">#</span>
+<span class="c1"># todo          check with all the adf04 files in adas</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1">################################################################################</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+
+
+<div class="viewcode-block" id="first_substring"><a class="viewcode-back" href="../source/read_adf04_py3_class.html#read_adf04_py3_class.first_substring">[docs]</a><span class="k">def</span> <span class="nf">first_substring</span><span class="p">(</span><span class="n">strings</span><span class="p">,</span> <span class="n">substring</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">string</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">strings</span><span class="p">)</span> <span class="k">if</span> <span class="n">substring</span> <span class="ow">in</span> <span class="n">string</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="config_format"><a class="viewcode-back" href="../source/read_adf04_py3_class.html#read_adf04_py3_class.config_format">[docs]</a><span class="k">def</span> <span class="nf">config_format</span><span class="p">(</span><span class="n">config_arr</span><span class="p">):</span>
+    <span class="n">conf</span> <span class="o">=</span> <span class="n">config_arr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">config_arr</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">config_arr</span><span class="p">)):</span>
+            <span class="n">conf</span> <span class="o">=</span> <span class="n">conf</span><span class="o">+</span><span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">config_arr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">conf</span></div>
+
+<div class="viewcode-block" id="read_adf04"><a class="viewcode-back" href="../source/read_adf04_py3_class.html#read_adf04_py3_class.read_adf04">[docs]</a><span class="k">def</span> <span class="nf">read_adf04</span><span class="p">(</span><span class="n">fil</span><span class="p">):</span>
+    <span class="n">file_path</span> <span class="o">=</span> <span class="n">fil</span>
+
+    <span class="n">file_name</span> <span class="o">=</span> <span class="n">file_path</span>
+    <span class="n">adf04</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;atomic&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;rates&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+    <span class="c1">############################################################################</span>
+    <span class="c1">#</span>
+    <span class="c1"># reading the first line</span>
+    <span class="c1">#</span>
+    <span class="c1">############################################################################</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">first_line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;atomic&#39;</span><span class="p">][</span><span class="s1">&#39;element&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;[+]&#39;</span><span class="p">,</span><span class="n">first_line</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">first_linep</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;[ ]&#39;</span><span class="p">,</span><span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;[+]&#39;</span><span class="p">,</span><span class="n">first_line</span><span class="p">)[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">first_linep_inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">first_linep</span> <span class="o">!=</span><span class="s1">&#39;&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;atomic&#39;</span><span class="p">][</span><span class="s1">&#39;charge_state&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">first_linep</span><span class="p">[</span><span class="n">first_linep_inds</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+        <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;atomic&#39;</span><span class="p">][</span><span class="s1">&#39;iz0&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">first_linep</span><span class="p">[</span><span class="n">first_linep_inds</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+        <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;atomic&#39;</span><span class="p">][</span><span class="s1">&#39;iz1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">first_linep</span><span class="p">[</span><span class="n">first_linep_inds</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
+        <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;atomic&#39;</span><span class="p">][</span><span class="s1">&#39;ion_pot&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">first_linep_inds</span><span class="p">)</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span>
+
+        <span class="n">ion_term</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;atomic&#39;</span><span class="p">][</span><span class="s1">&#39;ion_pot&#39;</span><span class="p">])):</span>
+            <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;atomic&#39;</span><span class="p">][</span><span class="s1">&#39;ion_pot&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span><span class="nb">float</span><span class="p">(</span>
+                <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;[(]&#39;</span><span class="p">,</span><span class="n">first_linep</span><span class="p">[</span><span class="n">first_linep_inds</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">]])[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">ion_term</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span>
+                <span class="s1">&#39;[)]&#39;</span><span class="p">,</span><span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;[(]&#39;</span><span class="p">,</span><span class="n">first_linep</span><span class="p">[</span><span class="n">first_linep_inds</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">]])[</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;atomic&#39;</span><span class="p">][</span><span class="s1">&#39;ion_term&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ion_term</span><span class="p">)</span>
+
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;**Failed first line of the adf04**</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="o">+</span><span class="n">first_line</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">file is formatted incorrectly failed line.</span><span class="se">\n</span><span class="s2">CHECK WHITE SPACE.</span><span class="se">\n</span><span class="s2">It should be formatted as below (Neutral Tungsten example). </span><span class="se">\n</span><span class="s2">If more than one ionization metastable,</span><span class="se">\n</span><span class="s2">add more ionization potentials and terms after the first</span><span class="se">\n</span><span class="s2">W+ 0        74         1       63427.7(6D3)&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1">############################################################################</span>
+    <span class="c1">#</span>
+    <span class="c1"># done reading the first line, reading the level information</span>
+    <span class="c1">#</span>
+    <span class="c1">############################################################################</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">energy</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">zpla</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">zpla1</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">level_num</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">tmp_line</span> <span class="o">=</span>   <span class="n">first_line</span>
+        <span class="n">zpla</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">zpla1</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">zz_check</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">while</span><span class="p">(</span><span class="s1">&#39;-1&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tmp_line</span> <span class="ow">or</span> <span class="s1">&#39;-1</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tmp_line</span><span class="p">):</span>
+            <span class="n">level_num</span> <span class="o">=</span> <span class="n">level_num</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">tmp_line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;[  ]&#39;</span><span class="p">,</span><span class="n">tmp_line</span><span class="p">))</span>
+
+            <span class="k">if</span><span class="p">(</span><span class="s1">&#39;-1&#39;</span> <span class="ow">in</span> <span class="n">tmp</span> <span class="ow">or</span> <span class="s1">&#39;-1</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">):</span>
+                <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">tmp_inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">tmp</span> <span class="o">!=</span><span class="s1">&#39;&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="c1">#finding end of config</span>
+                <span class="n">config_stop</span> <span class="o">=</span> <span class="n">first_substring</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">],</span><span class="s1">&#39;(&#39;</span><span class="p">)</span>
+
+                <span class="n">config</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">config_format</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">config_stop</span><span class="p">]]))</span>
+                <span class="n">S</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;[)]&#39;</span><span class="p">,</span><span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;[(]&#39;</span><span class="p">,</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">config_stop</span><span class="p">]])[</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">]))</span>
+                <span class="n">L</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;[)]&#39;</span><span class="p">,</span><span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;[(]&#39;</span><span class="p">,</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">config_stop</span><span class="p">]])[</span><span class="mi">1</span><span class="p">])[</span><span class="mi">1</span><span class="p">]))</span>
+
+                <span class="k">if</span><span class="p">(</span> <span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">config_stop</span><span class="p">]]</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s1">&#39;)&#39;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">w</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;[(]&#39;</span><span class="p">,</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">config_stop</span><span class="p">]])[</span><span class="mi">2</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">4</span><span class="p">]))</span>
+                    <span class="n">offset</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">w</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;[)]&#39;</span><span class="p">,</span><span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;[(]&#39;</span><span class="p">,</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">config_stop</span><span class="o">+</span><span class="mi">1</span><span class="p">]])[</span><span class="mi">0</span><span class="p">])[</span><span class="mi">0</span><span class="p">]))</span>
+                    <span class="n">offset</span><span class="o">=</span><span class="mi">0</span>
+                    
+                <span class="n">energy</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">config_stop</span><span class="o">+</span><span class="mi">2</span><span class="o">+</span><span class="n">offset</span><span class="p">]]))</span>
+                <span class="n">zz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;atomic&#39;</span><span class="p">][</span><span class="s1">&#39;ion_pot&#39;</span><span class="p">]))</span><span class="o">*-</span><span class="mi">1</span>
+                <span class="n">zz1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;atomic&#39;</span><span class="p">][</span><span class="s1">&#39;ion_pot&#39;</span><span class="p">]))</span><span class="o">*-</span><span class="mi">1</span>
+                
+
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config_stop</span><span class="o">+</span><span class="mi">3</span><span class="o">+</span><span class="n">offset</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">tmp_inds</span><span class="p">)):</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;X&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="p">]]):</span>
+                        <span class="n">zpla1_line</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;[}]&#39;</span><span class="p">,</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="p">]])[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+                        <span class="n">zpla_line</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;[}]&#39;</span><span class="p">,</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="p">]])[</span><span class="mi">1</span><span class="p">])</span>
+                        <span class="k">if</span><span class="p">(</span><span class="n">zpla1_line</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">zz_check</span><span class="p">):</span>
+                            <span class="k">if</span><span class="p">(</span><span class="n">zz_check</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+                                <span class="n">zz_check</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">zpla1_line</span><span class="p">)</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="n">zz_check</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">zz_check</span><span class="p">,</span><span class="n">zpla1_line</span><span class="p">)</span>
+
+                        
+                        <span class="n">zz</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">zz_check</span><span class="o">==</span><span class="n">zpla1_line</span><span class="p">)[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">zpla1_line</span>
+                        <span class="n">zz1</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">zz_check</span><span class="o">==</span><span class="n">zpla1_line</span><span class="p">)[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">zpla_line</span>
+
+                <span class="n">zpla</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">zz1</span><span class="p">)</span>
+                <span class="n">zpla1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">zz</span><span class="p">)</span>
+
+        <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;atomic&#39;</span><span class="p">][</span><span class="s1">&#39;config&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;atomic&#39;</span><span class="p">][</span><span class="s1">&#39;L&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">L</span><span class="p">)</span>
+        <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;atomic&#39;</span><span class="p">][</span><span class="s1">&#39;S&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
+        <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;atomic&#39;</span><span class="p">][</span><span class="s1">&#39;w&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+        <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;atomic&#39;</span><span class="p">][</span><span class="s1">&#39;energy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">energy</span><span class="p">)</span>
+        <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;atomic&#39;</span><span class="p">][</span><span class="s1">&#39;zpla&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">zpla</span><span class="p">)</span>
+        <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;atomic&#39;</span><span class="p">][</span><span class="s1">&#39;zpla1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">zpla1</span><span class="p">)</span>
+        <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;atomic&#39;</span><span class="p">][</span><span class="s1">&#39;ion_pot_lvl&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">zz_check</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">**FAILED LEVEL &quot;</span> <span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">level_num</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;**</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">One or more configuration/energy lines in the adf04 file are formatted incorrectly.</span><span class="se">\n</span><span class="s2">It should be formatted as below (C+3 example). </span><span class="se">\n</span><span class="s2">If more than one ionization metastable,</span><span class="se">\n</span><span class="s2">add more apla,zpla after the first ie. </span><span class="si">{2}</span><span class="s2">1.00</span><span class="se">\n</span><span class="s2">      2 1S2 2P1           (2)1( 2.5)    64555.4   </span><span class="si">{1}</span><span class="s2">1.000&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1">############################################################################</span>
+    <span class="c1">#</span>
+    <span class="c1"># end reading level info start reading temperature grid</span>
+    <span class="c1">#</span>
+    <span class="c1">############################################################################</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">temp_line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="n">temp_line_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;[ ]&#39;</span><span class="p">,</span><span class="n">temp_line</span><span class="p">))</span>
+        <span class="n">temp_line_inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span> <span class="n">temp_line_arr</span><span class="o">!=</span><span class="s1">&#39;&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">adf04_temp_grid</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">temp_line_inds</span><span class="p">)):</span>
+            <span class="k">if</span><span class="p">(</span> <span class="s1">&#39;+&#39;</span> <span class="ow">in</span> <span class="n">temp_line_arr</span><span class="p">[</span><span class="n">temp_line_inds</span><span class="p">[</span><span class="n">i</span><span class="p">]]):</span>
+                <span class="n">temp_tmp</span> <span class="o">=</span> <span class="n">temp_line_arr</span><span class="p">[</span><span class="n">temp_line_inds</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;+&#39;</span><span class="p">,</span><span class="s1">&#39;E&#39;</span><span class="p">)</span>
+            <span class="k">elif</span><span class="p">(</span><span class="s1">&#39;-&#39;</span> <span class="ow">in</span> <span class="n">temp_line_arr</span><span class="p">[</span><span class="n">temp_grid_inds</span><span class="p">[</span><span class="n">i</span><span class="p">]]):</span>
+                <span class="n">temp_tmp</span> <span class="o">=</span> <span class="n">temp_line_arr</span><span class="p">[</span><span class="n">temp_line_inds</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span><span class="s1">&#39;E-&#39;</span><span class="p">)</span>
+            <span class="n">adf04_temp_grid</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">temp_tmp</span><span class="p">))</span>
+        <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">][</span><span class="s1">&#39;temp_grid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">][</span><span class="s1">&#39;temp_grid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">adf04_temp_grid</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">**FAILED TEMPERATURE GRID**</span><span class="se">\n\n</span><span class="s2">&quot;</span> <span class="o">+</span><span class="n">temp_line</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">adf04 temperature grid formatted incorrectly.</span><span class="se">\n</span><span class="s2">Should be formatted as below (C+3 example).</span><span class="se">\n</span><span class="s2">  4.0    3       8.00+03 1.60+04 3.20+04 8.00+04 1.60+05 3.20+05 8.00+05 1.60+06 3.20+06 8.00+06 1.60+07&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1">################################################################################</span>
+    <span class="c1">#</span>
+    <span class="c1"># end reading temp grid start reading in the atomic data from the adf04 file</span>
+    <span class="c1">#</span>
+    <span class="c1">################################################################################</span>
+    <span class="c1">#declare the colisional stuff</span>
+    <span class="n">col_excit</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">col_transitions</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1">#declare the recombination stuff</span>
+    <span class="n">recomb_excit</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">recomb_transitions</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1">#declare the ion stuff</span>
+    <span class="n">ion_excit</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ion_transitions</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1">#declare the a value stuff</span>
+    <span class="n">a_val</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">inf_engy</span><span class="o">=</span> <span class="p">[]</span>
+    <span class="k">while</span><span class="p">(</span><span class="s1">&#39;-1&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tmp</span> <span class="ow">or</span> <span class="s1">&#39;-1</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">):</span>
+        <span class="n">level_num</span> <span class="o">=</span> <span class="n">level_num</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">tmp_line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;[  ]&#39;</span><span class="p">,</span><span class="n">tmp_line</span><span class="p">))</span>
+        <span class="k">if</span><span class="p">(</span><span class="s1">&#39;-1&#39;</span> <span class="ow">in</span> <span class="n">tmp</span> <span class="ow">or</span> <span class="s1">&#39;-1</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">):</span>
+            <span class="k">break</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+            <span class="n">tmp_inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">tmp</span><span class="o">!=</span><span class="s1">&#39;&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="c1"># Transition numbers</span>
+            <span class="n">col_transitions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="mi">0</span><span class="p">]]),</span><span class="nb">int</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="mi">1</span><span class="p">]])]))</span>
+            <span class="c1"># A-values</span>
+            <span class="k">if</span><span class="p">(</span> <span class="s1">&#39;+&#39;</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="mi">2</span><span class="p">]]):</span>
+                <span class="n">a_val</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;+&#39;</span><span class="p">,</span><span class="s1">&#39;E&#39;</span><span class="p">)))</span>
+            <span class="k">elif</span><span class="p">(</span><span class="s1">&#39;-&#39;</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="mi">2</span><span class="p">]]):</span>
+                <span class="n">a_val</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span><span class="s1">&#39;E-&#39;</span><span class="p">)))</span>
+            <span class="c1">#collisional values</span>
+            <span class="n">col_excit_row</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">][</span><span class="s1">&#39;temp_grid&#39;</span><span class="p">]))</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">tmp_inds</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span><span class="p">):</span>
+
+                <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">]])</span> <span class="o">&lt;</span> <span class="mi">9</span><span class="p">):</span>
+
+                    <span class="k">if</span><span class="p">(</span><span class="n">i</span><span class="o">&gt;</span><span class="nb">len</span><span class="p">(</span><span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">][</span><span class="s1">&#39;temp_grid&#39;</span><span class="p">])</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                        <span class="k">if</span><span class="p">(</span> <span class="s1">&#39;+&#39;</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">]]):</span>
+                            <span class="n">inf_engy</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">]]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;+&#39;</span><span class="p">,</span><span class="s1">&#39;E&#39;</span><span class="p">)))</span>
+                        <span class="k">elif</span><span class="p">(</span><span class="s1">&#39;-&#39;</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">]]):</span>
+                            <span class="n">inf_engy</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">]]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span><span class="s1">&#39;E-&#39;</span><span class="p">)))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">if</span><span class="p">(</span> <span class="s1">&#39;+&#39;</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">]]):</span>
+                            <span class="n">col_excit_row</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">]]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;+&#39;</span><span class="p">,</span><span class="s1">&#39;E&#39;</span><span class="p">))</span>
+                        <span class="k">elif</span><span class="p">(</span><span class="s1">&#39;-&#39;</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">]]):</span>
+                            <span class="n">col_excit_row</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">]]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span><span class="s1">&#39;E-&#39;</span><span class="p">))</span>
+
+                        
+                <span class="k">else</span><span class="p">:</span>
+
+                    <span class="n">last_temp</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">]][</span><span class="mi">0</span><span class="p">:</span><span class="mi">7</span><span class="p">]</span>
+                    <span class="n">inf_temp</span> <span class="o">=</span>  <span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">]][</span><span class="mi">8</span><span class="p">:</span><span class="mi">15</span><span class="p">]</span>
+                    <span class="k">if</span><span class="p">(</span> <span class="s1">&#39;+&#39;</span> <span class="ow">in</span> <span class="n">last_temp</span><span class="p">):</span>
+                        <span class="n">col_excit_row</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">last_temp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;+&#39;</span><span class="p">,</span><span class="s1">&#39;E&#39;</span><span class="p">))</span>
+                    <span class="k">elif</span><span class="p">(</span><span class="s1">&#39;-&#39;</span> <span class="ow">in</span> <span class="n">last_temp</span><span class="p">):</span>
+                        <span class="n">col_excit_row</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">last_temp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span><span class="s1">&#39;E-&#39;</span><span class="p">))</span>
+                    
+                    <span class="k">if</span><span class="p">(</span> <span class="s1">&#39;+&#39;</span> <span class="ow">in</span> <span class="n">inf_temp</span><span class="p">):</span>
+                        <span class="n">inf_engy</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">inf_temp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;+&#39;</span><span class="p">,</span><span class="s1">&#39;E&#39;</span><span class="p">)))</span>
+                    <span class="k">elif</span><span class="p">(</span><span class="s1">&#39;-&#39;</span> <span class="ow">in</span> <span class="n">inf_temp</span><span class="p">):</span>
+                        <span class="n">inf_engy</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">inf_temp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span><span class="s1">&#39;E-&#39;</span><span class="p">)))</span>
+
+            <span class="n">col_excit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col_excit_row</span><span class="p">)</span>
+            <span class="c1">#infinite energy</span>
+
+    <span class="c1">######################################################################</span>
+    <span class="c1">#</span>
+    <span class="c1"># end excitation and a values from the adf04, start looking for recomb</span>
+    <span class="c1">#</span>
+    <span class="c1">######################################################################</span>
+        <span class="k">elif</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;R&#39;</span> <span class="ow">or</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;r&#39;</span><span class="p">):</span>
+            <span class="n">tmp_inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">tmp</span><span class="o">!=</span><span class="s1">&#39;&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">recomb_transitions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="mi">2</span><span class="p">]]),</span><span class="nb">int</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="mi">1</span><span class="p">]])]))</span>
+
+            <span class="n">recomb_excit_row</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">][</span><span class="s1">&#39;temp_grid&#39;</span><span class="p">]))</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">][</span><span class="s1">&#39;temp_grid&#39;</span><span class="p">])):</span>
+                <span class="k">if</span><span class="p">(</span> <span class="s1">&#39;+&#39;</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">]]):</span>
+                    <span class="n">recomb_excit_row</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">]]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;+&#39;</span><span class="p">,</span><span class="s1">&#39;E&#39;</span><span class="p">))</span>
+                <span class="k">elif</span><span class="p">(</span><span class="s1">&#39;-&#39;</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">]]):</span>
+                    <span class="n">recomb_excit_row</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">]]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span><span class="s1">&#39;E-&#39;</span><span class="p">))</span>
+            <span class="n">recomb_excit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">recomb_excit_row</span><span class="p">)</span>
+
+    <span class="c1">######################################################################</span>
+    <span class="c1">#</span>
+    <span class="c1"># end recombination and values from the adf04, start looking for ionization</span>
+    <span class="c1">#</span>
+    <span class="c1">######################################################################</span>
+        <span class="k">elif</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;S&#39;</span> <span class="ow">or</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span><span class="s1">&#39;s&#39;</span><span class="p">):</span>
+            <span class="n">tmp_inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">tmp</span><span class="o">!=</span><span class="s1">&#39;&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">ion_transitions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="mi">1</span><span class="p">]]),</span><span class="nb">int</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="mi">2</span><span class="p">]])]))</span>
+            <span class="n">ion_excit_row</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">][</span><span class="s1">&#39;temp_grid&#39;</span><span class="p">]))</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">][</span><span class="s1">&#39;temp_grid&#39;</span><span class="p">])):</span>
+                <span class="k">if</span><span class="p">(</span> <span class="s1">&#39;+&#39;</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">]]):</span>
+                    <span class="n">ion_excit_row</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">]]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;+&#39;</span><span class="p">,</span><span class="s1">&#39;E&#39;</span><span class="p">))</span>
+                <span class="k">elif</span><span class="p">(</span><span class="s1">&#39;-&#39;</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">]]):</span>
+                    <span class="n">ion_excit_row</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp_inds</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">]]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span><span class="s1">&#39;E-&#39;</span><span class="p">))</span>
+            <span class="n">ion_excit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ion_excit_row</span><span class="p">)</span>
+    <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;rates&#39;</span><span class="p">][</span><span class="s1">&#39;excit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;rates&#39;</span><span class="p">][</span><span class="s1">&#39;excit&#39;</span><span class="p">][</span><span class="s1">&#39;col_transitions&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">col_transitions</span><span class="p">)</span>
+    <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;rates&#39;</span><span class="p">][</span><span class="s1">&#39;excit&#39;</span><span class="p">][</span><span class="s1">&#39;col_excit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">col_excit</span><span class="p">)</span>
+    <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;rates&#39;</span><span class="p">][</span><span class="s1">&#39;a_val&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">a_val</span><span class="p">)</span>
+    <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;rates&#39;</span><span class="p">][</span><span class="s1">&#39;inf_engy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">inf_engy</span><span class="p">)</span>
+    <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;rates&#39;</span><span class="p">][</span><span class="s1">&#39;recomb&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;rates&#39;</span><span class="p">][</span><span class="s1">&#39;recomb&#39;</span><span class="p">][</span><span class="s1">&#39;recomb_transitions&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">recomb_transitions</span><span class="p">)</span>
+    <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;rates&#39;</span><span class="p">][</span><span class="s1">&#39;recomb&#39;</span><span class="p">][</span><span class="s1">&#39;recomb_excit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">recomb_excit</span><span class="p">)</span>
+    <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;rates&#39;</span><span class="p">][</span><span class="s1">&#39;ioniz&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;rates&#39;</span><span class="p">][</span><span class="s1">&#39;ioniz&#39;</span><span class="p">][</span><span class="s1">&#39;ion_transitions&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ion_transitions</span><span class="p">)</span>
+    <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;rates&#39;</span><span class="p">][</span><span class="s1">&#39;ioniz&#39;</span><span class="p">][</span><span class="s1">&#39;ion_excit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ion_excit</span><span class="p">)</span>
+
+    <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">][</span><span class="s1">&#39;rates&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">][</span><span class="s1">&#39;atomic&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">][</span><span class="s1">&#39;rates&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;rates&#39;</span><span class="p">])</span>
+    <span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">][</span><span class="s1">&#39;atomic&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">adf04</span><span class="p">[</span><span class="s1">&#39;atomic&#39;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">adf04</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo.jpg" alt="Logo"/>
+            </a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ColRadPy 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Curtis Johnson.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.
+    </div>
+  </body>
+</html>

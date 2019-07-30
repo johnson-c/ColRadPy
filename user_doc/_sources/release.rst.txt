@@ -1,15 +1,21 @@
-Release Notes
-=============
+Release Notes 1.0
+==================
 
 Summary
--------
-ColRadPy 0.9 is a beta relase of the ColRadPy code.
+---------
+ColRadPy 1.0 is the first release of the ColRadPy code.
 ColRadPy is a collisional radiative solver as well as an ionization balance solver.
-For background theory and example of ColRadPy's use see upcoming Johnson Nuclear materials paper.
+For background theory and example of ColRadPy's 
 
 Installation Instructions
--------------------------
+---------------------------
 
 Right now ColRadPy has been tested with Anaconda installed python3.
 
-   
+
+
+Examples
+----------
+Examples on running ColRadPy are in the 'examples' folder.
+These examples are highlighted in the :ref:`Tutorial. <tutorial>`
+

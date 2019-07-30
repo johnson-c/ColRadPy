@@ -1,3 +1,19 @@
+################################################################################
+# file name         : r8necip.py
+# author            : Curt Johnson
+# description       : This code uses the ECIP forumula to calculate ionization
+# version           : 0.1
+# python version    : 2.7.12 ipython 2.4.1
+# dependencies      : numpy
+#
+# This code was entirely based on the ADAS fortran routine r8ecip.for and r8yip.for.
+# Orginal authors Johnathan Nash, William Osborn, Allan Whiteford
+# It has just been transplated to python. Variable names may have been changed.
+# See the Summers appelton review for the theory
+#
+################################################################################
+
+
 import numpy as np
 from r8yip import *
 
@@ -23,33 +39,33 @@ def r8necip(IZ, ion_pot, energy, zpla,temperature_grid):
 
     """
     
-    ZETA = zpla
     CL = 2.3
     DXIPOW = 1.5
-    TK2ATE = 1.5789e5
+
     R2GAM  = 2.17161e-8 
-    D150   = 1.50e2
     CR2GAM = CL*R2GAM
     CALF = 3.30048e-24
-    XI_arr = ion_pot - energy
+    eng_diff = ion_pot - energy
     X = np.array([ 0.26356 , 1.41340 , 3.59643 , 7.08581 ,
                    12.64080])
     W = np.array([ 0.521756   , 0.398667   , 0.0759424 ,
                    0.00361176 , 0.00002337])
     r8necip = np.zeros((len(energy),len(temperature_grid)))
-    for z in range(0, len(XI_arr)):
+    for z in range(0, len(eng_diff)):
         for zz in range(0,len(temperature_grid)):
+            
             TE = temperature_grid[zz]
-            XI = XI_arr[z]
             Z     = float( IZ+1 )
-            ATE   = TK2ATE/TE
-            EN    = Z/np.sqrt(XI)
-            Y     = XI*ATE
-            IZETA = ZETA[z]
-            J1    = 5
+
+
+            te_rydberg = 1.5789e5/temperature_grid[zz]
+            EN    = Z/np.sqrt(eng_diff[z])
+            Y     = eng_diff[z]*TE_TYDBERG
+            Izpla = zpla[z]
+
             AI    = 0.0
 
-            for  J in range (0,J1):
+            for  J in range (0,len(X)):
                 V     =  X[J]
                 B     =  V/Y
                 B1    =  B+1.0
@@ -63,12 +79,12 @@ def r8necip(IZ, ion_pot, energy, zpla,temperature_grid):
                 AI    =  AI+W[J]*C2
                 Q     =  4.0*C2/B1
                 
-            ALFRED = CALF * (ATE ** 1.5) * 8.68811e-8*np.sqrt(ATE)*ZETA[z]*AI/XI
+            r8necip[z,zz] = CALF * (te_rydberg ** 1.5) * 8.68811e-8*np.sqrt(te_rydberg)*zpla[z]*AI/eng_diff[z]
 
             if( Y < 150):
-                R8NECIP = 8.68811e-8*np.sqrt(ATE)*np.exp(-Y)*ZETA*AI/XI
+                R8NECIP = 8.68811e-8*np.sqrt(te_rydberg)*np.exp(-Y)*zpla*AI/eng_diff[z]
             else:
                 R8NECIP = 0.0
 
-            r8necip[z,zz] = ALFRED
+             
     return r8necip

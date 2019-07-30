@@ -1,0 +1,151 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>ionization_balance module &#8212; ColRadPy 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ColRadPy 1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-ionization_balance">
+<span id="ionization-balance-module"></span><h1>ionization_balance module<a class="headerlink" href="#module-ionization_balance" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="ionization_balance.ionization_balance">
+<em class="property">class </em><code class="descclassname">ionization_balance.</code><code class="descname">ionization_balance</code><span class="sig-paren">(</span><em>fils</em>, <em>metas</em>, <em>temp_grid</em>, <em>dens_grid</em>, <em>use_ionization=True</em>, <em>suppliment_with_ecip=True</em>, <em>use_recombination_three_body=True</em>, <em>use_recombination=True</em>, <em>keep_species_data=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ionization_balance.html#ionization_balance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ionization_balance.ionization_balance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="ionization_balance.ionization_balance.populate_ion_matrix">
+<code class="descname">populate_ion_matrix</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ionization_balance.html#ionization_balance.populate_ion_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ionization_balance.ionization_balance.populate_ion_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>This will populate the ionization matrix from the various GCR coefficients
+for all of the ionization stages</p>
+<p>This matrix in mostly zeros because we don’t have ways to connect charge states
+that are more than one change away. For example if only ground states are included
+this matrix becomes diagonal.</p>
+<p>QCDs bring the atom between metastables states in a charge state
+SCDS bring the atom to the next charge state
+ACDS bring the atom to the previous charge state
+XCDS bring the atom to next charge state between the metastables of that level,
+through the previous charge state</p>
+<p>The columns of this matrix sum to zero</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ionization_balance.ionization_balance.solve_no_source">
+<code class="descname">solve_no_source</code><span class="sig-paren">(</span><em>n0</em>, <em>td_t</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ionization_balance.html#ionization_balance.solve_no_source"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ionization_balance.ionization_balance.solve_no_source" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solves the ionization balance matrix given an initial populations and times</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>n0</strong> (<em>float array</em>) – The initial populations of levels at t=0</li>
+<li><strong>td_t</strong> (<em>float array</em>) – Solution times</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>populates the pops, eigen_val and eigen_vec</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ionization_balance.ionization_balance.solve_source">
+<code class="descname">solve_source</code><span class="sig-paren">(</span><em>n0</em>, <em>s0</em>, <em>td_t</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ionization_balance.html#ionization_balance.solve_source"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ionization_balance.ionization_balance.solve_source" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solves the ionization balance matrix given an initial populations and times when a source term is present</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>n0</strong> (<em>float array</em>) – The initial populations of levels at t=0</li>
+<li><strong>td_t</strong> (<em>float array</em>) – Solution times</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>populates the pops, eigen_val and eigen_vec</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo.jpg" alt="Logo"/>
+            </a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/source/ionization_balance.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ColRadPy 1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Curtis Johnson.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.
+    </div>
+  </body>
+</html>
