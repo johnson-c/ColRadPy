@@ -5,24 +5,21 @@
 # version           : 0.1
 # python version    : 2.7.12 ipython 2.4.1
 # dependencies      : numpy
-# license           : to be freed after code is stable and papers are published
 #
-# This code was entirely based on the ADAS fortran routine r8ecip.for and
-# r8yip.for. They will be included in the SVN for refence. I did not think about
-# the theory here, this is a str8 copy. Was checked for He I and gives the same
-# results.
-#
+# This code was entirely based on the ADAS fortran routine r8ecip.for and r8yip.for.
+# Origal fortran authors Jonathan Nash, Hugh Summers, Martin O'Mulane
+# It has just been transplated to python. Variable names may have been changed.
+# See the Summers appelton review for the theory
 #
 ################################################################################
+
 
 import numpy as np
 
 def R8YIP(XI,DELTA):
-    """This code was entirely based on the ADAS fortran routine r8ecip.for and
- r8yip.for. They will be included in the SVN for refence. I did not think about
- the theory here, this is a str8 copy. Was checked for He I and gives the same
- results.
-
+    """This code was entirely based on the ADAS fortran routine r8ecip.for and r8yip.for.
+       It has just been transplated to python. Variable names may have been changed.
+       See the Summers appelton review for the theory
 
     :param XI: -
     :type XI: -
