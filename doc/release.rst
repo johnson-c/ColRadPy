@@ -1,3 +1,4 @@
+.. _release:
 Release Notes 1.0
 ==================
 
@@ -17,3 +18,7 @@ Right now ColRadPy has been tested with Anaconda installed python3.
 Examples
 ----------
 Examples on running ColRadPy are in the 'examples' folder.
+These examples are highlighted in the :ref:`Tutorial. <tutorial>`
+
+
+
