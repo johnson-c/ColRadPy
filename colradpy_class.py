@@ -831,6 +831,9 @@ class colradpy():
 
     def split_pec_multiplet(self):
         """This function will solve take LS resolved PECs and split them statistically among the j levels
+           Note that is only works for dipole transitions. See "split_multiplet.py" for the transitions
+           that this will split. Most transitsions of spectroscopic importance should be able to be 
+           split by this.
 
         """
         if('processed' not in self.data.keys()):

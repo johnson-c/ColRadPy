@@ -89,13 +89,14 @@ def split_multiplet(s_low,l_low,s_up,l_up):
 
     j1_arr = np.arange(np.abs(l_up-s_up),np.abs(l_up+s_up)+1.,1.)
     j2_arr = np.arange(np.abs(l_low-s_low),np.abs(l_low+s_low)+1.,1.)
-    
+
     for j1 in j1_arr:
         for j2 in j2_arr:
-
+            j_up.append(j1)
+            j_low.append(j2)
             if( (np.abs(j2-j1) < 2) and (np.abs(l_up - l_low) < 2) and (np.abs(j1+j2) >= 1)):
-                j_up.append(j1)
-                j_low.append(j2)
                 res.append( split_condon_shortley(s_up,l_up,j1,s_low,l_low,j2))
-
+            else:
+                res.append(-1)
+                
     return np.asarray(j_up),np.asarray(j_low),np.asarray(res)
