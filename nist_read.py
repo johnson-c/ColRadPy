@@ -1,6 +1,6 @@
 import pymysql
 from fractions import Fraction
-
+import re
 
 
 
@@ -54,5 +54,5 @@ def get_nist_levels(element,charge):
 
 def get_nist_clean(element,charge):
 
-    return remove_senority(remove_conf_paraentage(sort_energy(get_nist_levels(element,charge))))
+    return remove_senority(remove_conf_parentage(sort_energy(get_nist_levels(element,charge))))
     
