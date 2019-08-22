@@ -44,7 +44,7 @@ def split_condon_shortley(s1,l1,j1,s2,l2,j2):
         res = (j1+s1-l1+1) * (l1+s1-j1) * (j1+s1-l1+2)  * (l1+s1-j1-1) / (4.0 * (j1+1) )
     else:
         res = []
-    print(j1,l1,j2,l2,res)
+
     return res
 
 
@@ -79,6 +79,7 @@ def split_multiplet(s_low,l_low,s_up,l_up):
     #finding all possible j values for upper and lower
 
     #l_low has to be smaller than l_up
+    switch = False
     if(l_up < l_low):
         l_t = l_low
         s_t = s_low
@@ -86,7 +87,7 @@ def split_multiplet(s_low,l_low,s_up,l_up):
         l_low = l_up
         l_up = l_t
         s_up = s_t
-
+        switch=True
     j1_arr = np.arange(np.abs(l_up-s_up),np.abs(l_up+s_up)+1.,1.)
     j2_arr = np.arange(np.abs(l_low-s_low),np.abs(l_low+s_low)+1.,1.)
 
@@ -97,6 +98,10 @@ def split_multiplet(s_low,l_low,s_up,l_up):
             if( (np.abs(j2-j1) < 2) and (np.abs(l_up - l_low) < 2) and (np.abs(j1+j2) >= 1)):
                 res.append( split_condon_shortley(s_up,l_up,j1,s_low,l_low,j2))
             else:
-                res.append(-1)
-                
-    return np.asarray(j_up),np.asarray(j_low),np.asarray(res)
+                res.append(0)
+
+
+    if(switch):
+        return np.asarray(j_low),np.asarray(j_up),np.asarray(res)        
+    else:
+        return np.asarray(j_up),np.asarray(j_low),np.asarray(res)

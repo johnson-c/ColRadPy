@@ -38,9 +38,11 @@ from read_adf04_py3_class import *
 from ecip_rates import *
 from burgess_tully_rates import *
 from split_multiplet import *
+from nist_read import *
 import collections
 from solve_matrix_exponential import *
 from matplotlib import rc,rcParams
+from fractions import Fraction
 
 def convert_to_air(lam):
     """This function converts the vacuum wavelength of spectral lines to 
@@ -323,7 +325,7 @@ class colradpy():
                                   len(self.data['atomic']['ion_pot']),
                                   len(self.data['user']['temp_grid'])))
         for p in range(0,len(self.data['atomic']['ion_pot'])):
-            l_map = np.array(['S','P','D','F','G'])
+            l_map = np.array(['S','P','D','F','G','H','I','J'])
             if(len(self.data['atomic']['ion_term'][p]) ==2): # was -1)/2.
                 w_ion = ( int(self.data['atomic']['ion_term'][p][0]) * \
                           (np.where(l_map==self.data['atomic']['ion_term'][p][1])[0][0]*2+1))
@@ -838,36 +840,206 @@ class colradpy():
         """
         if('processed' not in self.data.keys()):
             self.solve_quasi_static()
-            
-        self.data['processed']['split'] = {}
+
+        if('split' not in self.data['processed'].keys()):
+            self.data['processed']['split'] = {}
+
         self.data['processed']['split']['j_up'] = []
         self.data['processed']['split']['j_low'] = []
         self.data['processed']['split']['pecs'] = []
+        self.data['processed']['split']['wave_air'] = []
         self.data['processed']['split']['relative_inten'] = []
-        self.data['processed']['split']['config'] = []
-        self.data['processed']['split']['L'] = []
-        self.data['processed']['split']['S'] = []
-        
+        self.data['processed']['split']['pec_levels'] = []
+
         for i in range(0,len(self.data['processed']['pec_levels'])):
             up = self.data['processed']['pec_levels'][i,0]
             low = self.data['processed']['pec_levels'][i,1]
             
-            ju,jl,res = split_multiplet( (self.data['atomic']['S'][up]-1)/2.,
-                                         self.data['atomic']['L'][up],
-                                         (self.data['atomic']['S'][low]-1)/2.,
-                                         self.data['atomic']['L'][low])
+            ju,jl,res = split_multiplet( (self.data['atomic']['S'][low]-1)/2.,
+                                         self.data['atomic']['L'][low],
+                                         (self.data['atomic']['S'][up]-1)/2.,
+                                         self.data['atomic']['L'][up])
             L_tmp = np.zeros_like(ju)
             self.data['processed']['split']['j_low'].append(jl)
             self.data['processed']['split']['j_up'].append(ju)
             self.data['processed']['split']['relative_inten'].append(res)
+
             
             if(res.size>0):
-                self.data['processed']['split']['pecs'].append(np.einsum('ijk,l->lijk',
-                                                                         self.data['processed']['pecs'][i],
-                                                                         res/np.sum(res)))
+
+                if((np.sum(res) > 0) or (res.size==1) ):
+                    for j in range(0,len(ju)):
+                        up_id = np.where((self.data['processed']['split']['config'] ==
+                                                                     self.data['atomic']['nist_conf_form'][up])&
+                                  (self.data['processed']['split']['L'] == self.data['atomic']['L'][up]) &
+                                  (self.data['processed']['split']['S'] == self.data['atomic']['S'][up]) &
+                                  (self.data['processed']['split']['j'] == ju[j]))[0]
+                        
+
+                        low_id = np.where((self.data['processed']['split']['config'] ==
+                                                              self.data['atomic']['nist_conf_form'][low])&
+                                  (self.data['processed']['split']['L'] == self.data['atomic']['L'][low]) &
+                                  (self.data['processed']['split']['S'] == self.data['atomic']['S'][low]) &
+                                  (self.data['processed']['split']['j'] == jl[j]))[0]
+                        self.data['processed']['split']['pec_levels'].append(np.array([up_id[0],low_id[0]]))
+
+
+                        if(res.size == 1):
+                            self.data['processed']['split']['pecs'].append(
+                                                                     self.data['processed']['pecs'][i])
+
+                        else:
+                            self.data['processed']['split']['pecs'].append(
+                                                   self.data['processed']['pecs'][i]*res[j]/np.sum(res))
+                            
+                        self.data['processed']['split']['wave_air'].append(
+                         1/(self.data['processed']['split']['energy'][up_id[0]] - \
+                            self.data['processed']['split']['energy'][low_id[0]]+1.e-20)*1e7)
+
+
+
+                            
             else:
                 self.data['processed']['split']['pecs'].append(self.data['processed']['pecs'][i])
+
+        self.data['processed']['split']['wave_air'] = np.asarray(self.data['processed']['split']['wave_air'])/\
+                                                     convert_to_air( np.asarray(self.data['processed']['split']['wave_air']))
+        self.data['processed']['split']['pecs'] =  np.asarray(self.data['processed']['split']['pecs'])
+    def split_structure_terms_to_levels(self):
+
+        if('split' not in self.data['processed']):
+            self.data['processed']['split'] = {}
+
+        self.data['processed']['split']['config'] = []
+        self.data['processed']['split']['L'] = []
+        self.data['processed']['split']['S'] = []
+        self.data['atomic']['nist_conf_form'] = np.empty_like(self.data['atomic']['config'])
+        conf = []
+        l = []
+        s = []
+        j = []
+
+        for i in range(0,len(self.data['atomic']['config'])):
+            j_arr = np.arange( np.abs(self.data['atomic']['L'][i] -  (self.data['atomic']['S'][i]-1)/2),
+                       self.data['atomic']['L'][i] + (self.data['atomic']['S'][i]-1)/2+1,1.)
+
+            conf_arr = np.empty_like(j_arr,dtype=object)
+            l_arr = np.empty_like(j_arr,dtype=int)
+            s_arr = np.empty_like(j_arr,dtype=int)
+
+
+            st = self.data['atomic']['config'][i].lower()
+            rem = list(re.finditer(r'\d\w1' , st))
+
+            if rem:
+                tmpp = ''
+                for ii in range(0,len(rem)):
+                    st = st[:rem[ii].span()[1]-1-ii] + st[rem[ii].span()[1]+1-1-ii:]
+                    
+                '''
+                nstring = ''
+                nstring = st[rem[0].span()[0]:rem[0].span()[1]-1]
+                for ii in range(1,len(rem)):
+                    nstring = nstring + st[rem[ii-1].span()[1]:rem[ii].span()[0]]
+                    nstring = nstring + st[rem[ii].span()[0]:rem[ii].span()[1]-1]
+
+                nstring = nstring + st[rem[ii].span()[1]:]
+                #import pdb
+                #pdb.set_trace()
+                conf_arr[:] = nstring
+                '''
+
+            conf_arr[:] = st
+            self.data['atomic']['nist_conf_form'][i] = st
+            
+            l_arr[:] = self.data['atomic']['L'][i]
+            s_arr[:] = self.data['atomic']['S'][i]
+            
+            conf.append(conf_arr)
+            l.append(l_arr)
+            s.append(s_arr)
+            j.append(j_arr)
+            print(i,l_arr)
+        self.data['processed']['split']['config'] = np.concatenate(conf,axis=0)
+
+        #remove closed subshells because thats what NIST does
+        #probably a better way to do this but I cant be bothered
+        closed_shells = np.array(['1s2','2s2','2p6','3s2','3p6','4s2','3d10','4p6','5s2','4f14','5d10'])
+        in_all = True
+        while(in_all):
+
+
+            for ij in range(0,len(closed_shells)):
+                in_all = in_all and closed_shells[ij] not in self.data['nist']['levels'][0]['conf']                
+            ##############################################################################################
+            # for ij in range(0,len(closed_shells)):                                                     #
+            #     for kk in range(0,len(self.data['atomic']['nist_conf_form'])):                         #
+            #         in_all = in_all and closed_shells[ij] in self.data['atomic']['nist_conf_form'][kk] #
+            ##############################################################################################
+
+
+
+                import pdb
+                pdb.set_trace()
+                if(in_all):
+                    for kk in range(0,len(self.data['atomic']['nist_conf_form'])):
+                        self.data['atomic']['nist_conf_form'][kk] = self.data['atomic']['nist_conf_form'][kk][4:]
+                    
+            
+        #remove closed subshells because thats what NIST does
+        #probably a better way to do this but I cant be bothered
+        closed_shells = np.array(['1s2','2s2','2p6','3s2','3p6','4s2','3d10','4p6','5s2','4f14','5d10'])
+        in_all = True
+        while(in_all):
+            for ij in range(0,len(closed_shells)):
+                in_all = in_all and closed_shells[ij] not in self.data['nist']['levels'][0]['conf']
+
+                ##############################################################################################
+                # for kk in range(0,len(self.data['processed']['split']['config'])):                         #
+                #     in_all = in_all and closed_shells[ij] in self.data['processed']['split']['config'][kk] #
+                ##############################################################################################
+                if(in_all):
+                    for kk in range(0,len(self.data['processed']['split']['config'])):
+                        self.data['processed']['split']['config'][kk] = self.data['processed']['split']['config'][kk][4:]
+
+
         
+        
+        self.data['processed']['split']['L'] = np.concatenate(l,axis=0)
+        self.data['processed']['split']['S'] = np.concatenate(s,axis=0)
+        self.data['processed']['split']['j'] = np.concatenate(j,axis=0)
+        
+
+
+####################################################################################################
+    def shift_split_structure_to_nist(self):
+        if('split' not in self.data['processed']):
+            if('config' not in self.data['processed']['split']):
+                self.split_structure_terms_to_levels()
+                
+        l_map = np.array(['S','P','D','F','G','H','I','J'])
+        energy = np.ones_like(self.data['processed']['split']['config'])
+        energy = energy * -1.
+
+        for i in range(0,len(self.data['processed']['split']['config'])):
+             tmp = list( filter(lambda ent: ent['conf']== self.data['processed']['split']['config'][i],
+                       filter(lambda ent: ent['term']== str(self.data['processed']['split']['S'][i]) +\
+                                                                    l_map[self.data['processed']['split']['L'][i]],
+                       filter(lambda ent: ent['j_val']==str(Fraction(self.data['processed']['split']['j'][i])),
+                                                              self.data['nist']['levels']))))
+             if(tmp):
+                         energy[i] = float(tmp[0]['energy'])
+
+        self.data['processed']['split']['energy'] = energy
+
+    def get_nist_levels(self):
+        self.data['nist'] = {}
+
+        self.data['nist']['levels'] = get_nist_clean(self.data['atomic']['element'].replace(' ', ''),
+                                                     self.data['atomic']['charge_state'] + 1)
+
+    
+
     def solve_cr(self):
         """Solve_cr automates the calls to various function to make the data for
            need to solve the CR equations and get to the quanties that users want.
