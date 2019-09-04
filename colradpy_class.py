@@ -282,6 +282,13 @@ class colradpy():
                                        axis=1,kind='slinear')
         self.data['rates']['recomb']['recomb_excit_interp_grid'] =\
                                     recomb_excit_interp(self.data['user']['temp_grid'])
+
+
+
+
+
+
+        '''
         #replace values lower than 1e-30 with a linear interpolation
         #because slinear gives the the wrong answer for some reason
         #maybe dont need this part now, 1dinterp was using kind='slinear'
@@ -300,7 +307,7 @@ class colradpy():
 
                     self.data['rates']['recomb']['recomb_excit_interp_grid'][a[v],0:c[v]+1] =\
                                                     w(self.data['user']['temp_grid'][0:tmp+1])
-
+        '''
         self.data['rates']['recomb']['recombination'] = \
             np.zeros((len(self.data['atomic']['energy']),
                       len(self.data['atomic']['ion_pot']),
@@ -975,97 +982,73 @@ class colradpy():
 
         test = np.where(np.char.find(closed_shells,
                               self.data['processed']['split']['config'][0][0:2])==0)[0]
-        for ij in range(0,len(test)):
-            
-            add_shell = np.setdiff1d(range(self.data['processed']['split']['config'].shape[0]),  np.where(np.char.find(self.data['processed']['split']['config'].astype('<U'),closed_shells[ij][0:2])==0)[0])
-
-            if(add_shell.size>0):
-                for ik in add_shell:
-                    
-                    wat = closed_shells[ij] + '.' + shells_arr_tmp[ik]
-                    shells_arr_tmp[ik] = wat
-                    
-        self.data['processed']['split']['config'] = shells_arr_tmp + self.data['processed']['split']['config']
 
 
+        #need the if statement here to easily account for hydrogenic species
+        if(test[0] >0):
+            for ij in range(0,len(test)):
 
+                add_shell = np.setdiff1d(range(self.data['processed']['split']['config'].shape[0]),  np.where(np.char.find(self.data['processed']['split']['config'].astype('<U'),closed_shells[ij][0:2])==0)[0])
 
-        shells_arr_tmp = np.empty_like(self.data['atomic']['nist_conf_form'].astype('<U1000'))
+                if(add_shell.size>0):
+                    for ik in add_shell:
 
-        test = np.where(np.char.find(closed_shells,
-                              self.data['atomic']['nist_conf_form'][0][0:2])==0)[0]
-        for ij in range(0,len(test)):
-            
-            add_shell = np.setdiff1d(range(self.data['atomic']['nist_conf_form'].shape[0]),  np.where(np.char.find(self.data['atomic']['nist_conf_form'].astype('<U'),closed_shells[ij][0:2])==0)[0])
+                        wat = closed_shells[ij] + '.' + shells_arr_tmp[ik]
+                        shells_arr_tmp[ik] = wat
 
-            if(add_shell.size>0):
-                for ik in add_shell:
-                    
-                    wat = closed_shells[ij] + '.' + shells_arr_tmp[ik]
-                    shells_arr_tmp[ik] = wat
-                    
-        self.data['atomic']['nist_conf_form'] = shells_arr_tmp + self.data['atomic']['nist_conf_form']
+            self.data['processed']['split']['config'] = shells_arr_tmp + self.data['processed']['split']['config']
 
 
 
 
+            shells_arr_tmp = np.empty_like(self.data['atomic']['nist_conf_form'].astype('<U1000'))
 
+            test = np.where(np.char.find(closed_shells,
+                                  self.data['atomic']['nist_conf_form'][0][0:2])==0)[0]
+            for ij in range(0,len(test)):
 
+                add_shell = np.setdiff1d(range(self.data['atomic']['nist_conf_form'].shape[0]),  np.where(np.char.find(self.data['atomic']['nist_conf_form'].astype('<U'),closed_shells[ij][0:2])==0)[0])
+
+                if(add_shell.size>0):
+                    for ik in add_shell:
+
+                        wat = closed_shells[ij] + '.' + shells_arr_tmp[ik]
+                        shells_arr_tmp[ik] = wat
+
+            self.data['atomic']['nist_conf_form'] = shells_arr_tmp + self.data['atomic']['nist_conf_form']
 
 
 
 
 
 
+            in_all = True
+            while(in_all):
 
 
-
-        
-
-
-
-        
+                for ij in range(0,len(closed_shells)):
+                    in_all = in_all and closed_shells[ij] not in self.data['nist']['levels'][0]['conf']
+                    print(closed_shells[ij],self.data['nist']['levels'][0]['conf'])
 
 
+                    if(in_all):
+                        for kk in range(0,len(self.data['atomic']['nist_conf_form'])):
+                            self.data['atomic']['nist_conf_form'][kk] = self.data['atomic']['nist_conf_form'][kk][4:]
 
 
-        
-        in_all = True
-        while(in_all):
+            #remove closed subshells because thats what NIST does
+            #probably a better way to do this but I cant be bothered
+            closed_shells = np.array(['1s2','2s2','2p6','3s2','3p6','4s2','3d10','4p6','5s2','4f14','5d10'])
+            in_all = True
+            while(in_all):
+                for ij in range(0,len(closed_shells)):
+                    in_all = in_all and closed_shells[ij] not in self.data['nist']['levels'][0]['conf']
+
+                    if(in_all):
+                        for kk in range(0,len(self.data['processed']['split']['config'])):
+                            self.data['processed']['split']['config'][kk] = self.data['processed']['split']['config'][kk][4:]
 
 
-            for ij in range(0,len(closed_shells)):
-                in_all = in_all and closed_shells[ij] not in self.data['nist']['levels'][0]['conf']                
-            ##############################################################################################
-            # for ij in range(0,len(closed_shells)):                                                     #
-            #     for kk in range(0,len(self.data['atomic']['nist_conf_form'])):                         #
-            #         in_all = in_all and closed_shells[ij] in self.data['atomic']['nist_conf_form'][kk] #
-            ##############################################################################################
-
-
-
-                if(in_all):
-                    for kk in range(0,len(self.data['atomic']['nist_conf_form'])):
-                        self.data['atomic']['nist_conf_form'][kk] = self.data['atomic']['nist_conf_form'][kk][4:]
-                    
-            
-        #remove closed subshells because thats what NIST does
-        #probably a better way to do this but I cant be bothered
-        closed_shells = np.array(['1s2','2s2','2p6','3s2','3p6','4s2','3d10','4p6','5s2','4f14','5d10'])
-        in_all = True
-        while(in_all):
-            for ij in range(0,len(closed_shells)):
-                in_all = in_all and closed_shells[ij] not in self.data['nist']['levels'][0]['conf']
-
-                ##############################################################################################
-                # for kk in range(0,len(self.data['processed']['split']['config'])):                         #
-                #     in_all = in_all and closed_shells[ij] in self.data['processed']['split']['config'][kk] #
-                ##############################################################################################
-                if(in_all):
-                    for kk in range(0,len(self.data['processed']['split']['config'])):
-                        self.data['processed']['split']['config'][kk] = self.data['processed']['split']['config'][kk][4:]
-
-        
         
         self.data['processed']['split']['L'] = np.concatenate(l,axis=0)
         self.data['processed']['split']['S'] = np.concatenate(s,axis=0)
