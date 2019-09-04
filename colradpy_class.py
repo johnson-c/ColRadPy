@@ -944,13 +944,12 @@ class colradpy():
                     nstring = nstring + st[rem[ii].span()[0]:rem[ii].span()[1]-1]
 
                 nstring = nstring + st[rem[ii].span()[1]:]
-                #import pdb
-                #pdb.set_trace()
                 conf_arr[:] = nstring
                 '''
 
             conf_arr[:] = st
             self.data['atomic']['nist_conf_form'][i] = st
+            self.data['atomic']['nist_conf_form'] = self.data['atomic']['nist_conf_form'].astype('object')
             
             l_arr[:] = self.data['atomic']['L'][i]
             s_arr[:] = self.data['atomic']['S'][i]
@@ -961,10 +960,76 @@ class colradpy():
             j.append(j_arr)
             print(i,l_arr)
         self.data['processed']['split']['config'] = np.concatenate(conf,axis=0)
-
         #remove closed subshells because thats what NIST does
         #probably a better way to do this but I cant be bothered
         closed_shells = np.array(['1s2','2s2','2p6','3s2','3p6','4s2','3d10','4p6','5s2','4f14','5d10'])
+
+        #because NIST is apparently incapable of creating a standard scheme for the configuration string
+        #we are goin got add in all the closed subshells only to remove them later...who came up with this
+        #stuff :'(
+
+
+
+
+        shells_arr_tmp = np.empty_like(self.data['processed']['split']['config'].astype('<U1000'))
+
+        test = np.where(np.char.find(closed_shells,
+                              self.data['processed']['split']['config'][0][0:2])==0)[0]
+        for ij in range(0,len(test)):
+            
+            add_shell = np.setdiff1d(range(self.data['processed']['split']['config'].shape[0]),  np.where(np.char.find(self.data['processed']['split']['config'].astype('<U'),closed_shells[ij][0:2])==0)[0])
+
+            if(add_shell.size>0):
+                for ik in add_shell:
+                    
+                    wat = closed_shells[ij] + '.' + shells_arr_tmp[ik]
+                    shells_arr_tmp[ik] = wat
+                    
+        self.data['processed']['split']['config'] = shells_arr_tmp + self.data['processed']['split']['config']
+
+
+
+
+        shells_arr_tmp = np.empty_like(self.data['atomic']['nist_conf_form'].astype('<U1000'))
+
+        test = np.where(np.char.find(closed_shells,
+                              self.data['atomic']['nist_conf_form'][0][0:2])==0)[0]
+        for ij in range(0,len(test)):
+            
+            add_shell = np.setdiff1d(range(self.data['atomic']['nist_conf_form'].shape[0]),  np.where(np.char.find(self.data['atomic']['nist_conf_form'].astype('<U'),closed_shells[ij][0:2])==0)[0])
+
+            if(add_shell.size>0):
+                for ik in add_shell:
+                    
+                    wat = closed_shells[ij] + '.' + shells_arr_tmp[ik]
+                    shells_arr_tmp[ik] = wat
+                    
+        self.data['atomic']['nist_conf_form'] = shells_arr_tmp + self.data['atomic']['nist_conf_form']
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+
+
+
+        
+
+
+
+
+        
         in_all = True
         while(in_all):
 
@@ -979,8 +1044,6 @@ class colradpy():
 
 
 
-                import pdb
-                pdb.set_trace()
                 if(in_all):
                     for kk in range(0,len(self.data['atomic']['nist_conf_form'])):
                         self.data['atomic']['nist_conf_form'][kk] = self.data['atomic']['nist_conf_form'][kk][4:]
@@ -1001,7 +1064,6 @@ class colradpy():
                 if(in_all):
                     for kk in range(0,len(self.data['processed']['split']['config'])):
                         self.data['processed']['split']['config'][kk] = self.data['processed']['split']['config'][kk][4:]
-
 
         
         
