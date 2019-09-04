@@ -965,7 +965,7 @@ class colradpy():
             l.append(l_arr)
             s.append(s_arr)
             j.append(j_arr)
-            print(i,l_arr)
+
         self.data['processed']['split']['config'] = np.concatenate(conf,axis=0)
         #remove closed subshells because thats what NIST does
         #probably a better way to do this but I cant be bothered
@@ -1028,7 +1028,6 @@ class colradpy():
 
                 for ij in range(0,len(closed_shells)):
                     in_all = in_all and closed_shells[ij] not in self.data['nist']['levels'][0]['conf']
-                    print(closed_shells[ij],self.data['nist']['levels'][0]['conf'])
 
 
                     if(in_all):
