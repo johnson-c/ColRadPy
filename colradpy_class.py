@@ -61,8 +61,9 @@ def convert_to_air(lam):
     s = 10**3/lam
     return 1 + 0.0000834254 + 0.02406147 / (130 - s**2) + 0.00015998 / (38.9 - s**2)
 
-class colradpy():
 
+
+class colradpy():
     """The ColRadPy class, this class will store data and carry out calculation to solve
        the collisional radiative set of equations. A full tutorial is provided in the 
        documentation.
@@ -102,10 +103,13 @@ class colradpy():
       :type metas: float array
 
     """
+
+    
     def __init__(self,fil,metas=np.array([]),temp_grid=np.array([]),electron_den=np.array([]),
                  use_ionization=True,suppliment_with_ecip=True,use_recombination_three_body=True,
                  use_recombination = True, td_t = np.array([]), td_n0=np.array([]),td_source=np.array([]),
                   default_pop_norm=True):
+        
         """The initializing method. Sets up the nested list for data storage and starts to populate with user data
            as well as reading in the adf04 file
 
@@ -128,6 +132,7 @@ class colradpy():
         self.populate_data(fil)
         self.data['atomic']['metas'] = np.asarray(metas)
 
+        
     def update_dict(self,d, u):
         """This function will update dictionary that is stores all parameter for the class
 
@@ -145,6 +150,7 @@ class colradpy():
                 d[k] = v
         return d
 
+    
     def populate_data(self,fil):
         """This function will populate atomic data. Currently this only uses the
            adf04 file but there is nothing special about this format and should be
@@ -166,6 +172,7 @@ class colradpy():
             else:
                 self.data = fil
 
+                
     def make_ecip(self):
         """This function calls the ecip_rates function and populates the ecip
            values in the dictionary. See documentation ecip_rates.py for a better desciption
@@ -188,13 +195,15 @@ class colradpy():
                                                   self.data['atomic']['ion_pot'],self.data['atomic']['zpla'][inds_below],
                                                   self.data['atomic']['zpla1'][inds_below],self.data['atomic']['charge_state'],
                                                   self.data['user']['temp_grid'])
-        
+
+
     def make_burgess_tully(self):
         """This function calls the burgess_tully_rates function and updates the 'rates' dictionary
 
            values in the dictionary. See documentation ecip_rates.py for a better desciption
            
         """
+        
         self.data['rates'].update( burgess_tully_rates(self.data['user']['temp_grid'],self.data['input_file']['temp_grid'],
                                                        self.data['rates']['excit']['col_transitions'],self.data['rates']\
                                                        ['excit']['col_excit'],
@@ -203,14 +212,12 @@ class colradpy():
                                                        self.data['atomic']['L'],self.data['rates']['inf_engy']))
 
     def make_ioniz_from_reduced_ionizrates(self):
-
         """This function calls will make ionization rates to be used in the CR matrix from the
            reduced ionization rates that are provided in the adf04 file. This function
            must be called even if ionization is not provided so that ECIP rates can be 
            supplimented into the matrix
         """
 
-        
         #if there is no ionization in the file create a zero matrix so that ECIP can be subbed in
         if(np.size(self.data['rates']['ioniz']['ion_excit']) < 1):
             print('No ionization in the input file ECIP can be made')
@@ -239,6 +246,8 @@ class colradpy():
                     ['ion_transitions'][i,1]-1] - self.data['atomic']['energy']\
                     [self.data['rates']['ioniz']['ion_transitions'][i,0] -1 ])\
                     *0.00012398774011749576/self.data['user']['temp_grid'][j])
+
+                
     def suppliment_with_ecip(self):
         """This function will suppliment the ionization that is to be used in the CR matrix
            with ECIP ionization if there is no ionization that is provided. While ECIP ionization
@@ -272,6 +281,7 @@ class colradpy():
             self.data['rates']['ioniz']['ionization'][to_use,p,:] =\
                                         self.data['rates']['ioniz']['ecip'][to_use,p,:]
 
+
     def make_recombination_rates_from_file(self):
         """This function will make recombination rates from the rates that are provided in the
            adf04 file.
@@ -282,10 +292,6 @@ class colradpy():
                                        axis=1,kind='slinear')
         self.data['rates']['recomb']['recomb_excit_interp_grid'] =\
                                     recomb_excit_interp(self.data['user']['temp_grid'])
-
-
-
-
 
 
         '''
@@ -319,6 +325,7 @@ class colradpy():
                  self.data['rates']['recomb']['recomb_transitions'][q,0]-1,:] = \
                                     self.data['rates']['recomb']['recomb_excit_interp_grid'][q]
 
+            
     def make_three_body_recombination(self):
         """This function will make three body recombination rates by using a detailed balance
            relation with ionization that used. Three body recombination becomes important at high densities
@@ -351,14 +358,15 @@ class colradpy():
                 (self.data['user']['temp_grid'])**(1.5)
         #rates of this are in cm3
 
+        
     def make_electron_excitation_rates(self):
-
         """This function will make both electron impact excitation and deexcitation rates
            from the values that stored in adf04 file on a user defined temperature grid
            If values are above the last calculate point in the adf04 then a burgess tully
            extrapolation will be used. There is currently no extrapolation below the first
            calculated temperature point. THis is something to add in the future.
         """
+        
         tmp = interp1d(self.data['input_file']['temp_grid']/11604.5,
                        self.data['rates']['excit']['col_excit'],axis=1,kind='slinear')
 
@@ -412,6 +420,7 @@ class colradpy():
 
            The dictionary ['cr_matrix'] is made in this definition mostly from rates in the ['rates'] dictionary.
         """
+        
         #add in the excitation/de-excitation if they are not already calculated
         if('col_excit_interp' not in self.data['rates']['excit'].keys()):
             print('Electron collisional rates have not yet been made on '+\
@@ -499,7 +508,7 @@ class colradpy():
                                                  len(self.data['user']['dens_grid'])))
 
 
-        
+
         for i in range(0,len(self.data['atomic']['energy'])):
             #level i depopulating mechanisms
             #these are all the transitions from the level
@@ -798,6 +807,7 @@ class colradpy():
                         recomb_coeff[len(self.data['atomic']['metas']):len(self.data['atomic']['energy']),metasplus_to_keep,:,:])
                         )
 
+
     def solve_time_dependent(self):
         """This function will solve the CR matrix with no assumptions. A matrix expoential is used to solve this problem.
            A source term can be included to mimick erosion of fresh atoms or injection of neutral gas or maybe even LIF
@@ -838,6 +848,7 @@ class colradpy():
                                             self.data['user']['td_n0'],
                                             self.data['user']['td_t'])
 
+
     def split_pec_multiplet(self):
         """This function will solve take LS resolved PECs and split them statistically among the j levels
            Note that is only works for dipole transitions. See "split_multiplet.py" for the transitions
@@ -845,6 +856,7 @@ class colradpy():
            split by this.
 
         """
+        
         if('processed' not in self.data.keys()):
             self.solve_quasi_static()
 
@@ -912,8 +924,15 @@ class colradpy():
         self.data['processed']['split']['wave_air'] = np.asarray(self.data['processed']['split']['wave_air'])/\
                                                      convert_to_air( np.asarray(self.data['processed']['split']['wave_air']))
         self.data['processed']['split']['pecs'] =  np.asarray(self.data['processed']['split']['pecs'])
-    def split_structure_terms_to_levels(self):
 
+
+    def split_structure_terms_to_levels(self):
+        """ split_structure_term_to_levels will take an LS resolved file like is common for low-z
+            species and split it to j resolution. This is so the file can be shifted to NIST energy
+            values as well as be spectroscopically 'accurate'. This is just using j = |l-s| .. l+s to
+            get the j values. This also puts the configuration string into NIST format.
+        """
+        
         if('split' not in self.data['processed']):
             self.data['processed']['split'] = {}
 
@@ -988,7 +1007,9 @@ class colradpy():
         if(test[0] >0):
             for ij in range(0,len(test)):
 
-                add_shell = np.setdiff1d(range(self.data['processed']['split']['config'].shape[0]),  np.where(np.char.find(self.data['processed']['split']['config'].astype('<U'),closed_shells[ij][0:2])==0)[0])
+                add_shell = np.setdiff1d(range(self.data['processed']['split']['config'].shape[0]),
+                                        np.where(np.char.find(self.data['processed']['split']['config'].astype('<U'),
+                                                              closed_shells[ij][0:2])==0)[0])
 
                 if(add_shell.size>0):
                     for ik in add_shell:
@@ -997,18 +1018,16 @@ class colradpy():
                         shells_arr_tmp[ik] = wat
 
             self.data['processed']['split']['config'] = shells_arr_tmp + self.data['processed']['split']['config']
-
-
-
-
+            
             shells_arr_tmp = np.empty_like(self.data['atomic']['nist_conf_form'].astype('<U1000'))
 
             test = np.where(np.char.find(closed_shells,
                                   self.data['atomic']['nist_conf_form'][0][0:2])==0)[0]
             for ij in range(0,len(test)):
 
-                add_shell = np.setdiff1d(range(self.data['atomic']['nist_conf_form'].shape[0]),  np.where(np.char.find(self.data['atomic']['nist_conf_form'].astype('<U'),closed_shells[ij][0:2])==0)[0])
-
+                add_shell = np.setdiff1d(range(self.data['atomic']['nist_conf_form'].shape[0]),
+                                         np.where(np.char.find(self.data['atomic']['nist_conf_form'].astype('<U'),
+                                                               closed_shells[ij][0:2])==0)[0])
                 if(add_shell.size>0):
                     for ik in add_shell:
 
@@ -1017,23 +1036,13 @@ class colradpy():
 
             self.data['atomic']['nist_conf_form'] = shells_arr_tmp + self.data['atomic']['nist_conf_form']
 
-
-
-
-
-
             in_all = True
             while(in_all):
-
-
                 for ij in range(0,len(closed_shells)):
                     in_all = in_all and closed_shells[ij] not in self.data['nist']['levels'][0]['conf']
-
-
                     if(in_all):
                         for kk in range(0,len(self.data['atomic']['nist_conf_form'])):
                             self.data['atomic']['nist_conf_form'][kk] = self.data['atomic']['nist_conf_form'][kk][4:]
-
 
             #remove closed subshells because thats what NIST does
             #probably a better way to do this but I cant be bothered
@@ -1047,21 +1056,23 @@ class colradpy():
                         for kk in range(0,len(self.data['processed']['split']['config'])):
                             self.data['processed']['split']['config'][kk] = self.data['processed']['split']['config'][kk][4:]
 
-
-        
         self.data['processed']['split']['L'] = np.concatenate(l,axis=0)
         self.data['processed']['split']['S'] = np.concatenate(s,axis=0)
         self.data['processed']['split']['j'] = np.concatenate(j,axis=0)
+
+
+    def shift_j_res_energy_to_nist(self):
+        """shift_j_res_energy_to_nist maps j resolved structure energy values to the NIST values
+           if those values are availble. Saves these in the 'split' sub dictionary. This can be used
+           with a j resolved file or with LS file if it is split to j resolution with the 
+           'split_structure_terms_to_levels' method.
+        """
         
-
-
-####################################################################################################
-    def shift_split_structure_to_nist(self):
         if('split' not in self.data['processed']):
             if('config' not in self.data['processed']['split']):
                 self.split_structure_terms_to_levels()
                 
-        l_map = np.array(['S','P','D','F','G','H','I','J'])
+        l_map = np.array(['S','P','D','F','G','H','I','J']) #map of l values to the letters, NIST uses letters
         energy = np.ones_like(self.data['processed']['split']['config'])
         energy = energy * -1.
 
@@ -1076,14 +1087,18 @@ class colradpy():
 
         self.data['processed']['split']['energy'] = energy
 
+
     def get_nist_levels(self):
+        """ get_nist_levels grabs the nist energy levels from the NIST mysql database. The mysql NIST database must
+            be installed. There is a plain text file in the works to get around this and simplify for users.
+        """
+        
         self.data['nist'] = {}
 
         self.data['nist']['levels'] = get_nist_clean(self.data['atomic']['element'].replace(' ', ''),
                                                      self.data['atomic']['charge_state'] + 1)
 
     
-
     def solve_cr(self):
         """Solve_cr automates the calls to various function to make the data for
            need to solve the CR equations and get to the quanties that users want.
@@ -1097,6 +1112,7 @@ class colradpy():
            Populates the CR matrix
            Solve the CR matrix using the quasistatic approximation
         """
+        
         if(self.data['user']['use_ionization']):
             self.make_ioniz_from_reduced_ionizrates()
         if(self.data['user']['suppliment_with_ecip']):
@@ -1110,6 +1126,7 @@ class colradpy():
         self.make_electron_excitation_rates()
         self.populate_cr_matrix()
         self.solve_quasi_static()
+
 
     def plot_pec_sticks(self,temp=[0],dens=[0],meta=[0]):
         """plot_pec_sticks will plot the the PEC values versus wavelength.
@@ -1126,18 +1143,13 @@ class colradpy():
 
         :param meta: array of metastable indexes
         :type metas: int array
-
         """
 
         rc('axes', linewidth=2)
         rc('font', weight='semibold')
 
-
-        
         if('processed' not in self.data.keys()):
             self.solve_cr()
-
-        
         p_t = np.arange(0,len(self.data['user']['temp_grid']))
         p_n = np.arange(0,len(self.data['user']['dens_grid']))
         p_m = np.arange(0,len(self.data['atomic']['metas']))
@@ -1164,6 +1176,7 @@ class colradpy():
                               'Metastable ' + str(self.data['atomic']['metas'][k]),weight='semibold')
                     plt.xlim(0,1300)
 
+
     def plot_pec_ratio_temp(self,pec1,pec2,dens=np.array([0]),meta = np.array([0])):
         """plot_pec_ratio_temp will plot the ratio of any two user defined PECs versus temperature.
            Density values for the ratio are choosen by the user by specifying the indices from the user
@@ -1188,8 +1201,6 @@ class colradpy():
 
         if('processed' not in self.data.keys()):
             self.solve_cr()
-
-        
         dens = np.array(dens)
         p_n = np.arange(0,len(self.data['user']['dens_grid']),dtype=int)
         p_m = np.arange(0,len(self.data['atomic']['metas']),dtype=int)
@@ -1214,7 +1225,8 @@ class colradpy():
                           ' to PEC '+str(pec2)+', ' + format(self.data['processed']['wave_air'][pec2],'.2f') + ' nm, '+\
                               'Metastable ' + str(self.data['atomic']['metas'][k]),weight='semibold')
                 plt.legend(loc='best')
-                
+
+
     def plot_pec_ratio_dens(self,pec1,pec2,temp=np.array([0]),meta = np.array([0]),scale='log'):
         """plot_pec_ratio_dens will plot the ratio of any two user defined PECs versus density.
            Temperature values for the ratio are choosen by the user by specifying the indices from the user
@@ -1237,8 +1249,8 @@ class colradpy():
 
         :param scale: scale for the density axis default is log
         :type scale: str
-
         """
+        
         temp = np.array(temp)
         p_n = np.arange(0,len(self.data['user']['temp_grid']),dtype=int)
         p_m = np.arange(0,len(self.data['atomic']['metas']),dtype=int)
