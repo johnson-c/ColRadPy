@@ -9,11 +9,12 @@
     <title>ionization_balance module &#8212; ColRadPy 1.0 documentation</title>
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
   </head><body>
@@ -35,68 +36,8 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-ionization_balance">
-<span id="ionization-balance-module"></span><h1>ionization_balance module<a class="headerlink" href="#module-ionization_balance" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
-<dt id="ionization_balance.ionization_balance">
-<em class="property">class </em><code class="descclassname">ionization_balance.</code><code class="descname">ionization_balance</code><span class="sig-paren">(</span><em>fils</em>, <em>metas</em>, <em>temp_grid</em>, <em>dens_grid</em>, <em>use_ionization=True</em>, <em>suppliment_with_ecip=True</em>, <em>use_recombination_three_body=True</em>, <em>use_recombination=True</em>, <em>keep_species_data=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ionization_balance.html#ionization_balance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ionization_balance.ionization_balance" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="method">
-<dt id="ionization_balance.ionization_balance.populate_ion_matrix">
-<code class="descname">populate_ion_matrix</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ionization_balance.html#ionization_balance.populate_ion_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ionization_balance.ionization_balance.populate_ion_matrix" title="Permalink to this definition">¶</a></dt>
-<dd><p>This will populate the ionization matrix from the various GCR coefficients
-for all of the ionization stages</p>
-<p>This matrix in mostly zeros because we don’t have ways to connect charge states
-that are more than one change away. For example if only ground states are included
-this matrix becomes diagonal.</p>
-<p>QCDs bring the atom between metastables states in a charge state
-SCDS bring the atom to the next charge state
-ACDS bring the atom to the previous charge state
-XCDS bring the atom to next charge state between the metastables of that level,
-through the previous charge state</p>
-<p>The columns of this matrix sum to zero</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="ionization_balance.ionization_balance.solve_no_source">
-<code class="descname">solve_no_source</code><span class="sig-paren">(</span><em>n0</em>, <em>td_t</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ionization_balance.html#ionization_balance.solve_no_source"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ionization_balance.ionization_balance.solve_no_source" title="Permalink to this definition">¶</a></dt>
-<dd><p>Solves the ionization balance matrix given an initial populations and times</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>n0</strong> (<em>float array</em>) – The initial populations of levels at t=0</li>
-<li><strong>td_t</strong> (<em>float array</em>) – Solution times</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-<p>populates the pops, eigen_val and eigen_vec</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="ionization_balance.ionization_balance.solve_source">
-<code class="descname">solve_source</code><span class="sig-paren">(</span><em>n0</em>, <em>s0</em>, <em>td_t</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ionization_balance.html#ionization_balance.solve_source"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ionization_balance.ionization_balance.solve_source" title="Permalink to this definition">¶</a></dt>
-<dd><p>Solves the ionization balance matrix given an initial populations and times when a source term is present</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>n0</strong> (<em>float array</em>) – The initial populations of levels at t=0</li>
-<li><strong>td_t</strong> (<em>float array</em>) – Solution times</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-<p>populates the pops, eigen_val and eigen_vec</p>
-</dd></dl>
-
-</dd></dl>
-
+  <div class="section" id="ionization-balance-module">
+<h1>ionization_balance module<a class="headerlink" href="#ionization-balance-module" title="Permalink to this headline">¶</a></h1>
 </div>
 
 
@@ -145,7 +86,7 @@ through the previous charge state</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Curtis Johnson.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.2.
     </div>
   </body>
 </html>

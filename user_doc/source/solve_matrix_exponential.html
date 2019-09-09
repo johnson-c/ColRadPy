@@ -9,11 +9,12 @@
     <title>solve_matrix_exponential module &#8212; ColRadPy 1.0 documentation</title>
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
   </head><body>
@@ -35,81 +36,8 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-solve_matrix_exponential">
-<span id="solve-matrix-exponential-module"></span><h1>solve_matrix_exponential module<a class="headerlink" href="#module-solve_matrix_exponential" title="Permalink to this headline">¶</a></h1>
-<dl class="function">
-<dt id="solve_matrix_exponential.solve_matrix_exponential">
-<code class="descclassname">solve_matrix_exponential.</code><code class="descname">solve_matrix_exponential</code><span class="sig-paren">(</span><em>matrix</em>, <em>td_n0</em>, <em>td_t</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/solve_matrix_exponential.html#solve_matrix_exponential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solve_matrix_exponential.solve_matrix_exponential" title="Permalink to this definition">¶</a></dt>
-<dd><p>This definition will solve a 4 dimensional matrix using the matrix expoentiaiation method</p>
-<blockquote>
-<div>R. LeVeque, Finite Difference Methods for Ordinary and Par-
-tial Differential Equations: Steady-State and Time-Dependent
-Problems (Classics in Applied Mathematics Classics in Applied
-Mathemat), Society for Industrial and Applied Mathematics,
-Philadelphia, PA, USA, 2007.</div></blockquote>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><table class="first last docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">param matrix:</th><td class="field-body">The 4d matrix to be solved</td>
-</tr>
-<tr class="field-even field"><th class="field-name">type matrix:</th><td class="field-body">4d matrix x,y,temp,dens</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">param td_n0:</th><td class="field-body">The initial fractional populations</td>
-</tr>
-<tr class="field-even field"><th class="field-name">type td_n0:</th><td class="field-body">float array</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">param td_t:</th><td class="field-body">array of times for the solution</td>
-</tr>
-<tr class="field-even field"><th class="field-name">type metas:</th><td class="field-body">float array</td>
-</tr>
-</tbody>
-</table>
-</dd>
-<dt>Returns:</dt>
-<dd>This returns three arrays the time dependent populations, eigenvals and eigenvectors</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="solve_matrix_exponential.solve_matrix_exponential_source">
-<code class="descclassname">solve_matrix_exponential.</code><code class="descname">solve_matrix_exponential_source</code><span class="sig-paren">(</span><em>matrix</em>, <em>td_n0</em>, <em>source</em>, <em>td_t</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/solve_matrix_exponential.html#solve_matrix_exponential_source"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solve_matrix_exponential.solve_matrix_exponential_source" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="docutils">
-<dt>This definition will solve a 4 dimensional matrix using the matrix expoentiaiation method</dt>
-<dd><p class="first">when a source term is also included</p>
-<p class="last">This is a slight modification to R. LeVeque 2007, see Johnson thesis</p>
-</dd>
-<dt>Args:</dt>
-<dd><table class="first last docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">param matrix:</th><td class="field-body">The 4d matrix to be solved</td>
-</tr>
-<tr class="field-even field"><th class="field-name">type matrix:</th><td class="field-body">4d matrix x,y,temp,dens</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">param td_n0:</th><td class="field-body">The initial fractional populations</td>
-</tr>
-<tr class="field-even field"><th class="field-name">type td_n0:</th><td class="field-body">float array</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">param source:</th><td class="field-body">The source of particles into the different states.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">type source:</th><td class="field-body">float array</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">param td_t:</th><td class="field-body">array of times for the solution</td>
-</tr>
-<tr class="field-even field"><th class="field-name">type metas:</th><td class="field-body">float array</td>
-</tr>
-</tbody>
-</table>
-</dd>
-<dt>Returns:</dt>
-<dd>This returns three arrays the time dependent populations, eigenvals and eigenvectors</dd>
-</dl>
-</dd></dl>
-
+  <div class="section" id="solve-matrix-exponential-module">
+<h1>solve_matrix_exponential module<a class="headerlink" href="#solve-matrix-exponential-module" title="Permalink to this headline">¶</a></h1>
 </div>
 
 
@@ -158,7 +86,7 @@ Philadelphia, PA, USA, 2007.</div></blockquote>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Curtis Johnson.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.2.
     </div>
   </body>
 </html>

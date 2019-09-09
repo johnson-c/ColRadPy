@@ -43,6 +43,32 @@ Installing ColRadPy
 ColRadPy should work with any python 3.6 distribution.
 However, ColRadPy is only tested with the anaconda distribution of python 3.6.
 ColRadPy requires numpy, matplotlib, re, scipy, sys, collections packages.
+For local installation of ColRadPy In the 'colradpy' directory.
+
+
+
+.. code-block:: python
+   :linenos:
+      
+   python setup.py build
+   python setup.py install
+
+
+
+
+Colradpy can now be called like anyother package.
+
+
+
+.. code-block:: python
+   :linenos:
+      
+   from colradpy import colradpy #import the colradpy class
+   from colradpy import ionization_balance #import the ionization_balance class
+
+
+
+
 
 
 

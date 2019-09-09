@@ -9,11 +9,12 @@
     <title>saha_boltzmann_lte_pops module &#8212; ColRadPy 1.0 documentation</title>
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
   </head><body>
@@ -35,54 +36,8 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-saha_boltzmann_lte_pops">
-<span id="saha-boltzmann-lte-pops-module"></span><h1>saha_boltzmann_lte_pops module<a class="headerlink" href="#module-saha_boltzmann_lte_pops" title="Permalink to this headline">¶</a></h1>
-<dl class="function">
-<dt id="saha_boltzmann_lte_pops.boltzmann_population">
-<code class="descclassname">saha_boltzmann_lte_pops.</code><code class="descname">boltzmann_population</code><span class="sig-paren">(</span><em>w</em>, <em>energy</em>, <em>temp</em>, <em>norm_tot=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/saha_boltzmann_lte_pops.html#boltzmann_population"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#saha_boltzmann_lte_pops.boltzmann_population" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="docutils">
-<dt>Calculates the LTE boltzmann populations given level spin, level energies and a temperature array</dt>
-<dd>returns the boltzmann populations relative to the ground state.</dd>
-<dt>Args:</dt>
-<dd><table class="first last docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">param w:</th><td class="field-body">array of the level spins</td>
-</tr>
-<tr class="field-even field"><th class="field-name">type w:</th><td class="field-body">float array</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">param energy:</th><td class="field-body">array of the energy levels (cm-1)</td>
-</tr>
-<tr class="field-even field"><th class="field-name">type energy:</th><td class="field-body">float array</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">param temp:</th><td class="field-body">array of temperatures for calculation (eV)</td>
-</tr>
-<tr class="field-even field"><th class="field-name">type temp:</th><td class="field-body">float array</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">param norm_tot:</th><td class="field-body">If true normalizes to the total population instead of the ground</td>
-</tr>
-<tr class="field-even field"><th class="field-name">type norm_tot:</th><td class="field-body">boolean</td>
-</tr>
-</tbody>
-</table>
-</dd>
-</dl>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">float array populations of levels relative to the ground [len(levels),len(temp)]</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="saha_boltzmann_lte_pops.saha_population">
-<code class="descclassname">saha_boltzmann_lte_pops.</code><code class="descname">saha_population</code><span class="sig-paren">(</span><em>ci</em>, <em>w_z</em>, <em>w_z1</em>, <em>energy_z</em>, <em>energy_z1</em>, <em>ftemp</em>, <em>norm_tot=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/saha_boltzmann_lte_pops.html#saha_population"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#saha_boltzmann_lte_pops.saha_population" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
+  <div class="section" id="saha-boltzmann-lte-pops-module">
+<h1>saha_boltzmann_lte_pops module<a class="headerlink" href="#saha-boltzmann-lte-pops-module" title="Permalink to this headline">¶</a></h1>
 </div>
 
 
@@ -131,7 +86,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Curtis Johnson.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.2.
     </div>
   </body>
 </html>

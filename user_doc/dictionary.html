@@ -9,11 +9,12 @@
     <title>ColRadPy Dictionary Structure &#8212; ColRadPy 1.0 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Ionization balance Dictionary Structure" href="ioniz_dictionary.html" />
@@ -548,6 +549,34 @@ it is not store.</p>
 </tr>
 </tbody>
 </table>
+<p><strong>NIST</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="18%" />
+<col width="36%" />
+<col width="9%" />
+<col width="37%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">key Name</th>
+<th class="head">Description</th>
+<th class="head">Data Type</th>
+<th class="head">Size</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>levels</td>
+<td>NIST levels data base</td>
+<td>array</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>lines</td>
+<td>NIST lines database</td>
+<td>array</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
 <p><strong>processed</strong></p>
 <table border="1" class="docutils">
 <colgroup>
@@ -654,41 +683,58 @@ it is not store.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td>j_up</td>
-<td>spin of the upper level</td>
-<td>array</td>
-<td>(len(energy)-len(metas), len(energy), user temp)</td>
-</tr>
-<tr class="row-odd"><td>j_low</td>
-<td>spin of the lower level</td>
-<td>bool</td>
-<td><ul class="first last simple">
-<li></li>
-</ul>
-</td>
-</tr>
-<tr class="row-even"><td>pecs</td>
-<td>photon emmisivity coefficients (ph cm-3 s-1)</td>
-<td>float arr</td>
-<td>(pecs, len(metas)+len(metas_ion), user_temp, user dens)</td>
-</tr>
-<tr class="row-odd"><td>relative_inten</td>
-<td>array of upper and lower levels that correspond pecs</td>
-<td>int arr</td>
-<td>(len(pecs),2)</td>
-</tr>
 <tr class="row-even"><td>config</td>
-<td>configurations for the split levels</td>
-<td>float arr</td>
-<td>(len(pecs))</td>
+<td>Configuration of the split levels</td>
+<td>string arr</td>
+<td>Length of the number of split levels in the adf04 file</td>
 </tr>
 <tr class="row-odd"><td>L</td>
-<td>L for the split levels</td>
+<td>L quantum number of the split levels</td>
+<td>int arr</td>
+<td>(len([‘split’][‘config’]))</td>
+</tr>
+<tr class="row-even"><td>S</td>
+<td>S quantum number of the split levels</td>
+<td>int arr</td>
+<td>(len([‘split’][‘config’]))</td>
+</tr>
+<tr class="row-odd"><td>j</td>
+<td>j quantum number of the split levels</td>
+<td>int arr</td>
+<td>(len([‘split’][‘config’]))</td>
+</tr>
+<tr class="row-even"><td>energy</td>
+<td>NIST energies of the split levels</td>
+<td>float arr</td>
+<td>(len([‘split’][‘config’]))</td>
+</tr>
+<tr class="row-odd"><td>pecs</td>
+<td>PECs values for the PECs that could be split E-dipoles only</td>
+<td>float arr</td>
+<td>(len([‘split’][‘pecs’]))</td>
+</tr>
+<tr class="row-even"><td>wave_air</td>
+<td>Wavelengths of the PECs that could be split</td>
+<td>float arr</td>
+<td>(len([‘split’][‘pecs’]))</td>
+</tr>
+<tr class="row-odd"><td>relative_inten</td>
+<td>Relative intensities of the individual PECs in multiplet</td>
+<td>float arr</td>
+<td>(len([‘split’][‘pecs’]))</td>
+</tr>
+<tr class="row-even"><td>pec_levels</td>
+<td>array of upper and lower split levels that correspond pecs</td>
+<td>int arr</td>
+<td>(len([‘split’][‘pecs’]),2)</td>
+</tr>
+<tr class="row-odd"><td>j_up</td>
+<td>hold over</td>
 <td>int arr</td>
 <td>(len(pecs),2)</td>
 </tr>
-<tr class="row-even"><td>S</td>
-<td>S for the split levels</td>
+<tr class="row-even"><td>j_low</td>
+<td>hold over</td>
 <td>float arr</td>
 <td>(len(pecs))</td>
 </tr>
@@ -754,7 +800,7 @@ it is not store.</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Curtis Johnson.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.2.
     </div>
   </body>
 </html>

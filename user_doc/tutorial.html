@@ -9,11 +9,12 @@
     <title>Tutorial &#8212; ColRadPy 1.0 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="ColRadPy Dictionary Structure" href="dictionary.html" />
@@ -68,7 +69,19 @@ this is outlined in (Summers 2006).</p>
 <h2>Installing ColRadPy<a class="headerlink" href="#installing-colradpy" title="Permalink to this headline">¶</a></h2>
 <p>ColRadPy should work with any python 3.6 distribution.
 However, ColRadPy is only tested with the anaconda distribution of python 3.6.
-ColRadPy requires numpy, matplotlib, re, scipy, sys, collections packages.</p>
+ColRadPy requires numpy, matplotlib, re, scipy, sys, collections packages.
+For local installation of ColRadPy In the ‘colradpy’ directory.</p>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">build</span>
+<span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span>
+</pre></div>
+</td></tr></table></div>
+<p>Colradpy can now be called like anyother package.</p>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">colradpy</span> <span class="kn">import</span> <span class="n">colradpy</span> <span class="c1">#import the colradpy class</span>
+<span class="kn">from</span> <span class="nn">colradpy</span> <span class="kn">import</span> <span class="n">ionization_balance</span> <span class="c1">#import the ionization_balance class</span>
+</pre></div>
+</td></tr></table></div>
 </div>
 <div class="section" id="atomic-data-and-the-adf04-file">
 <h2>Atomic Data and the ADF04 File<a class="headerlink" href="#atomic-data-and-the-adf04-file" title="Permalink to this headline">¶</a></h2>
@@ -1408,7 +1421,7 @@ In the plot of the time dependent abundances are shown as the solid lines and th
             <p class="logo"><a href="index.html">
               <img class="logo" src="_static/logo.jpg" alt="Logo"/>
             </a></p>
-  <h3><a href="index.html">Table Of Contents</a></h3>
+  <h3><a href="index.html">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Tutorial</a><ul>
 <li><a class="reference internal" href="#installing-colradpy">Installing ColRadPy</a></li>
@@ -1500,7 +1513,7 @@ In the plot of the time dependent abundances are shown as the solid lines and th
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Curtis Johnson.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.2.
     </div>
   </body>
 </html>
