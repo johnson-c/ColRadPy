@@ -67,9 +67,18 @@ Colradpy can now be called like anyother package.
    from colradpy import ionization_balance #import the ionization_balance class
 
 
+Alternatively ColRadPy can be call from the directory in which it is located
 
 
 
+.. code-block:: python
+   :linenos:
+      
+   import sys
+   sys.path.append("/home/curtis/colradpy/colradpy"
+   
+
+   
 
 
 Atomic Data and the ADF04 File

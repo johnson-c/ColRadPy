@@ -12,11 +12,12 @@ Installation Instructions
 ---------------------------
 
 Right now ColRadPy has been tested with Anaconda installed python3.
-More detailed installation instructions in the tutorial.
+Install with
 
-python setup.py build
 
-python setup.py install
+
+
+
 
 
 Examples
