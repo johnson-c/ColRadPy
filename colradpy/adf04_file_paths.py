@@ -1,4 +1,3 @@
-
 import urllib.request
 import numpy as np
 
@@ -20,7 +19,7 @@ be_file = np.array(['be0_adf04','be1_adf04','be2_adf04','be3_adf04'])
 be_arr = np.array(['adas][4/cpb03_ls][be0.dat','adas][4/cpb03_ls][be1.dat','adas][4/cpb03_ls][be2.dat','adas][4/cpb03_ls][be3.dat'])
 be_file = np.array(['be0_adf04','be1_adf04','be2_adf04','be3_adf04'])
 
-b_arr = np.array(['cophps][b/dw/ls][b0.dat','copaw][be/belike_lfm14][b1.dat','copaw][li/lilike_lgy10][b2.dat','cophps][he/dw/ls][b3.dat','hlike/hlike_cpb02][b4.dat']
+b_arr = np.array(['cophps][b/dw/ls][b0.dat','copaw][be/belike_lfm14][b1.dat','copaw][li/lilike_lgy10][b2.dat','cophps][he/dw/ls][b3.dat','hlike/hlike_cpb02][b4.dat'])
 b_file = np.array(['b0_adf04','b1_adf04','b2_adf04','b3_adf04'])
 
 

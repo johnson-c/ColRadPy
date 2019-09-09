@@ -1,5 +1,5 @@
 import numpy as np
-from r8necip import *
+from .r8necip import *
 ####################################################################################################
 def ecip_rates(energy,ion_pot,zpla,zpla1,charge_state,temp_grid):
     """This function gives energy levels to r8necip for ECIP ionization to be

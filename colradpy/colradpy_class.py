@@ -32,15 +32,15 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 import sys
 sys.path.append('./')
-from r8yip import *
-from r8necip import *
-from read_adf04_py3_class import *
-from ecip_rates import *
-from burgess_tully_rates import *
-from split_multiplet import *
-from nist_read import *
+from .r8yip import *
+from .r8necip import *
+from .read_adf04_py3_class import *
+from .ecip_rates import *
+from .burgess_tully_rates import *
+from .split_multiplet import *
+from .nist_read import *
 import collections
-from solve_matrix_exponential import *
+from .solve_matrix_exponential import *
 from matplotlib import rc,rcParams
 from fractions import Fraction
 

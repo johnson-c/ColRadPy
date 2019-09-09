@@ -1,6 +1,6 @@
 import numpy as np
-from colradpy_class import colradpy
-from solve_matrix_exponential import *
+from .colradpy_class import colradpy
+from .solve_matrix_exponential import *
 
 class ionization_balance():
 
