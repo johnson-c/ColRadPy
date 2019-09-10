@@ -1,0 +1,1536 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>colradpy package &#8212; ColRadPy 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ColRadPy 1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="colradpy-package">
+<h1>colradpy package<a class="headerlink" href="#colradpy-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-colradpy.adf04_file_paths">
+<span id="colradpy-adf04-file-paths-module"></span><h2>colradpy.adf04_file_paths module<a class="headerlink" href="#module-colradpy.adf04_file_paths" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="colradpy.adf04_file_paths.fix_whitespace">
+<code class="descclassname">colradpy.adf04_file_paths.</code><code class="descname">fix_whitespace</code><span class="sig-paren">(</span><em>fname</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/adf04_file_paths.html#fix_whitespace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.adf04_file_paths.fix_whitespace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fix whitespace in a file</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-colradpy.burgess_tully_rates">
+<span id="colradpy-burgess-tully-rates-module"></span><h2>colradpy.burgess_tully_rates module<a class="headerlink" href="#module-colradpy.burgess_tully_rates" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="colradpy.burgess_tully_rates.burgess_tully_rates">
+<code class="descclassname">colradpy.burgess_tully_rates.</code><code class="descname">burgess_tully_rates</code><span class="sig-paren">(</span><em>user_temp_grid</em>, <em>calc_temp_grid</em>, <em>col_transitions</em>, <em>col_excit</em>, <em>energy</em>, <em>w</em>, <em>a_val</em>, <em>S</em>, <em>L</em>, <em>inf_engy</em>, <em>c=1.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/burgess_tully_rates.html#burgess_tully_rates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.burgess_tully_rates.burgess_tully_rates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates excitation rates extrapolated to temperatures beyond the calculated
+rates in the file. If an infinite energy point in the file is present the extrapolation
+will be done between the last calculated point and the infinite energy point. A linear
+line is fit in the burgess tully space and extrapolated from there before being transformed
+back into temperature. If no infinite energy point is provided then an extrapolation is 
+provided from the last two calculated points by fitting a linear line in burgess tully
+space.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">User_temp_grid:</th><td class="field-body">array of user defined temperatures</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Calc_temp_grid:</th><td class="field-body">array of temperatures which were calculated in atomic code</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Col_transitions:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body">2d array of transitions (upper,lower)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Col_excit:</th><td class="field-body">2d array of excitations between levels</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Energy:</th><td class="field-body">array of energies for the levels</td>
+</tr>
+<tr class="field-even field"><th class="field-name">W:</th><td class="field-body">array of w (j) for the levels</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">A_val:</th><td class="field-body">array of einstien a coefficients</td>
+</tr>
+<tr class="field-even field"><th class="field-name">A_val:</th><td class="field-body">array of einstien a coefficients</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">S:</th><td class="field-body">array of spin values for the levels</td>
+</tr>
+<tr class="field-even field"><th class="field-name">L:</th><td class="field-body">array of spin values for the levels</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Inf_engy:</th><td class="field-body">array of infinite enery points for the transitions</td>
+</tr>
+<tr class="field-even field"><th class="field-name">C:</th><td class="field-body">scale value for the extrapolation, just impacts how zoomed the plot is not actual results</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">array – b coefficent</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="colradpy.burgess_tully_rates.calc_coeffs_a">
+<code class="descclassname">colradpy.burgess_tully_rates.</code><code class="descname">calc_coeffs_a</code><span class="sig-paren">(</span><em>coeffs_b</em>, <em>xval_arr</em>, <em>yval_arr</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/burgess_tully_rates.html#calc_coeffs_a"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.burgess_tully_rates.calc_coeffs_a" title="Permalink to this definition">¶</a></dt>
+<dd><p>For an infinite energy extrapolation temperatures and excitation rates
+are converted to burgess-tully space. A linear extrapolation in the 
+brugess-tully space is done between the last calculated point and the 
+infinite energy point. This calculates the ‘a’ in the equation y = ax+b</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>xval_arr</strong> – array of x values from calcualted points must have atleast 2</li>
+<li><strong>yval_arr</strong> – array of y values from calcualted points must have atleast 2</li>
+<li><strong>yval_inf</strong> – array of infinite energy y values from calcualtions</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array – a coefficent</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="colradpy.burgess_tully_rates.calc_coeffs_b">
+<code class="descclassname">colradpy.burgess_tully_rates.</code><code class="descname">calc_coeffs_b</code><span class="sig-paren">(</span><em>xval_arr</em>, <em>yval_arr</em>, <em>yval_inf</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/burgess_tully_rates.html#calc_coeffs_b"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.burgess_tully_rates.calc_coeffs_b" title="Permalink to this definition">¶</a></dt>
+<dd><p>For an infinite energy extrapolation temperatures and excitation rates
+are converted to burgess-tully space. A linear extrapolation in the 
+brugess-tully space is done between the last calculated point and the 
+infinite energy point. This calculates the ‘b’ in the equation y = ax+b</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>xval_arr</strong> – array of x values from calcualted points must have atleast 2</li>
+<li><strong>yval_arr</strong> – array of y values from calcualted points must have atleast 2</li>
+<li><strong>yval_inf</strong> – array of infinite energy y values from calcualtions</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array – b coefficent</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="colradpy.burgess_tully_rates.calc_coeffs_lin_b">
+<code class="descclassname">colradpy.burgess_tully_rates.</code><code class="descname">calc_coeffs_lin_b</code><span class="sig-paren">(</span><em>xval_arr</em>, <em>yval_arr</em>, <em>coeff_lin_m</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/burgess_tully_rates.html#calc_coeffs_lin_b"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.burgess_tully_rates.calc_coeffs_lin_b" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Some rates may not have infinite energy points in which case a</dt>
+<dd>linear extrapolation is done in the burgess tully space from the</dd>
+</dl>
+<p>last two calculated points this calculates the ‘b’ coefficient in the 
+equation y = mx+b</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>xval_arr</strong> – array of x values from calcualted points must have atleast 2</li>
+<li><strong>yval_arr</strong> – array of y values from calcualted points must have atleast 2</li>
+<li><strong>yval_inf</strong> – array of infinite energy y values from calcualtions</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array – b coefficent</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="colradpy.burgess_tully_rates.calc_coeffs_lin_m">
+<code class="descclassname">colradpy.burgess_tully_rates.</code><code class="descname">calc_coeffs_lin_m</code><span class="sig-paren">(</span><em>xval_arr</em>, <em>yval_arr</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/burgess_tully_rates.html#calc_coeffs_lin_m"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.burgess_tully_rates.calc_coeffs_lin_m" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Some rates may not have infinite energy points in which case a</dt>
+<dd>linear extrapolation is done in the burgess tully space from the</dd>
+</dl>
+<p>last two calculated points this calculates the ‘b’ coefficient in the 
+equation y = mx+b</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>xval_arr</strong> – array of x values from calcualted points must have atleast 2</li>
+<li><strong>yval_arr</strong> – array of y values from calcualted points must have atleast 2</li>
+<li><strong>yval_inf</strong> – array of infinite energy y values from calcualtions</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array – m coefficent</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="colradpy.burgess_tully_rates.lin_yconvert">
+<code class="descclassname">colradpy.burgess_tully_rates.</code><code class="descname">lin_yconvert</code><span class="sig-paren">(</span><em>coeff_lin_b</em>, <em>coeff_lin_m</em>, <em>xval_extrap</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/burgess_tully_rates.html#lin_yconvert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.burgess_tully_rates.lin_yconvert" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Some rates may not have infinite energy points in which case a</dt>
+<dd>linear extrapolation is done in the burgess tully space from the</dd>
+</dl>
+<p>last two calculated points</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>coeff_lin_b</strong> – coefficients of ‘b’ in the y=mx+b equation</li>
+<li><strong>coeff_lin_m</strong> – coefficients of ‘m’ in the y=mx+b equation</li>
+<li><strong>xval_extrap</strong> – xvalues for the extrapolated temperatures</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array –linear extrapolation rate  values</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="colradpy.burgess_tully_rates.type1_xconvert">
+<code class="descclassname">colradpy.burgess_tully_rates.</code><code class="descname">type1_xconvert</code><span class="sig-paren">(</span><em>tconvert_grid</em>, <em>energy</em>, <em>c=1.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/burgess_tully_rates.html#type1_xconvert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.burgess_tully_rates.type1_xconvert" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This function extrapolates excitation rates through the burgess-tully method</dt>
+<dd>see On the anlysis of collision strengths and rate coefficients A burgess and J.A. Tully</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tconvert_grid</strong> – Temperature grid to do transform on</li>
+<li><strong>energy</strong> (<em>array</em>) – energies of the levels that are being transformed</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array –type1 burgess x values</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="colradpy.burgess_tully_rates.type1_yconvert">
+<code class="descclassname">colradpy.burgess_tully_rates.</code><code class="descname">type1_yconvert</code><span class="sig-paren">(</span><em>tconvert_grid</em>, <em>energy</em>, <em>col_excit</em>, <em>direct='f'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/burgess_tully_rates.html#type1_yconvert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.burgess_tully_rates.type1_yconvert" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This function extrapolates excitation rates through the burgess-tully method</dt>
+<dd>see On the anlysis of collision strengths and rate coefficients A burgess and J.A. Tully</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tconvert_grid</strong> – Temperature grid to do transform on</li>
+<li><strong>energy</strong> (<em>array</em>) – energies of the levels that are being transformed</li>
+<li><strong>col_excit</strong> – excitation rates of the levels that are being transformed</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array –type1 burgess y values</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="colradpy.burgess_tully_rates.type2_xconvert">
+<code class="descclassname">colradpy.burgess_tully_rates.</code><code class="descname">type2_xconvert</code><span class="sig-paren">(</span><em>tconvert_grid</em>, <em>energy</em>, <em>c=1.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/burgess_tully_rates.html#type2_xconvert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.burgess_tully_rates.type2_xconvert" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This function extrapolates excitation rates through the burgess-tully method</dt>
+<dd>see On the anlysis of collision strengths and rate coefficients A burgess and J.A. Tully</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tconvert_grid</strong> – Temperature grid to do transform on</li>
+<li><strong>energy</strong> (<em>array</em>) – energies of the levels that are being transformed</li>
+<li><strong>c</strong> (<em>array</em>) – scaling constant doesn’t impact results</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array –type2 burgess x values</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="colradpy.burgess_tully_rates.type2_yconvert">
+<code class="descclassname">colradpy.burgess_tully_rates.</code><code class="descname">type2_yconvert</code><span class="sig-paren">(</span><em>col_excit</em>, <em>direct='f'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/burgess_tully_rates.html#type2_yconvert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.burgess_tully_rates.type2_yconvert" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This function extrapolates excitation rates through the burgess-tully method</dt>
+<dd>see On the anlysis of collision strengths and rate coefficients A burgess and J.A. Tully</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>col_excit</strong> – excitation rates of the levels that are being transformed</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">array –type2 burgess y values</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="colradpy.burgess_tully_rates.type3_xconvert">
+<code class="descclassname">colradpy.burgess_tully_rates.</code><code class="descname">type3_xconvert</code><span class="sig-paren">(</span><em>tconvert_grid</em>, <em>energy</em>, <em>c=1.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/burgess_tully_rates.html#type3_xconvert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.burgess_tully_rates.type3_xconvert" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This function extrapolates excitation rates through the burgess-tully method</dt>
+<dd>see On the anlysis of collision strengths and rate coefficients A burgess and J.A. Tully</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tconvert_grid</strong> – Temperature grid to do transform on</li>
+<li><strong>energy</strong> (<em>array</em>) – energies of the levels that are being transformed</li>
+<li><strong>c</strong> (<em>array</em>) – scaling constant doesn’t impact results</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array –type3 burgess x values</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="colradpy.burgess_tully_rates.type3_yconvert">
+<code class="descclassname">colradpy.burgess_tully_rates.</code><code class="descname">type3_yconvert</code><span class="sig-paren">(</span><em>tconvert_grid</em>, <em>energy</em>, <em>col_excit</em>, <em>direct='f'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/burgess_tully_rates.html#type3_yconvert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.burgess_tully_rates.type3_yconvert" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This function extrapolates excitation rates through the burgess-tully method</dt>
+<dd>see On the anlysis of collision strengths and rate coefficients A burgess and J.A. Tully</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tconvert_grid</strong> – Temperature grid to do transform on</li>
+<li><strong>energy</strong> (<em>array</em>) – energies of the levels that are being transformed</li>
+<li><strong>col_excit</strong> – excitation rates of the levels that are being transformed</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array –type3 burgess y values</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="colradpy.burgess_tully_rates.type4_xconvert">
+<code class="descclassname">colradpy.burgess_tully_rates.</code><code class="descname">type4_xconvert</code><span class="sig-paren">(</span><em>tconvert_grid</em>, <em>energy</em>, <em>c=1.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/burgess_tully_rates.html#type4_xconvert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.burgess_tully_rates.type4_xconvert" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This function extrapolates excitation rates through the burgess-tully method</dt>
+<dd>see On the anlysis of collision strengths and rate coefficients A burgess and J.A. Tully</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tconvert_grid</strong> – Temperature grid to do transform on</li>
+<li><strong>energy</strong> (<em>array</em>) – energies of the levels that are being transformed</li>
+<li><strong>c</strong> (<em>array</em>) – scaling constant doesn’t impact results</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array –type4 burgess x values</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="colradpy.burgess_tully_rates.type4_yconvert">
+<code class="descclassname">colradpy.burgess_tully_rates.</code><code class="descname">type4_yconvert</code><span class="sig-paren">(</span><em>tconvert_grid</em>, <em>energy</em>, <em>col_excit</em>, <em>c=1.5</em>, <em>direct='f'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/burgess_tully_rates.html#type4_yconvert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.burgess_tully_rates.type4_yconvert" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This function extrapolates excitation rates through the burgess-tully method</dt>
+<dd>see On the anlysis of collision strengths and rate coefficients A burgess and J.A. Tully</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tconvert_grid</strong> – Temperature grid to do transform on</li>
+<li><strong>energy</strong> (<em>array</em>) – energies of the levels that are being transformed</li>
+<li><strong>col_excit</strong> – excitation rates of the levels that are being transformed</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array –type4 burgess y values</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-colradpy.colradpy_class">
+<span id="colradpy-colradpy-class-module"></span><h2>colradpy.colradpy_class module<a class="headerlink" href="#module-colradpy.colradpy_class" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="colradpy.colradpy_class.colradpy">
+<em class="property">class </em><code class="descclassname">colradpy.colradpy_class.</code><code class="descname">colradpy</code><span class="sig-paren">(</span><em>fil</em>, <em>metas=array([]</em>, <em>dtype=float64)</em>, <em>temp_grid=array([]</em>, <em>dtype=float64)</em>, <em>electron_den=array([]</em>, <em>dtype=float64)</em>, <em>use_ionization=True</em>, <em>suppliment_with_ecip=True</em>, <em>use_recombination_three_body=True</em>, <em>use_recombination=True</em>, <em>td_t=array([]</em>, <em>dtype=float64)</em>, <em>td_n0=array([]</em>, <em>dtype=float64)</em>, <em>td_source=array([]</em>, <em>dtype=float64)</em>, <em>default_pop_norm=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#colradpy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.colradpy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="docutils">
+<dt>The ColRadPy class, this class will store data and carry out calculation to solve</dt>
+<dd>the collisional radiative set of equations. A full tutorial is provided in the 
+documentation.</dd>
+<dt>Args:</dt>
+<dd><table class="first last docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">param fil:</th><td class="field-body">the file path to the input file</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type fil:</th><td class="field-body">string</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">param metas:</th><td class="field-body">array of the levels that metastable</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type metas:</th><td class="field-body">integer array</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param temp_grid:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body">array of temperature for calculation (eV)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type metas:</th><td class="field-body">float array</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param dens_grid:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body">array of temperature for calculation (cm-3)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type metas:</th><td class="field-body">float array</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param use_ionization:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body">Flag to turn on ionization in calculation, default = True</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type metas:</th><td class="field-body">bool</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param suppliment_with_ecip:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body">Flag to turn on ECIP supplimentation to ionization rates, default = Tue</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type metas:</th><td class="field-body">bool</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param use_recombination_three_body:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body">Flag to turn 3 body recombination on,  default = True</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type metas:</th><td class="field-body">bool</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param use_recombination:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body">Flag to turn recombination on, default = True</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type metas:</th><td class="field-body">bool</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">param td_t:</th><td class="field-body">Time array for time dependent solution to CR equations</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type metas:</th><td class="field-body">float array</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">param td_n0:</th><td class="field-body">Initial populations of levels at time t=0 for TD CR equations</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type metas:</th><td class="field-body">float array</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param td_source:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body">source term for populations in the TD CR equations</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type metas:</th><td class="field-body">float array</td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<dl class="method">
+<dt id="colradpy.colradpy_class.colradpy.get_nist_levels">
+<code class="descname">get_nist_levels</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#colradpy.get_nist_levels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.colradpy.get_nist_levels" title="Permalink to this definition">¶</a></dt>
+<dd><p>get_nist_levels grabs the nist energy levels from the NIST mysql database. The mysql NIST database must
+be installed. There is a plain text file in the works to get around this and simplify for users.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.colradpy_class.colradpy.make_burgess_tully">
+<code class="descname">make_burgess_tully</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#colradpy.make_burgess_tully"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.colradpy.make_burgess_tully" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function calls the burgess_tully_rates function and updates the ‘rates’ dictionary</p>
+<p>values in the dictionary. See documentation ecip_rates.py for a better desciption</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.colradpy_class.colradpy.make_ecip">
+<code class="descname">make_ecip</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#colradpy.make_ecip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.colradpy.make_ecip" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function calls the ecip_rates function and populates the ecip
+values in the dictionary. See documentation ecip_rates.py for a better desciption</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.colradpy_class.colradpy.make_electron_excitation_rates">
+<code class="descname">make_electron_excitation_rates</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#colradpy.make_electron_excitation_rates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.colradpy.make_electron_excitation_rates" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function will make both electron impact excitation and deexcitation rates
+from the values that stored in adf04 file on a user defined temperature grid
+If values are above the last calculate point in the adf04 then a burgess tully
+extrapolation will be used. There is currently no extrapolation below the first
+calculated temperature point. THis is something to add in the future.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.colradpy_class.colradpy.make_ioniz_from_reduced_ionizrates">
+<code class="descname">make_ioniz_from_reduced_ionizrates</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#colradpy.make_ioniz_from_reduced_ionizrates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.colradpy.make_ioniz_from_reduced_ionizrates" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function calls will make ionization rates to be used in the CR matrix from the
+reduced ionization rates that are provided in the adf04 file. This function
+must be called even if ionization is not provided so that ECIP rates can be 
+supplimented into the matrix</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.colradpy_class.colradpy.make_recombination_rates_from_file">
+<code class="descname">make_recombination_rates_from_file</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#colradpy.make_recombination_rates_from_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.colradpy.make_recombination_rates_from_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function will make recombination rates from the rates that are provided in the
+adf04 file.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.colradpy_class.colradpy.make_three_body_recombination">
+<code class="descname">make_three_body_recombination</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#colradpy.make_three_body_recombination"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.colradpy.make_three_body_recombination" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function will make three body recombination rates by using a detailed balance
+relation with ionization that used. Three body recombination becomes important at high densities
+and low temperatures</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.colradpy_class.colradpy.plot_pec_ratio_dens">
+<code class="descname">plot_pec_ratio_dens</code><span class="sig-paren">(</span><em>pec1</em>, <em>pec2</em>, <em>temp=array([0])</em>, <em>meta=array([0])</em>, <em>scale='log'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#colradpy.plot_pec_ratio_dens"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.colradpy.plot_pec_ratio_dens" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>plot_pec_ratio_dens will plot the ratio of any two user defined PECs versus density.</dt>
+<dd>Temperature values for the ratio are choosen by the user by specifying the indices from the user
+temperature array to be plotted. Each temperature chosen will show up as a new line in the figure.
+The user can also choose the metastable by default only the ground is plotted.
+The user specifies the indices of the metastable to be plot. 
+A new figure for each metastable chosen will be made with the number of density lines chosen.
+The density axis default is a log scale but linear can be chosen as well.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>pec1</strong> (<em>int</em>) – Index of pec on the top of the ratio</li>
+<li><strong>pec2</strong> (<em>int</em>) – Index of the pec on the bottom of the ratio</li>
+<li><strong>temp</strong> (<em>int array</em>) – Array of temperature indexes</li>
+<li><strong>meta</strong> – array of metastable indexes</li>
+<li><strong>scale</strong> (<em>str</em>) – scale for the density axis default is log</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.colradpy_class.colradpy.plot_pec_ratio_temp">
+<code class="descname">plot_pec_ratio_temp</code><span class="sig-paren">(</span><em>pec1</em>, <em>pec2</em>, <em>dens=array([0])</em>, <em>meta=array([0])</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#colradpy.plot_pec_ratio_temp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.colradpy.plot_pec_ratio_temp" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>plot_pec_ratio_temp will plot the ratio of any two user defined PECs versus temperature.</dt>
+<dd>Density values for the ratio are choosen by the user by specifying the indices from the user
+density array to be plot. Each density chosen will show up as a new line in the figure.
+The user can also choose the metastable by default only the ground is plotted.
+The user specifies the indices of the metastable to be plot. 
+A new figure for each metastable chosen will be made with the number of density lines chosen.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>pec1</strong> (<em>int</em>) – Index of pec on the top of the ratio</li>
+<li><strong>pec2</strong> (<em>int</em>) – Index of the pec on the bottom of the ratio</li>
+<li><strong>dens</strong> (<em>int array</em>) – Array of density indexes</li>
+<li><strong>meta</strong> – array of metastable indexes</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.colradpy_class.colradpy.plot_pec_sticks">
+<code class="descname">plot_pec_sticks</code><span class="sig-paren">(</span><em>temp=[0], dens=[0], meta=[0]</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#colradpy.plot_pec_sticks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.colradpy.plot_pec_sticks" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>plot_pec_sticks will plot the the PEC values versus wavelength.</dt>
+<dd><strong>WARNING</strong> wavelngth values will be wrong unless energy levels in the file
+have been ‘shifted’ to NIST values.
+User provides index arrays for the temperature density and metastable
+for the PECs to be plotted.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>temp</strong> (<em>int array</em>) – Array of temperature indexes</li>
+<li><strong>dens</strong> (<em>int array</em>) – Array of density indexes</li>
+<li><strong>meta</strong> – array of metastable indexes</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.colradpy_class.colradpy.populate_cr_matrix">
+<code class="descname">populate_cr_matrix</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#colradpy.populate_cr_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.colradpy.populate_cr_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function will populate the collision radiative matrix with all the rates that
+user asks to be included into the calculation.</p>
+<p>Ionization is included from the ADF04 file, there is a user option to suppliment with ECIP
+rates that ColRadPy will make</p>
+<p>Recombination is included from the ADF04 file.
+Three-body recombination can also be made from ColRadPy through detailed balance
+Excitation rates are included from the ADF04 file.</p>
+<p>The dictionary [‘cr_matrix’] is made in this definition mostly from rates in the [‘rates’] dictionary.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.colradpy_class.colradpy.populate_data">
+<code class="descname">populate_data</code><span class="sig-paren">(</span><em>fil</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#colradpy.populate_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.colradpy.populate_data" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This function will populate atomic data. Currently this only uses the</dt>
+<dd>adf04 file but there is nothing special about this format and should be
+put out to pasture at some point</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fil</strong> (<em>file path</em>) – path to the file that contains atomic data</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">array –wavelengths in nm in air</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.colradpy_class.colradpy.shift_j_res_energy_to_nist">
+<code class="descname">shift_j_res_energy_to_nist</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#colradpy.shift_j_res_energy_to_nist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.colradpy.shift_j_res_energy_to_nist" title="Permalink to this definition">¶</a></dt>
+<dd><p>shift_j_res_energy_to_nist maps j resolved structure energy values to the NIST values
+if those values are availble. Saves these in the ‘split’ sub dictionary. This can be used
+with a j resolved file or with LS file if it is split to j resolution with the 
+‘split_structure_terms_to_levels’ method.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.colradpy_class.colradpy.solve_cr">
+<code class="descname">solve_cr</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#colradpy.solve_cr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.colradpy.solve_cr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solve_cr automates the calls to various function to make the data for
+need to solve the CR equations and get to the quanties that users want.
+This can be thought of as a basic mode for the user doesn’t want to mess
+with the default rates that are made.</p>
+<p>Generally what a user just wanting basic output should use.
+Makes ionization if requested
+Makes recombination if requested
+Makes excitation rates
+Populates the CR matrix
+Solve the CR matrix using the quasistatic approximation</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.colradpy_class.colradpy.solve_quasi_static">
+<code class="descname">solve_quasi_static</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#colradpy.solve_quasi_static"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.colradpy.solve_quasi_static" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function will solve the CR matrix using the quasistatic approximation, after solving this problem
+the generalized radiative coefficients GCRs will be calculated other claculated quanities such as 
+PEC and SXB are also calculated. This function is analgous to ADAS208.</p>
+<p>Creates the [‘processed’] dictionary which will hold all of the quanties that require the CR
+matrix to be solved in order to be obtained.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.colradpy_class.colradpy.solve_time_dependent">
+<code class="descname">solve_time_dependent</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#colradpy.solve_time_dependent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.colradpy.solve_time_dependent" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function will solve the CR matrix with no assumptions. A matrix expoential is used to solve this problem.
+A source term can be included to mimick erosion of fresh atoms or injection of neutral gas or maybe even LIF</p>
+<p>Uses same CR matrix “.data[‘cr_matrix’][‘cr’]” used to define the reduced CR matrix that the quasistatic solution solves.</p>
+<p>Creates a new dictionary under [‘processed’] call [‘td’]
+Stores eigenvalues and eigenvectors that were required for the solution (Theres also physics there see ColRadPy paper).
+Stores the time changing populations.</p>
+<p>R. LeVeque, Finite Difference Methods for Ordinary and Par-
+tial Differential Equations: Steady-State and Time-Dependent
+Problems (Classics in Applied Mathematics Classics in Applied
+Mathemat), Society for Industrial and Applied Mathematics,
+Philadelphia, PA, USA, 2007.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.colradpy_class.colradpy.split_pec_multiplet">
+<code class="descname">split_pec_multiplet</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#colradpy.split_pec_multiplet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.colradpy.split_pec_multiplet" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function will solve take LS resolved PECs and split them statistically among the j levels
+Note that is only works for dipole transitions. See “split_multiplet.py” for the transitions
+that this will split. Most transitsions of spectroscopic importance should be able to be 
+split by this.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.colradpy_class.colradpy.split_structure_terms_to_levels">
+<code class="descname">split_structure_terms_to_levels</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#colradpy.split_structure_terms_to_levels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.colradpy.split_structure_terms_to_levels" title="Permalink to this definition">¶</a></dt>
+<dd><p>split_structure_term_to_levels will take an LS resolved file like is common for low-z
+species and split it to j resolution. This is so the file can be shifted to NIST energy
+values as well as be spectroscopically ‘accurate’. This is just using j = <a href="#id1"><span class="problematic" id="id2">|l-s|</span></a> .. l+s to
+get the j values. This also puts the configuration string into NIST format.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.colradpy_class.colradpy.suppliment_with_ecip">
+<code class="descname">suppliment_with_ecip</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#colradpy.suppliment_with_ecip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.colradpy.suppliment_with_ecip" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function will suppliment the ionization that is to be used in the CR matrix
+with ECIP ionization if there is no ionization that is provided. While ECIP ionization
+is better than not including ionization using other ionization rates is generall better
+Ionization must be must be included to accurately model plasma even if it is approximate ECIP</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.colradpy_class.colradpy.update_dict">
+<code class="descname">update_dict</code><span class="sig-paren">(</span><em>d</em>, <em>u</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#colradpy.update_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.colradpy.update_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function will update dictionary that is stores all parameter for the class</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>d</strong> (<em>dictionary</em>) – the dictionary that is to be updated</li>
+<li><strong>w</strong> (<em>dictionary</em>) – the dictionary the use wants to update to</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="colradpy.colradpy_class.convert_to_air">
+<code class="descclassname">colradpy.colradpy_class.</code><code class="descname">convert_to_air</code><span class="sig-paren">(</span><em>lam</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/colradpy_class.html#convert_to_air"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.colradpy_class.convert_to_air" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This function converts the vacuum wavelength of spectral lines to </dt>
+<dd>the air wavelength. The wavelength is the difference in energy
+levels of the upper and lower transition. By defualt in the adf04
+file these energy correspond to the vacuum wavelengths to this
+must be converted at some point for UV and visible light.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>lam</strong> (<em>array</em>) – The wavelengths in nm in vacuum</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">array –wavelengths in nm in air</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-colradpy.ecip_rates">
+<span id="colradpy-ecip-rates-module"></span><h2>colradpy.ecip_rates module<a class="headerlink" href="#module-colradpy.ecip_rates" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="colradpy.ecip_rates.ecip_rates">
+<code class="descclassname">colradpy.ecip_rates.</code><code class="descname">ecip_rates</code><span class="sig-paren">(</span><em>energy</em>, <em>ion_pot</em>, <em>zpla</em>, <em>zpla1</em>, <em>charge_state</em>, <em>temp_grid</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/ecip_rates.html#ecip_rates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.ecip_rates.ecip_rates" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function gives energy levels to r8necip for ECIP ionization to be
+calculated for and then returns ECIP rates for each energy level on the temperature
+grid provided.</p>
+<blockquote>
+<div><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">param energy:</th><td class="field-body">Energy levels</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type energy:</th><td class="field-body">array</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">param ion_pot:</th><td class="field-body">ionization potential</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type ion_pot:</th><td class="field-body">float</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">param zpla:</th><td class="field-body">ionization potential</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type zpla:</th><td class="field-body">array</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">param zpla1:</th><td class="field-body">ionization potential</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type zpla1:</th><td class="field-body">array</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param charge_state:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body">charge state</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">type charge_state:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body">int</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param temp_grid:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body">Temperature grid to return ECIP rates on</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type temp_grid:</th><td class="field-body">array</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">returns:</th><td class="field-body">array –ECIP rates on the temperature grid</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</dd></dl>
+
+</div>
+<div class="section" id="module-colradpy.ionization_balance">
+<span id="colradpy-ionization-balance-module"></span><h2>colradpy.ionization_balance module<a class="headerlink" href="#module-colradpy.ionization_balance" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="colradpy.ionization_balance.ionization_balance">
+<em class="property">class </em><code class="descclassname">colradpy.ionization_balance.</code><code class="descname">ionization_balance</code><span class="sig-paren">(</span><em>fils</em>, <em>metas</em>, <em>temp_grid</em>, <em>dens_grid</em>, <em>use_ionization=True</em>, <em>suppliment_with_ecip=True</em>, <em>use_recombination_three_body=True</em>, <em>use_recombination=True</em>, <em>keep_species_data=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/ionization_balance.html#ionization_balance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.ionization_balance.ionization_balance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="colradpy.ionization_balance.ionization_balance.populate_ion_matrix">
+<code class="descname">populate_ion_matrix</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/ionization_balance.html#ionization_balance.populate_ion_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.ionization_balance.ionization_balance.populate_ion_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>This will populate the ionization matrix from the various GCR coefficients
+for all of the ionization stages</p>
+<p>This matrix in mostly zeros because we don’t have ways to connect charge states
+that are more than one change away. For example if only ground states are included
+this matrix becomes diagonal.</p>
+<p>QCDs bring the atom between metastables states in a charge state
+SCDS bring the atom to the next charge state
+ACDS bring the atom to the previous charge state
+XCDS bring the atom to next charge state between the metastables of that level,
+through the previous charge state</p>
+<p>The columns of this matrix sum to zero</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.ionization_balance.ionization_balance.solve_no_source">
+<code class="descname">solve_no_source</code><span class="sig-paren">(</span><em>n0</em>, <em>td_t</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/ionization_balance.html#ionization_balance.solve_no_source"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.ionization_balance.ionization_balance.solve_no_source" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solves the ionization balance matrix given an initial populations and times</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>n0</strong> (<em>float array</em>) – The initial populations of levels at t=0</li>
+<li><strong>td_t</strong> (<em>float array</em>) – Solution times</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>populates the pops, eigen_val and eigen_vec</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.ionization_balance.ionization_balance.solve_source">
+<code class="descname">solve_source</code><span class="sig-paren">(</span><em>n0</em>, <em>s0</em>, <em>td_t</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/ionization_balance.html#ionization_balance.solve_source"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.ionization_balance.ionization_balance.solve_source" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solves the ionization balance matrix given an initial populations and times when a source term is present</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>n0</strong> (<em>float array</em>) – The initial populations of levels at t=0</li>
+<li><strong>td_t</strong> (<em>float array</em>) – Solution times</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>populates the pops, eigen_val and eigen_vec</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-colradpy.ionization_balance_class">
+<span id="colradpy-ionization-balance-class-module"></span><h2>colradpy.ionization_balance_class module<a class="headerlink" href="#module-colradpy.ionization_balance_class" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="colradpy.ionization_balance_class.ionization_balance">
+<em class="property">class </em><code class="descclassname">colradpy.ionization_balance_class.</code><code class="descname">ionization_balance</code><span class="sig-paren">(</span><em>fils</em>, <em>metas</em>, <em>temp_grid</em>, <em>dens_grid</em>, <em>soln_times=array([]</em>, <em>dtype=float64)</em>, <em>use_ionization=True</em>, <em>suppliment_with_ecip=True</em>, <em>use_recombination_three_body=True</em>, <em>use_recombination=True</em>, <em>keep_charge_state_data=False</em>, <em>init_abund=array([]</em>, <em>dtype=float64)</em>, <em>source=array([]</em>, <em>dtype=float64)</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/ionization_balance_class.html#ionization_balance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.ionization_balance_class.ionization_balance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="docutils">
+<dt>The ionization balance class takes adf04 file inputs runs CR calcualations</dt>
+<dd>‘colradpy_class.py’ to get GCR coefficients. The GCR coefficients are then
+assemble into the ionization balance matrix. This matrix is solved in the 
+same way as the time dependent CR problem with ‘solve_matrix_exponential.py’.
+The matrix can be solved time dependently with and without a source.
+The time-independent solution can also be solved. See dictionary structure documentation.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Args:</th><td class="field-body"><table class="first last docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">param fils:</th><td class="field-body"><p class="first">Array of the input adf04 file</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type fils:</th><td class="field-body"><p class="first">string array</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param temp_grid:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><p class="first">Array of the temperatures in eV</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type temp_grid:</th><td class="field-body"><p class="first">float array</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param dens_grid:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><p class="first">Array of the densities in cm-3</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type dens_grid:</th><td class="field-body"><p class="first">float array</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param use_ionization:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><p class="first">Choose if ionization will be use. This will proced the SCD rates.
+This should probably always be true if running an ionization balance but the option is there.</p>
+<blockquote>
+<div><p>Can be array of bools or just a single bool,
+if just a single bool is supplied then all
+charge states will have the same value.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">type use_ionization:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><p class="first">bool array or bool</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param suppliment_with_ecip:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><dl class="first docutils">
+<dt>Suppliments ionization rates with ECIP when ionization rates are not </dt>
+<dd><blockquote class="first">
+<div><p>present in the adf04 file.</p>
+</div></blockquote>
+<p class="last">Can be array of bools or just a single bool,</p>
+</dd>
+</dl>
+<p>if just a single bool is supplied then all
+charge states will have the same value.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">type suppliment_with_ecip:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><p class="first">bool array or bool</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param use_recombination_three_body:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><dl class="first docutils">
+<dt>Adds in three body recombination, there must be ionization present for this to work</dt>
+<dd><p class="first last">Can be array of bools or just a single bool,</p>
+</dd>
+</dl>
+<p>if just a single bool is supplied then all
+charge states will have the same value.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">type use_recombination_three_body:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><p class="first">bool array or bool</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param use_recombination:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><dl class="first docutils">
+<dt>Use recombination in the ionization balance. THis will produce the ACD and possible XCD rates</dt>
+<dd><p class="first last">Can be array of bools or just a single bool,</p>
+</dd>
+</dl>
+<p>if just a single bool is supplied then all
+charge states will have the same value.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">type use_recombination:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><p class="first">bool array or bool</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param keep_species_data:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><p class="first">When True this will keep all of the data associated with the CR solutions for each charge state.
+The can potentially take up lots of memory, the default is False</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">type use_recombination:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><p class="first last">bool</p>
+</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="colradpy.ionization_balance_class.ionization_balance.populate_ion_matrix">
+<code class="descname">populate_ion_matrix</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/ionization_balance_class.html#ionization_balance.populate_ion_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.ionization_balance_class.ionization_balance.populate_ion_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>This will populate the ionization matrix from the various GCR coefficients
+for all of the ionization stages</p>
+<p>This matrix in mostly zeros because we don’t have ways to connect charge states
+that are more than one change away. For example if only ground states are included
+this matrix becomes diagonal.</p>
+<p>QCDs bring the atom between metastables states in a charge state
+SCDS bring the atom to the next charge state
+ACDS bring the atom to the previous charge state
+XCDS bring the atom to next charge state between the metastables of that level,
+through the previous charge state</p>
+<p>The columns of this matrix sum to zero</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.ionization_balance_class.ionization_balance.solve_no_source">
+<code class="descname">solve_no_source</code><span class="sig-paren">(</span><em>n0=array([]</em>, <em>dtype=float64)</em>, <em>td_t=array([]</em>, <em>dtype=float64)</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/ionization_balance_class.html#ionization_balance.solve_no_source"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.ionization_balance_class.ionization_balance.solve_no_source" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solves the ionization balance matrix given an initial populations and times</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>n0</strong> (<em>float array</em>) – The initial populations of levels at t=0</li>
+<li><strong>td_t</strong> (<em>float array</em>) – Solution times</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>populates the pops, eigen_val and eigen_vec</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.ionization_balance_class.ionization_balance.solve_source">
+<code class="descname">solve_source</code><span class="sig-paren">(</span><em>n0=array([]</em>, <em>dtype=float64)</em>, <em>s0=array([]</em>, <em>dtype=float64)</em>, <em>td_t=array([]</em>, <em>dtype=float64)</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/ionization_balance_class.html#ionization_balance.solve_source"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.ionization_balance_class.ionization_balance.solve_source" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Solves the ionization balance matrix given an</dt>
+<dd>initial populations and times when a source term is present</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>n0</strong> (<em>float array</em>) – The initial populations of levels at t=0</li>
+<li><strong>td_t</strong> (<em>float array</em>) – Solution times</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>populates the pops, eigen_val and eigen_vec</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="colradpy.ionization_balance_class.ionization_balance.solve_time_independent">
+<code class="descname">solve_time_independent</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/ionization_balance_class.html#ionization_balance.solve_time_independent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.ionization_balance_class.ionization_balance.solve_time_independent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solves the ionization balance matrix for the steady-state (time-independent) solution.</p>
+<blockquote>
+<div>This is going to use the time dependent method just solving at 8 e-folding times
+for the second to smallest eigen value. Note that there are faster methods to do this
+but its more work to code it up and the time-dependent part is already done.
+This function is mostly a niceity for the casual user.
+The smallest eigenvalue corresponds to the
+steady state so we want to wait until the second to last componet completely dies off.
+This is done for the smallest over the given temperature and density parameter space
+this has been tested for 17 orders of magnitude and I haven’t run into overflow problems.</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>n0</strong> (<em>float array</em>) – The initial populations of levels at t=0</li>
+<li><strong>td_t</strong> (<em>float array</em>) – Solution times</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>populates the pops, eigen_val and eigen_vec</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-colradpy.nist_read">
+<span id="colradpy-nist-read-module"></span><h2>colradpy.nist_read module<a class="headerlink" href="#module-colradpy.nist_read" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="colradpy.nist_read.get_nist_clean">
+<code class="descclassname">colradpy.nist_read.</code><code class="descname">get_nist_clean</code><span class="sig-paren">(</span><em>element</em>, <em>charge</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/nist_read.html#get_nist_clean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.nist_read.get_nist_clean" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="colradpy.nist_read.get_nist_levels">
+<code class="descclassname">colradpy.nist_read.</code><code class="descname">get_nist_levels</code><span class="sig-paren">(</span><em>element</em>, <em>charge</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/nist_read.html#get_nist_levels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.nist_read.get_nist_levels" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="colradpy.nist_read.remove_conf_parentage">
+<code class="descclassname">colradpy.nist_read.</code><code class="descname">remove_conf_parentage</code><span class="sig-paren">(</span><em>dic</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/nist_read.html#remove_conf_parentage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.nist_read.remove_conf_parentage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="colradpy.nist_read.remove_senority">
+<code class="descclassname">colradpy.nist_read.</code><code class="descname">remove_senority</code><span class="sig-paren">(</span><em>dic</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/nist_read.html#remove_senority"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.nist_read.remove_senority" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="colradpy.nist_read.sort_energy">
+<code class="descclassname">colradpy.nist_read.</code><code class="descname">sort_energy</code><span class="sig-paren">(</span><em>dic</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/nist_read.html#sort_energy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.nist_read.sort_energy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="colradpy.nist_read.sort_energy_key">
+<code class="descclassname">colradpy.nist_read.</code><code class="descname">sort_energy_key</code><span class="sig-paren">(</span><em>dic</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/nist_read.html#sort_energy_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.nist_read.sort_energy_key" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-colradpy.r8necip">
+<span id="colradpy-r8necip-module"></span><h2>colradpy.r8necip module<a class="headerlink" href="#module-colradpy.r8necip" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="colradpy.r8necip.r8necip">
+<code class="descclassname">colradpy.r8necip.</code><code class="descname">r8necip</code><span class="sig-paren">(</span><em>IZ</em>, <em>ion_pot</em>, <em>energy</em>, <em>zpla</em>, <em>temperature_grid</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/r8necip.html#r8necip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.r8necip.r8necip" title="Permalink to this definition">¶</a></dt>
+<dd><p>THis function calculates ECIP rates, adapted from ADAS code.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>IZ</strong> (<em>int</em>) – charge state</li>
+<li><strong>ion_pot</strong> (<em>float</em>) – ionization potential</li>
+<li><strong>energy</strong> (<em>array</em>) – Energy levels</li>
+<li><strong>zpla</strong> (<em>array</em>) – ionization potential</li>
+<li><strong>temp_grid</strong> (<em>array</em>) – Temperature grid to return ECIP rates on</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array –ECIP rates on the temperature grid</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-colradpy.r8yip">
+<span id="colradpy-r8yip-module"></span><h2>colradpy.r8yip module<a class="headerlink" href="#module-colradpy.r8yip" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="colradpy.r8yip.R8YIP">
+<code class="descclassname">colradpy.r8yip.</code><code class="descname">R8YIP</code><span class="sig-paren">(</span><em>XI</em>, <em>DELTA</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/r8yip.html#R8YIP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.r8yip.R8YIP" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This code was entirely based on the ADAS fortran routine r8ecip.for and r8yip.for.</dt>
+<dd>It has just been transplated to python. Variable names may have been changed.
+See the Summers appelton review for the theory</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>XI</strong> – <ul>
+<li></li>
+</ul>
+</li>
+<li><strong>DELTA</strong> – <ul>
+<li></li>
+</ul>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="colradpy.r8yip.r8ecip">
+<code class="descclassname">colradpy.r8yip.</code><code class="descname">r8ecip</code><span class="sig-paren">(</span><em>IZC</em>, <em>ion_pot</em>, <em>energy</em>, <em>zpla</em>, <em>temperature_grid</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/r8yip.html#r8ecip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.r8yip.r8ecip" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-colradpy.read_adf04_py3_class">
+<span id="colradpy-read-adf04-py3-class-module"></span><h2>colradpy.read_adf04_py3_class module<a class="headerlink" href="#module-colradpy.read_adf04_py3_class" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="colradpy.read_adf04_py3_class.config_format">
+<code class="descclassname">colradpy.read_adf04_py3_class.</code><code class="descname">config_format</code><span class="sig-paren">(</span><em>config_arr</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/read_adf04_py3_class.html#config_format"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.read_adf04_py3_class.config_format" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="colradpy.read_adf04_py3_class.first_substring">
+<code class="descclassname">colradpy.read_adf04_py3_class.</code><code class="descname">first_substring</code><span class="sig-paren">(</span><em>strings</em>, <em>substring</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/read_adf04_py3_class.html#first_substring"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.read_adf04_py3_class.first_substring" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="colradpy.read_adf04_py3_class.read_adf04">
+<code class="descclassname">colradpy.read_adf04_py3_class.</code><code class="descname">read_adf04</code><span class="sig-paren">(</span><em>fil</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/read_adf04_py3_class.html#read_adf04"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.read_adf04_py3_class.read_adf04" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-colradpy.read_adf11">
+<span id="colradpy-read-adf11-module"></span><h2>colradpy.read_adf11 module<a class="headerlink" href="#module-colradpy.read_adf11" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="colradpy.read_adf11.read_adf11">
+<code class="descclassname">colradpy.read_adf11.</code><code class="descname">read_adf11</code><span class="sig-paren">(</span><em>fil</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/read_adf11.html#read_adf11"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.read_adf11.read_adf11" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Reads data formatted in adf11 format. This format is generally used for GCR coefficients.</dt>
+<dd><p class="first">The data is stored in arrays of log_10.
+Creates a dictionary to hold the data
+Args:</p>
+<blockquote class="last">
+<div><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">param fil:</th><td class="field-body">The file path to the input file</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-colradpy.saha_boltzmann_lte_pops">
+<span id="colradpy-saha-boltzmann-lte-pops-module"></span><h2>colradpy.saha_boltzmann_lte_pops module<a class="headerlink" href="#module-colradpy.saha_boltzmann_lte_pops" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="colradpy.saha_boltzmann_lte_pops.boltzmann_population">
+<code class="descclassname">colradpy.saha_boltzmann_lte_pops.</code><code class="descname">boltzmann_population</code><span class="sig-paren">(</span><em>w</em>, <em>energy</em>, <em>temp</em>, <em>norm_tot=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/saha_boltzmann_lte_pops.html#boltzmann_population"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.saha_boltzmann_lte_pops.boltzmann_population" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Calculates the LTE boltzmann populations given level spin, level energies and a temperature array</dt>
+<dd>returns the boltzmann populations relative to the ground state.</dd>
+<dt>Args:</dt>
+<dd><table class="first last docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">param w:</th><td class="field-body">array of the level spins</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type w:</th><td class="field-body">float array</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">param energy:</th><td class="field-body">array of the energy levels (cm-1)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type energy:</th><td class="field-body">float array</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">param temp:</th><td class="field-body">array of temperatures for calculation (eV)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type temp:</th><td class="field-body">float array</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">param norm_tot:</th><td class="field-body">If true normalizes to the total population instead of the ground</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type norm_tot:</th><td class="field-body">boolean</td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">float array populations of levels relative to the ground [len(levels),len(temp)]</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="colradpy.saha_boltzmann_lte_pops.saha_population">
+<code class="descclassname">colradpy.saha_boltzmann_lte_pops.</code><code class="descname">saha_population</code><span class="sig-paren">(</span><em>ci</em>, <em>w_z</em>, <em>w_z1</em>, <em>energy_z</em>, <em>energy_z1</em>, <em>ftemp</em>, <em>norm_tot=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/saha_boltzmann_lte_pops.html#saha_population"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.saha_boltzmann_lte_pops.saha_population" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-colradpy.solve_matrix_exponential">
+<span id="colradpy-solve-matrix-exponential-module"></span><h2>colradpy.solve_matrix_exponential module<a class="headerlink" href="#module-colradpy.solve_matrix_exponential" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="colradpy.solve_matrix_exponential.solve_matrix_exponential">
+<code class="descclassname">colradpy.solve_matrix_exponential.</code><code class="descname">solve_matrix_exponential</code><span class="sig-paren">(</span><em>matrix</em>, <em>td_n0</em>, <em>td_t</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/solve_matrix_exponential.html#solve_matrix_exponential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.solve_matrix_exponential.solve_matrix_exponential" title="Permalink to this definition">¶</a></dt>
+<dd><p>This definition will solve a 4 dimensional matrix using the matrix expoentiaiation method</p>
+<blockquote>
+<div>R. LeVeque, Finite Difference Methods for Ordinary and Par-
+tial Differential Equations: Steady-State and Time-Dependent
+Problems (Classics in Applied Mathematics Classics in Applied
+Mathemat), Society for Industrial and Applied Mathematics,
+Philadelphia, PA, USA, 2007.</div></blockquote>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><table class="first last docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">param matrix:</th><td class="field-body">The 4d matrix to be solved</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type matrix:</th><td class="field-body">4d matrix x,y,temp,dens</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">param td_n0:</th><td class="field-body">The initial fractional populations</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type td_n0:</th><td class="field-body">float array</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">param td_t:</th><td class="field-body">array of times for the solution</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type metas:</th><td class="field-body">float array</td>
+</tr>
+</tbody>
+</table>
+</dd>
+<dt>Returns:</dt>
+<dd>This returns three arrays the time dependent populations, eigenvals and eigenvectors</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="colradpy.solve_matrix_exponential.solve_matrix_exponential_source">
+<code class="descclassname">colradpy.solve_matrix_exponential.</code><code class="descname">solve_matrix_exponential_source</code><span class="sig-paren">(</span><em>matrix</em>, <em>td_n0</em>, <em>source</em>, <em>td_t</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/solve_matrix_exponential.html#solve_matrix_exponential_source"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.solve_matrix_exponential.solve_matrix_exponential_source" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This definition will solve a 4 dimensional matrix using the matrix expoentiaiation method</dt>
+<dd><p class="first">when a source term is also included</p>
+<p class="last">This is a slight modification to R. LeVeque 2007, see Johnson thesis</p>
+</dd>
+<dt>Args:</dt>
+<dd><table class="first last docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">param matrix:</th><td class="field-body">The 4d matrix to be solved</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type matrix:</th><td class="field-body">4d matrix x,y,temp,dens</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">param td_n0:</th><td class="field-body">The initial fractional populations</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type td_n0:</th><td class="field-body">float array</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">param source:</th><td class="field-body">The source of particles into the different states.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type source:</th><td class="field-body">float array</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">param td_t:</th><td class="field-body">array of times for the solution</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type metas:</th><td class="field-body">float array</td>
+</tr>
+</tbody>
+</table>
+</dd>
+<dt>Returns:</dt>
+<dd>This returns three arrays the time dependent populations, eigenvals and eigenvectors</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-colradpy.split_multiplet">
+<span id="colradpy-split-multiplet-module"></span><h2>colradpy.split_multiplet module<a class="headerlink" href="#module-colradpy.split_multiplet" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="colradpy.split_multiplet.split_condon_shortley">
+<code class="descclassname">colradpy.split_multiplet.</code><code class="descname">split_condon_shortley</code><span class="sig-paren">(</span><em>s1</em>, <em>l1</em>, <em>j1</em>, <em>s2</em>, <em>l2</em>, <em>j2</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/split_multiplet.html#split_condon_shortley"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.split_multiplet.split_condon_shortley" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This function calculates splitting percentages for LS</dt>
+<dd>coupled PECs that are to be split to LSJ.
+This is based on the orginal ‘split_multiplet.pro’ from ADAS, orginal
+author Martin O’Mulane. Page 238 The Theory of Atomic Spectra, Condon, Shortley 1935</dd>
+<dt>Args:</dt>
+<dd><table class="first last docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">param s1:</th><td class="field-body">‘S’ quantum number array for the PECs from the lower term</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type s1:</th><td class="field-body">integer</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">param l1:</th><td class="field-body">‘L’ quantum number array for the PECs from the lower term</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type l1:</th><td class="field-body">integer</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">param s2:</th><td class="field-body">‘S’ quantum number array for the PECs from the upper term</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type s2:</th><td class="field-body">integer</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">param l2:</th><td class="field-body">‘L’ quantum number array for the PECs from the upper term</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type l2:</th><td class="field-body">integer</td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">integer splitting percentage for the term resolved PEC</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="colradpy.split_multiplet.split_multiplet">
+<code class="descclassname">colradpy.split_multiplet.</code><code class="descname">split_multiplet</code><span class="sig-paren">(</span><em>s_low</em>, <em>l_low</em>, <em>s_up</em>, <em>l_up</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colradpy/split_multiplet.html#split_multiplet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#colradpy.split_multiplet.split_multiplet" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This function calculates splitting percentages for LS</dt>
+<dd>coupled PECs that are to be split to LSJ.
+This is based on the orginal ‘split_multiplet.pro’ from ADAS, orginal
+author Martin O’Mulane.</dd>
+<dt>Args:</dt>
+<dd><table class="first last docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">param s_low:</th><td class="field-body">‘S’ quantum number array for the PECs from the lower term</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type s_low:</th><td class="field-body">integer array</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">param l_low:</th><td class="field-body">‘L’ quantum number array for the PECs from the lower term</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type l_low:</th><td class="field-body">integer array</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">param s_up:</th><td class="field-body">‘S’ quantum number array for the PECs from the upper term</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type s_up:</th><td class="field-body">integer array</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">param l_up:</th><td class="field-body">‘L’ quantum number array for the PECs from the upper term</td>
+</tr>
+<tr class="field-even field"><th class="field-name">type l_up:</th><td class="field-body">integer array</td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">array ‘j’ value array for the upper level
+array ‘j’ value array for the lower level
+array splitting percentages for the term resolved PEC</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-colradpy">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-colradpy" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo.jpg" alt="Logo"/>
+            </a></p>
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">colradpy package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-colradpy.adf04_file_paths">colradpy.adf04_file_paths module</a></li>
+<li><a class="reference internal" href="#module-colradpy.burgess_tully_rates">colradpy.burgess_tully_rates module</a></li>
+<li><a class="reference internal" href="#module-colradpy.colradpy_class">colradpy.colradpy_class module</a></li>
+<li><a class="reference internal" href="#module-colradpy.ecip_rates">colradpy.ecip_rates module</a></li>
+<li><a class="reference internal" href="#module-colradpy.ionization_balance">colradpy.ionization_balance module</a></li>
+<li><a class="reference internal" href="#module-colradpy.ionization_balance_class">colradpy.ionization_balance_class module</a></li>
+<li><a class="reference internal" href="#module-colradpy.nist_read">colradpy.nist_read module</a></li>
+<li><a class="reference internal" href="#module-colradpy.r8necip">colradpy.r8necip module</a></li>
+<li><a class="reference internal" href="#module-colradpy.r8yip">colradpy.r8yip module</a></li>
+<li><a class="reference internal" href="#module-colradpy.read_adf04_py3_class">colradpy.read_adf04_py3_class module</a></li>
+<li><a class="reference internal" href="#module-colradpy.read_adf11">colradpy.read_adf11 module</a></li>
+<li><a class="reference internal" href="#module-colradpy.saha_boltzmann_lte_pops">colradpy.saha_boltzmann_lte_pops module</a></li>
+<li><a class="reference internal" href="#module-colradpy.solve_matrix_exponential">colradpy.solve_matrix_exponential module</a></li>
+<li><a class="reference internal" href="#module-colradpy.split_multiplet">colradpy.split_multiplet module</a></li>
+<li><a class="reference internal" href="#module-colradpy">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/source/colradpy.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ColRadPy 1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Curtis Johnson.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.2.
+    </div>
+  </body>
+</html>

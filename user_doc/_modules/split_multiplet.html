@@ -1,0 +1,211 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>split_multiplet &#8212; ColRadPy 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ColRadPy 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for split_multiplet</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span>  <span class="k">as</span> <span class="nn">np</span>
+
+<div class="viewcode-block" id="split_condon_shortley"><a class="viewcode-back" href="../source/split_multiplet.html#split_multiplet.split_condon_shortley">[docs]</a><span class="k">def</span> <span class="nf">split_condon_shortley</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span><span class="n">l1</span><span class="p">,</span><span class="n">j1</span><span class="p">,</span><span class="n">s2</span><span class="p">,</span><span class="n">l2</span><span class="p">,</span><span class="n">j2</span><span class="p">):</span>
+
+    <span class="k">if</span><span class="p">(</span> <span class="p">(</span><span class="n">j1</span> <span class="o">==</span> <span class="n">j2</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">l1</span> <span class="o">==</span> <span class="n">l2</span><span class="o">+</span><span class="mi">1</span><span class="p">)):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="n">s1</span><span class="o">-</span><span class="n">l1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">l1</span><span class="o">+</span><span class="n">s1</span><span class="o">-</span><span class="n">j1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="n">s1</span><span class="o">-</span><span class="n">l1</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span>  <span class="o">*</span> <span class="p">(</span><span class="n">l1</span><span class="o">+</span><span class="n">s1</span><span class="o">-</span><span class="n">j1</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">4.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="p">)</span>
+    <span class="k">elif</span><span class="p">((</span><span class="n">j1</span> <span class="o">==</span> <span class="n">j2</span><span class="p">)</span>   <span class="ow">and</span> <span class="p">(</span><span class="n">l1</span> <span class="o">==</span> <span class="n">l2</span><span class="o">+</span><span class="mi">1</span><span class="p">)):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">j1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="n">l1</span><span class="o">-</span><span class="n">s1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="n">s1</span><span class="o">-</span><span class="n">l1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">s1</span><span class="o">+</span><span class="n">l1</span><span class="o">+</span><span class="mi">1</span><span class="o">+</span><span class="n">j1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">s1</span><span class="o">+</span><span class="n">l1</span><span class="o">-</span><span class="n">j1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span> <span class="mf">4.0</span><span class="o">*</span><span class="n">j1</span><span class="o">*</span><span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="p">)</span>
+    <span class="k">elif</span><span class="p">((</span><span class="n">j1</span> <span class="o">==</span> <span class="n">j2</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">l1</span> <span class="o">==</span> <span class="n">l2</span><span class="o">+</span><span class="mi">1</span><span class="p">)):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="n">l1</span><span class="o">-</span><span class="n">s1</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="n">l1</span><span class="o">-</span><span class="n">s1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">s1</span><span class="o">+</span><span class="n">l1</span><span class="o">+</span><span class="n">j1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">s1</span><span class="o">+</span><span class="n">l1</span><span class="o">+</span><span class="n">j1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span> <span class="mf">4.0</span><span class="o">*</span><span class="n">j1</span> <span class="p">)</span>
+
+    <span class="k">elif</span><span class="p">((</span><span class="n">j1</span> <span class="o">==</span> <span class="n">j2</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">l1</span> <span class="o">==</span> <span class="n">l2</span><span class="p">)):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">(</span><span class="n">j1</span><span class="o">-</span><span class="n">s1</span><span class="o">+</span><span class="n">l1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="n">s1</span><span class="o">-</span><span class="n">l1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">s1</span><span class="o">+</span><span class="n">l1</span><span class="o">+</span><span class="n">j1</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">s1</span><span class="o">+</span><span class="n">l1</span><span class="o">-</span><span class="n">j1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span> <span class="mf">4.0</span><span class="o">*</span><span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="p">)</span>
+    <span class="k">elif</span><span class="p">((</span><span class="n">j1</span> <span class="o">==</span> <span class="n">j2</span><span class="p">)</span>   <span class="ow">and</span> <span class="p">(</span><span class="n">l1</span> <span class="o">==</span> <span class="n">l2</span><span class="p">)):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">j1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span> <span class="n">j1</span><span class="o">*</span><span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">s1</span><span class="o">*</span><span class="p">(</span><span class="n">s1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">l1</span><span class="o">*</span><span class="p">(</span><span class="n">l1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="p">)</span><span class="o">**</span><span class="mf">2.0</span> <span class="o">/</span> <span class="p">(</span> <span class="mf">4.0</span><span class="o">*</span><span class="n">j1</span><span class="o">*</span><span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="p">)</span>
+    <span class="k">elif</span><span class="p">((</span><span class="n">j1</span> <span class="o">==</span> <span class="n">j2</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">l1</span> <span class="o">==</span> <span class="n">l2</span><span class="p">)):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">(</span><span class="n">j1</span><span class="o">-</span><span class="n">s1</span><span class="o">+</span><span class="n">l1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="n">s1</span><span class="o">-</span><span class="n">l1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">s1</span><span class="o">+</span><span class="n">l1</span><span class="o">+</span><span class="n">j1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">s1</span><span class="o">+</span><span class="n">l1</span><span class="o">+</span><span class="mi">1</span><span class="o">-</span><span class="n">j1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span> <span class="mf">4.0</span><span class="o">*</span><span class="n">j1</span> <span class="p">)</span>
+    <span class="k">elif</span><span class="p">((</span><span class="n">j1</span> <span class="o">==</span> <span class="n">j2</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">l1</span> <span class="o">==</span> <span class="n">l2</span><span class="o">-</span><span class="mi">1</span><span class="p">)):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="n">l1</span><span class="o">-</span><span class="n">s1</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="n">l1</span><span class="o">-</span><span class="n">s1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">s1</span><span class="o">+</span><span class="n">l1</span><span class="o">+</span><span class="n">j1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">s1</span><span class="o">+</span><span class="n">l1</span><span class="o">+</span><span class="n">j1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span> <span class="mf">4.0</span><span class="o">*</span><span class="n">j1</span> <span class="p">)</span>
+    <span class="k">elif</span><span class="p">((</span><span class="n">j1</span> <span class="o">==</span> <span class="n">j2</span><span class="p">)</span>   <span class="ow">and</span> <span class="p">(</span><span class="n">l1</span> <span class="o">==</span> <span class="n">l2</span><span class="o">-</span><span class="mi">1</span><span class="p">)):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">j1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="n">l1</span><span class="o">-</span><span class="n">s1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="n">s1</span><span class="o">-</span><span class="n">l1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">s1</span><span class="o">+</span><span class="n">l1</span><span class="o">+</span><span class="mi">1</span><span class="o">+</span><span class="n">j1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">s1</span><span class="o">+</span><span class="n">l1</span><span class="o">-</span><span class="n">j1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span> <span class="mf">4.0</span><span class="o">*</span><span class="n">j1</span><span class="o">*</span><span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="p">)</span>
+    <span class="k">elif</span><span class="p">((</span><span class="n">j1</span> <span class="o">==</span> <span class="n">j2</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">l1</span> <span class="o">==</span> <span class="n">l2</span><span class="o">-</span><span class="mi">1</span><span class="p">)):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="n">s1</span><span class="o">-</span><span class="n">l1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">l1</span><span class="o">+</span><span class="n">s1</span><span class="o">-</span><span class="n">j1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="n">s1</span><span class="o">-</span><span class="n">l1</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span>  <span class="o">*</span> <span class="p">(</span><span class="n">l1</span><span class="o">+</span><span class="n">s1</span><span class="o">-</span><span class="n">j1</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">4.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">res</span> <span class="o">==</span><span class="mf">0.0</span><span class="p">):</span>
+        <span class="n">res</span><span class="o">=</span><span class="p">[]</span>
+    <span class="k">return</span> <span class="n">res</span></div>
+
+
+
+<div class="viewcode-block" id="split_multiplet"><a class="viewcode-back" href="../source/split_multiplet.html#split_multiplet.split_multiplet">[docs]</a><span class="k">def</span> <span class="nf">split_multiplet</span><span class="p">(</span><span class="n">s_low</span><span class="p">,</span><span class="n">l_low</span><span class="p">,</span><span class="n">s_up</span><span class="p">,</span><span class="n">l_up</span><span class="p">):</span>
+    <span class="n">j_up</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">j_low</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1">#finding all possible j values for upper and lower</span>
+
+    <span class="c1">#l_low has to be smaller than l_up</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">l_up</span> <span class="o">&lt;</span> <span class="n">l_low</span><span class="p">):</span>
+        <span class="n">l_t</span> <span class="o">=</span> <span class="n">l_low</span>
+        <span class="n">s_t</span> <span class="o">=</span> <span class="n">s_low</span>
+        <span class="n">s_low</span> <span class="o">=</span> <span class="n">s_up</span>
+        <span class="n">l_low</span> <span class="o">=</span> <span class="n">l_up</span>
+        <span class="n">l_up</span> <span class="o">=</span> <span class="n">l_t</span>
+        <span class="n">s_up</span> <span class="o">=</span> <span class="n">s_t</span>
+
+    <span class="n">j1_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">l_up</span><span class="o">-</span><span class="n">s_up</span><span class="p">),</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">l_up</span><span class="o">+</span><span class="n">s_up</span><span class="p">)</span><span class="o">+</span><span class="mf">1.</span><span class="p">,</span><span class="mf">1.</span><span class="p">)</span>
+    <span class="n">j2_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">l_low</span><span class="o">-</span><span class="n">s_low</span><span class="p">),</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">l_low</span><span class="o">+</span><span class="n">s_low</span><span class="p">)</span><span class="o">+</span><span class="mf">1.</span><span class="p">,</span><span class="mf">1.</span><span class="p">)</span>
+    
+    <span class="k">for</span> <span class="n">j1</span> <span class="ow">in</span> <span class="n">j1_arr</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">j2</span> <span class="ow">in</span> <span class="n">j2_arr</span><span class="p">:</span>
+
+            <span class="k">if</span><span class="p">(</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">j2</span><span class="o">-</span><span class="n">j1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">l_up</span> <span class="o">-</span> <span class="n">l_low</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">j1</span><span class="o">+</span><span class="n">j2</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)):</span>
+                <span class="n">j_up</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">j1</span><span class="p">)</span>
+                <span class="n">j_low</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">j2</span><span class="p">)</span>
+                <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">split_condon_shortley</span><span class="p">(</span><span class="n">s_up</span><span class="p">,</span><span class="n">l_up</span><span class="p">,</span><span class="n">j1</span><span class="p">,</span><span class="n">s_low</span><span class="p">,</span><span class="n">l_low</span><span class="p">,</span><span class="n">j2</span><span class="p">))</span>
+            
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">j_up</span><span class="p">),</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">j_low</span><span class="p">),</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">res</span><span class="p">)</span></div>
+
+
+
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="sd">he2 = colradpy(&#39;/home/curtis/adf04_files/mom97_ls#he1.dat&#39;,[0],np.array([100]),np.array([1.e13]),use_recombination=False,use_recombination_three_body = False,use_ionization=True)</span>
+<span class="sd">he2.solve_cr()</span>
+<span class="sd">config_l = []</span>
+<span class="sd">config_u = []    </span>
+<span class="sd">L_l = []</span>
+<span class="sd">L_u = []</span>
+<span class="sd">S_l = []</span>
+<span class="sd">S_u = []</span>
+<span class="sd">j_l = []</span>
+<span class="sd">j_u = []</span>
+<span class="sd">ress = []</span>
+<span class="sd">pecs = []</span>
+<span class="sd">for i in range(0,len(he2.data[&#39;processed&#39;][&#39;pec_levels&#39;])):</span>
+<span class="sd">    up = he2.data[&#39;processed&#39;][&#39;pec_levels&#39;][i,0]</span>
+<span class="sd">    low = he2.data[&#39;processed&#39;][&#39;pec_levels&#39;][i,1]</span>
+<span class="sd">    ju,jl,res = split_multiplet( (he2.data[&#39;atomic&#39;][&#39;S&#39;][up]-1)/2.,he2.data[&#39;atomic&#39;][&#39;L&#39;][up],(he2.data[&#39;atomic&#39;][&#39;S&#39;][low]-1)/2.,he2.data[&#39;atomic&#39;][&#39;L&#39;][low])</span>
+<span class="sd">    j_l.append(jl)</span>
+<span class="sd">    j_u.append(ju)</span>
+<span class="sd">    ress.append(res)</span>
+<span class="sd">    if(res.size&gt;0):</span>
+<span class="sd">        if( -1 not in res):</span>
+<span class="sd">            pecs.append(np.einsum(&#39;ijk,l-&gt;lijk&#39;,he2.data[&#39;processed&#39;][&#39;pecs&#39;][i],res/np.sum(res)))</span>
+<span class="sd">        else:</span>
+<span class="sd">            pecs.append(he2.data[&#39;processed&#39;][&#39;pecs&#39;][i])</span>
+<span class="sd">    else:</span>
+<span class="sd">        pecs.append(he2.data[&#39;processed&#39;][&#39;pecs&#39;][i])    </span>
+
+<span class="sd">    ress.append(res)</span>
+<span class="sd">    if(res.size&gt;0):</span>
+<span class="sd">        if(-1 not in res):</span>
+<span class="sd">            for j in range(0,len(ju)):</span>
+<span class="sd">                j_l.append(jl[j])</span>
+<span class="sd">                j_u.append(ju[j])</span>
+<span class="sd">                pecs.append(he2.data[&#39;processed&#39;][&#39;pecs&#39;][i]*res[j]/np.sum(res))</span>
+<span class="sd">                config_u.append(he2.data[&#39;atomic&#39;][&#39;config&#39;][up])</span>
+<span class="sd">                config_l.append(he2.data[&#39;atomic&#39;][&#39;config&#39;][low])</span>
+<span class="sd">                L_l.append(he2.data[&#39;atomic&#39;][&#39;L&#39;][low])</span>
+<span class="sd">                L_u.append(he2.data[&#39;atomic&#39;][&#39;L&#39;][up])</span>
+<span class="sd">                S_u.append(he2.data[&#39;atomic&#39;][&#39;S&#39;][up])</span>
+<span class="sd">                S_l.append(he2.data[&#39;atomic&#39;][&#39;S&#39;][low])</span>
+<span class="sd">        else:</span>
+<span class="sd">                j_l.append(jl[0])</span>
+<span class="sd">                j_u.append(ju[0])</span>
+<span class="sd">                pecs.append(he2.data[&#39;processed&#39;][&#39;pecs&#39;][i])</span>
+<span class="sd">                config_u.append(he2.data[&#39;atomic&#39;][&#39;config&#39;][up])</span>
+<span class="sd">                config_l.append(he2.data[&#39;atomic&#39;][&#39;config&#39;][low])</span>
+<span class="sd">                L_l.append(he2.data[&#39;atomic&#39;][&#39;L&#39;][low])</span>
+<span class="sd">                L_u.append(he2.data[&#39;atomic&#39;][&#39;L&#39;][up])</span>
+<span class="sd">                S_u.append(he2.data[&#39;atomic&#39;][&#39;S&#39;][up])</span>
+<span class="sd">                S_l.append(he2.data[&#39;atomic&#39;][&#39;S&#39;][low])</span>
+<span class="sd">    else:</span>
+<span class="sd">        j_l.append(he2.data[&#39;atomic&#39;][&#39;w&#39;][up])</span>
+<span class="sd">        j_u.append(he2.data[&#39;atomic&#39;][&#39;w&#39;][low])</span>
+<span class="sd">        pecs.append(he2.data[&#39;processed&#39;][&#39;pecs&#39;][i])        </span>
+<span class="sd">        config_u.append(he2.data[&#39;atomic&#39;][&#39;config&#39;][up])</span>
+<span class="sd">        config_l.append(he2.data[&#39;atomic&#39;][&#39;config&#39;][low])</span>
+<span class="sd">        L_l.append(he2.data[&#39;atomic&#39;][&#39;L&#39;][low])</span>
+<span class="sd">        L_u.append(he2.data[&#39;atomic&#39;][&#39;L&#39;][up])</span>
+<span class="sd">        S_u.append(he2.data[&#39;atomic&#39;][&#39;S&#39;][up])</span>
+<span class="sd">        S_l.append(he2.data[&#39;atomic&#39;][&#39;S&#39;][low])</span>
+<span class="sd">        </span>
+<span class="sd">pecs = np.asarray(pecs)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo.jpg" alt="Logo"/>
+            </a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ColRadPy 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Curtis Johnson.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.
+    </div>
+  </body>
+</html>
