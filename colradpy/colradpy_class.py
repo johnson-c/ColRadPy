@@ -681,11 +681,9 @@ class colradpy():
             for j in range(0,len(levels_to_keep)):
                 #if statement here because there will be a number of transitions that have zero
                 #for the PEC value and don't want to have to keep track of these.
-<<<<<<< HEAD:colradpy_class.py
-                if(levels_to_keep[j] > i):# and self.data['cr_matrix']['A_ji'][j,i] > 1E-31):
-=======
+
                 if(levels_to_keep[j] > i ):#and self.data['cr_matrix']['A_ji'][j,i] > 1E-31):
->>>>>>> curt_working:colradpy/colradpy_class.py
+
                     self.data['processed']['pecs'].append( self.data['cr_matrix']['A_ji'][levels_to_keep[j],i]*\
                                                         self.data['processed']['pops'][j]/ \
                                                         self.data['user']['dens_grid'])
