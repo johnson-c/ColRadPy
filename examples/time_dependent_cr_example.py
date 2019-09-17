@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../')
-from colradpy_class import colradpy
+from colradpy import colradpy
 import numpy as np
 import matplotlib.pyplot as plt
 

@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../') #starting in 'examples' so need to go up one
-from colradpy_class import colradpy
+from colradpy import colradpy
 import numpy as np
 
 fil = 'cpb03_ls#be0.dat' #adf04 file

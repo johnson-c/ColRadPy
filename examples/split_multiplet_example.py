@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../')
-from colradpy_class import *
+from colradpy import colradpy
 import numpy as np
 
 he = colradpy('./mom97_ls#he1.dat',[0],np.array([20]),np.array([1.e13]),use_recombination=False,use_recombination_three_body = False,use_ionization=True)

@@ -1,9 +1,8 @@
 import sys
 sys.path.append('../')
-from colradpy_class import colradpy
 import numpy as np
 import matplotlib.pyplot as plt
-from ionization_balance_class import ionization_balance
+from colradpy import ionization_balance
 
 fils = np.array(['cpb03_ls#be0.dat','cpb03_ls#be1.dat','be2_adf04','be3_adf04']) #the adf04 files
 temp = np.linspace(5,100,5) #temp grid
