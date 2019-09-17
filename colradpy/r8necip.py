@@ -15,7 +15,7 @@
 
 
 import numpy as np
-from .r8yip import *
+from colradpy.r8yip import *
 
 def r8necip(IZ, ion_pot, energy, zpla,temperature_grid):
     """THis function calculates ECIP rates, adapted from ADAS code.
