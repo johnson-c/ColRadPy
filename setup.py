@@ -10,7 +10,7 @@ setup(
     # Needed for dependencies
     install_requires=['numpy','collections','fractions','scipy','matplotlib','re','sys'],
     # *strongly* suggested for sharing
-    version='1.0',
+    version='1.1',
     description='python collisional radiative solver',
     # We will also need a readme eventually (there will be a warning)
     # long_description=open('README.txt').read(),

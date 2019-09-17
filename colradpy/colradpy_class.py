@@ -37,11 +37,12 @@ from colradpy.read_adf04_py3_class import *
 from colradpy.ecip_rates import *
 from colradpy.burgess_tully_rates import *
 from colradpy.split_multiplet import *
-from colradpy.nist_read import *
+from colradpy.nist_read_txt import *
+from colradpy.solve_matrix_exponential import *
 import collections
-from solve_matrix_exponential import *
 from matplotlib import rc,rcParams
 from fractions import Fraction
+
 
 def convert_to_air(lam):
     """This function converts the vacuum wavelength of spectral lines to 
@@ -1099,6 +1100,23 @@ class colradpy():
         self.data['nist']['levels'] = get_nist_clean(self.data['atomic']['element'].replace(' ', ''),
                                                      self.data['atomic']['charge_state'] + 1)
 
+
+
+
+
+
+    def get_nist_levels_txt(self):
+        """ get_nist_levels grabs the nist energy levels from the NIST mysql database. The mysql NIST database must
+            be installed. There is a plain text file in the works to get around this and simplify for users.
+        """
+        
+        self.data['nist'] = {}
+
+        
+        self.data['nist']['levels'] = get_nist_txt(self.data['atomic']['element'].replace(' ', ''),
+                                                     self.data['atomic']['charge_state'] + 1)
+
+        
     
     def solve_cr(self):
         """Solve_cr automates the calls to various function to make the data for
