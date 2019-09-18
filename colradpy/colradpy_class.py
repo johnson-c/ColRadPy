@@ -948,8 +948,8 @@ class colradpy():
         j = []
 
         for i in range(0,len(self.data['atomic']['config'])):
-            j_arr = np.arange( np.abs(self.data['atomic']['L'][i] -  (self.data['atomic']['S'][i]-1)/2),
-                       self.data['atomic']['L'][i] + (self.data['atomic']['S'][i]-1)/2+1,1.)
+            j_arr = np.arange( np.abs(self.data['atomic']['L'][i] -  (self.data['atomic']['S'][i]-1)/2.),
+                       self.data['atomic']['L'][i] + (self.data['atomic']['S'][i]-1)/2.+1,1.)
 
             conf_arr = np.empty_like(j_arr,dtype=object)
             l_arr = np.empty_like(j_arr,dtype=int)
@@ -1113,7 +1113,7 @@ class colradpy():
         self.data['nist'] = {}
         import inspect
         tmp = inspect.getfile(colradpy)#becuase this will be installed in diff locations we need to find where it is
-        tmp = tmp[0:len(tmp)-27] #we know the structure inside of the package though
+        tmp = tmp[0:len(tmp)-26] #we know the structure inside of the package though
         tmp = tmp + 'atomic/nist_energies/'
         self.data['nist']['levels'] = get_nist_txt(tmp ,self.data['atomic']['element'].replace(' ', ''),
                                                      self.data['atomic']['charge_state'] + 1)
