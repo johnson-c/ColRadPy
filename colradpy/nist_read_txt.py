@@ -1,8 +1,8 @@
 import numpy as np
 
-def get_nist_txt(el,ch):
+def get_nist_txt(path,el,ch):
 
-    tmp = np.genfromtxt('../atomic/nist_energies/'+el.lower()+'_'+str(ch),dtype=None,delimiter=',')
+    tmp = np.genfromtxt(path+el.lower()+'_'+str(ch),dtype=None,delimiter=',')
     levels = []
     for i in range(0,len(tmp)):
         tmp_dic = {}

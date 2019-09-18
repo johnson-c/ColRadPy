@@ -1111,9 +1111,11 @@ class colradpy():
         """
         
         self.data['nist'] = {}
-
-        
-        self.data['nist']['levels'] = get_nist_txt(self.data['atomic']['element'].replace(' ', ''),
+        import inspect
+        tmp = inspect.getfile(colradpy)#becuase this will be installed in diff locations we need to find where it is
+        tmp = tmp[0:len(tmp)-26] #we know the structure inside of the package though
+        tmp = tmp + 'atomic/nist_energies/'
+        self.data['nist']['levels'] = get_nist_txt(tmp ,self.data['atomic']['element'].replace(' ', ''),
                                                      self.data['atomic']['charge_state'] + 1)
 
         

@@ -66,7 +66,7 @@ def get_nist_clean(element,charge):
 
 
 
-for k in range(0,92):
+for k in range(0,5):
     el = tt[k][2]
     ch = tt[k][0]
 
@@ -84,7 +84,7 @@ for k in range(0,92):
             if(a[i]['term']):
                 term = a[i]['term']
 
-            w.write(conf + ','+term+','+j+','+a[i]['energy']+'\n')
+            w.write(conf + ','+term+','+j.replace(',','')+','+a[i]['energy']+'\n')
 
         w.close()
 '''
