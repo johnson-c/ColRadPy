@@ -8,7 +8,7 @@ setup(
     # Needed to actually package something
     packages=['colradpy'],
     # Needed for dependencies
-    install_requires=['numpy','collections','fractions','scipy','matplotlib','re','sys'],
+    install_requires=['numpy','scipy','matplotlib'],
     # *strongly* suggested for sharing
     version='1.1',
     description='python collisional radiative solver',
