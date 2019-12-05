@@ -311,7 +311,7 @@ class ionization_balance():
         #for the steady state the initial conditions don't matter so just make it simple        
         n0 = np.zeros((len(self.data['ion_matrix'])))
         n0[0] = 1.
-
+        '''
         #run the first time at t=0 just to get eigenvals
         self.data['processed']['pops_ss'],\
         self.data['processed']['eigen_val'],\
@@ -319,7 +319,7 @@ class ionization_balance():
                                                 np.einsum('ijkl,l->ijkl',self.data['ion_matrix'],
                                                 self.data['user']['dens_grid']),n0,np.array([0]))
         #get the second smallest time
-        time = np.max(8/np.abs(np.sort(self.data['processed']['eigen_val'][:,:,:],
+        time = np.max(1/np.abs(np.sort(self.data['processed']['eigen_val'][:,:,:],
                                        axis=0)[len(self.data['ion_matrix']) -2]))
 
         #solve at the 8 e-fold time
@@ -328,3 +328,9 @@ class ionization_balance():
         self.data['processed']['eigen_vec'] = solve_matrix_exponential(
                                                 np.einsum('ijkl,l->ijkl',self.data['ion_matrix'],
                                                 self.data['user']['dens_grid']),n0,np.array([time]))
+
+        '''
+        self.data['processed']['pops_ss'],\
+        self.data['processed']['eigen_val'],\
+        self.data['processed']['eigen_vec'] =  solve_matrix_exponential_steady_state(
+            np.einsum('ijkl,l->ijkl',self.data['ion_matrix'],self.data['user']['dens_grid']))
