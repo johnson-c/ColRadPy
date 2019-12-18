@@ -705,12 +705,6 @@ class colradpy():
                                                        self.data['user']['dens_grid'])
 
 
-
-
-            print(self.data['cr_matrix']['cr'][:,:,0,0])
-            
-
-                
     def solve_quasi_static(self):
         """This function will solve the CR matrix using the quasistatic approximation, after solving this problem
            the generalized radiative coefficients GCRs will be calculated other claculated quanities such as 
