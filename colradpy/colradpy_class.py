@@ -39,6 +39,7 @@ from colradpy.burgess_tully_rates import *
 from colradpy.split_multiplet import *
 from colradpy.nist_read_txt import *
 from colradpy.solve_matrix_exponential import *
+from colradpy.colradpy_utility import *
 import collections
 from matplotlib import rc,rcParams
 from fractions import Fraction
@@ -108,7 +109,8 @@ class colradpy():
     def __init__(self,fil,metas=np.array([]),temp_grid=np.array([]),electron_den=np.array([]),
                  use_ionization=True,suppliment_with_ecip=True,use_recombination_three_body=True,
                  use_recombination = True, td_t = np.array([]), td_n0=np.array([]),td_source=np.array([]),
-                  default_pop_norm=True,temp_dens_pair=False):
+                  default_pop_norm=True,temp_dens_pair=False,rate_interp_ion = 'slinear',
+                 rate_interp_recomb='log_slinear',rate_interp_col='log_slinear'):
         
         """The initializing method. Sets up the nested list for data storage and starts to populate with user data
            as well as reading in the adf04 file
@@ -130,6 +132,44 @@ class colradpy():
         self.data['user']['td_source'] = np.asarray(td_source)
         self.data['user']['default_pop_norm'] = default_pop_norm
         self.data['user']['temp_dens_pair'] = temp_dens_pair
+
+        #choosing the collisional interp and extrap type
+        #for low temperature, burgess tully is used for high temp extrap
+        self.data['user']['rate_interp_kind_col'] = rate_interp_col
+        self.data['user']['log_rate_col'],\
+            self.data['user']['interp_kind_col'] = rate_interp_parse(rate_interp_col)
+        #choosing interp and extrapolation type for ionization
+        self.data['user']['rate_interp_kind_ion'] = rate_interp_ion
+        self.data['user']['log_rate_ion'],\
+            self.data['user']['interp_kind_ion'] = rate_interp_parse(rate_interp_ion)
+        #choosing interp and extrapolation type for recombination
+        self.data['user']['rate_interp_kind_recomb'] = rate_interp_recomb
+        self.data['user']['log_rate_recomb'],\
+            self.data['user']['interp_kind_recomb'] = rate_interp_parse(rate_interp_recomb)
+
+
+        
+        
+        '''
+        if(self.data['user']['rate_interp'][0:3] =='log'):
+            self.data['user']['log_rate'] = True
+
+        self.data['user']['interp_kind'] = 'slinear'
+        if('linear' in self.data['user']['rate_interp']):
+            self.data['user']['interp_kind'] = 'linear'
+        if('nearest' in self.data['user']['rate_interp']):
+            self.data['user']['interp_kind'] = 'nearest'
+        if('zero' in self.data['user']['rate_interp']):
+            self.data['user']['interp_kind'] = 'zero'
+        if('slinear' in self.data['user']['rate_interp']):
+            self.data['user']['interp_kind'] = 'slinear'
+        if('quadratic' in self.data['user']['rate_interp']):
+            self.data['user']['interp_kind'] = 'quadratic'
+        if('cubic' in self.data['user']['rate_interp']):
+            self.data['user']['interp_kind'] = 'cubic'
+        '''
+            
+        
         if(self.data['user']['temp_dens_pair']):
             if( len(self.data['user']['temp_grid']) != len(self.data['user']['dens_grid'])):
                 print("Temperature and density were chosen to be pairs not grid. There for the length of temperature and density arrays must be the same")
@@ -210,6 +250,15 @@ class colradpy():
            values in the dictionary. See documentation ecip_rates.py for a better desciption
            
         """
+
+
+
+        if(np.size(self.data['rates']['inf_engy']) == 0):
+            print('No infinite energy points were in the adf04 file. Burgess tully extrapoluation is applied from'+
+                  ' the last two calculated points')
+            self.data['rates']['inf_engy'] = np.zeros((len(self.data['rates']['excit']['col_transitions'])))
+
+
         
         self.data['rates'].update( burgess_tully_rates(self.data['user']['temp_grid'],self.data['input_file']['temp_grid'],
                                                        self.data['rates']['excit']['col_transitions'],self.data['rates']\
@@ -238,10 +287,25 @@ class colradpy():
                                                                        len(self.data['atomic']['ion_pot']),
                                                                        len(self.data['user']['temp_grid'])))
 
-        ion_excit_interp = interp1d(self.data['input_file']['temp_grid']/11604.5,
-                                    self.data['rates']['ioniz']['ion_excit'],axis=1,kind='slinear')
-        
-        ion_excit_interp_grid = ion_excit_interp(self.data['user']['temp_grid'])
+
+
+
+        if(self.data['user']['log_rate_ion']):
+            ion_excit_interp = interp1d(np.log(self.data['input_file']['temp_grid']/11604.5),
+                                        self.data['rates']['ioniz']['ion_excit'],axis=1,
+                                        kind = self.data['user']['interp_kind_ion'],
+                                        fill_value =  'extrapolate')
+
+            ion_excit_interp_grid = ion_excit_interp(np.log(self.data['user']['temp_grid']))
+            
+        else:
+            ion_excit_interp = interp1d(self.data['input_file']['temp_grid']/11604.5,
+                                        self.data['rates']['ioniz']['ion_excit'],axis=1,
+                                        kind = self.data['user']['interp_kind_ion'],
+                                        fill_value =  'extrapolate')
+
+            ion_excit_interp_grid = ion_excit_interp(self.data['user']['temp_grid'])
+            
 
         for i in range(0,len(self.data['rates']['ioniz']['ion_transitions'])):
             for j in range(0,len(self.data['user']['temp_grid'])):
@@ -253,6 +317,7 @@ class colradpy():
                     ['ion_transitions'][i,1]-1] - self.data['atomic']['energy']\
                     [self.data['rates']['ioniz']['ion_transitions'][i,0] -1 ])\
                     *0.00012398774011749576/self.data['user']['temp_grid'][j])
+                
 
                 
     def suppliment_with_ecip(self):
@@ -294,12 +359,27 @@ class colradpy():
            adf04 file.
         """
 
-        recomb_excit_interp = interp1d(self.data['input_file']['temp_grid']/11604.5,
-                                       self.data['rates']['recomb']['recomb_excit'],
-                                       axis=1,kind='slinear')
-        self.data['rates']['recomb']['recomb_excit_interp_grid'] =\
-                                    recomb_excit_interp(self.data['user']['temp_grid'])
 
+
+        if(self.data['user']['log_rate_recomb']):
+            recomb_excit_interp = interp1d(np.log(self.data['input_file']['temp_grid']/11604.5),
+                                           self.data['rates']['recomb']['recomb_excit'],
+                                           axis=1,
+                                           kind = self.data['user']['interp_kind_recomb'],
+                                           fill_value =  'extrapolate')
+
+            self.data['rates']['recomb']['recomb_excit_interp_grid'] =\
+                                        recomb_excit_interp(np.log(self.data['user']['temp_grid']))
+        else:
+            recomb_excit_interp = interp1d(self.data['input_file']['temp_grid']/11604.5,
+                                           self.data['rates']['recomb']['recomb_excit'],
+                                           axis=1,
+                                           kind = self.data['user']['interp_kind_recomb'],
+                                           fill_value =  'extrapolate')
+
+            self.data['rates']['recomb']['recomb_excit_interp_grid'] =\
+                                        recomb_excit_interp(self.data['user']['temp_grid'])
+            
 
         '''
         #replace values lower than 1e-30 with a linear interpolation
@@ -373,10 +453,19 @@ class colradpy():
            extrapolation will be used. There is currently no extrapolation below the first
            calculated temperature point. THis is something to add in the future.
         """
-        
-        tmp = interp1d(self.data['input_file']['temp_grid']/11604.5,
-                       self.data['rates']['excit']['col_excit'],axis=1,kind='slinear')
+        if(self.data['user']['log_rate_col']):
+            tmp = interp1d(np.log(self.data['input_file']['temp_grid']/11604.5),
+                           self.data['rates']['excit']['col_excit'],axis=1,
+                                           kind = self.data['user']['interp_kind_col'],
+                                           fill_value =  'extrapolate')
+        else:
+            tmp = interp1d(self.data['input_file']['temp_grid']/11604.5,
+                           self.data['rates']['excit']['col_excit'],axis=1,
+                                           kind = self.data['user']['interp_kind_col'],
+                                           fill_value =  'extrapolate')
 
+
+            
         self.data['rates']['excit']['col_excit_interp'] = np.zeros((len(self.data['rates']['excit']['col_excit']),
                                                                          len(self.data['user']['temp_grid'])))
 
@@ -404,15 +493,20 @@ class colradpy():
                                         self.data['rates']['burg_tully']['extrap_temp_inds'][i] ] =\
                                         self.data['rates']['burg_tully']['excit_extrap_lin'][j][:,i]
 
-
-            self.data['rates']['excit']['col_excit_interp'][:,self.data['rates']['burg_tully']\
-                                   ['interp_temp_inds']] =\
-            tmp(self.data['user']['temp_grid'][self.data['rates']['burg_tully']['interp_temp_inds']])
+            if(self.data['user']['log_rate']):
+                self.data['rates']['excit']['col_excit_interp']\
+                 [:,self.data['rates']['burg_tully']['interp_temp_inds']] =\
+                 tmp(np.log(self.data['user']['temp_grid'][self.data['rates']['burg_tully']['interp_temp_inds']]))
+            else:
+                self.data['rates']['excit']['col_excit_interp']\
+                 [:,self.data['rates']['burg_tully']['interp_temp_inds']] =\
+                 tmp(self.data['user']['temp_grid'][self.data['rates']['burg_tully']['interp_temp_inds']])
 
         else:
-
-            self.data['rates']['excit']['col_excit_interp'] = tmp(self.data['user']['temp_grid'])
-
+            if(self.data['user']['log_rate']):
+                self.data['rates']['excit']['col_excit_interp'] = tmp(np.log(self.data['user']['temp_grid']))
+            else:
+                self.data['rates']['excit']['col_excit_interp'] = tmp(self.data['user']['temp_grid'])
 
     def populate_cr_matrix(self):
         """This function will populate the collision radiative matrix with all the rates that
@@ -705,6 +799,11 @@ class colradpy():
                                                        self.data['user']['dens_grid'])
 
 
+
+
+            
+
+                
     def solve_quasi_static(self):
         """This function will solve the CR matrix using the quasistatic approximation, after solving this problem
            the generalized radiative coefficients GCRs will be calculated other claculated quanities such as 
@@ -1401,8 +1500,8 @@ class colradpy():
         self.data['nist'] = {}
         import inspect
         tmp = inspect.getfile(colradpy)#becuase this will be installed in diff locations we need to find where it is
-        tmp = tmp[0:len(tmp)-26] #we know the structure inside of the package though
-        tmp = tmp + 'atomic/nist_energies/'
+        tmp = tmp[0:len(tmp)-27] #we know the structure inside of the package though
+        tmp = tmp + '/atomic/nist_energies/'
         self.data['nist']['levels'] = get_nist_txt(tmp ,self.data['atomic']['element'].replace(' ', ''),
                                                      self.data['atomic']['charge_state'] + 1)
 
