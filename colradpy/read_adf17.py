@@ -2,7 +2,7 @@ import numpy as np
 import re
 
 
-fil = '/home/curtis/cbnm93#h_h0ls.dat'
+fil = '../cbnm93#h_h0ls.dat'
 f = open(fil)
 adf17 = {}
 adf17['input_file'] = {}
@@ -14,7 +14,7 @@ if(len(first_ln_inds) < 5):
     print('The first line of the file is in the wrong format')
 
 ##############################################################################################################
-adf17['input_file']['seqence']    = re.search('\w+',first_ln[first_ln_inds[0]+1:]).group()
+adf17['input_file']['sequence']    = re.search('\w+',first_ln[first_ln_inds[0]+1:]).group()
 adf17['input_file']['nuc_chg']    = int(re.search('\w+',first_ln[first_ln_inds[1]+1:]).group())
 adf17['input_file']['num_parent'] = int(re.search('\w+',first_ln[first_ln_inds[2]+1:]).group())
 adf17['input_file']['num_dens']   = int(re.search('\w+',first_ln[first_ln_inds[3]+1:]).group())
@@ -39,13 +39,13 @@ for i in range(1,len(second_arr)):
 f.readline() #there is a blank line
 dens_line = f.readline()
 dens_arr = np.asarray([y.replace('D','e') for y in
-            [x.strip(' ') for x in re.split('\d  ',re.split('=',dens_line)[1])]],dtype='float64')
+            [x.strip(' ') for x in re.split('  ',re.split('=',dens_line)[1])[1:]]],dtype='float64')
+
 while(len(dens_arr) < adf17['input_file']['num_dens']):
     dens_line = f.readline()
     dens_arr = np.append(dens_arr,np.asarray([y.replace('D','e') for y in
-            [x.strip(' ') for x in re.split('\d  ',re.split('=',dens_line)[1])]],dtype='float64'))
+            [x.strip(' ') for x in re.split('  ',re.split('=',dens_line)[1])[1:]]],dtype='float64'))
 adf17['input_file']['dens_grid'] = dens_arr
-
 #reading the temperatures
 temp_line = f.readline()
 temp_arr = np.asarray([y.replace('D','e') for y in
