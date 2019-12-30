@@ -493,7 +493,7 @@ class colradpy():
                                         self.data['rates']['burg_tully']['extrap_temp_inds'][i] ] =\
                                         self.data['rates']['burg_tully']['excit_extrap_lin'][j][:,i]
 
-            if(self.data['user']['log_rate']):
+            if(self.data['user']['log_rate_col']):
                 self.data['rates']['excit']['col_excit_interp']\
                  [:,self.data['rates']['burg_tully']['interp_temp_inds']] =\
                  tmp(np.log(self.data['user']['temp_grid'][self.data['rates']['burg_tully']['interp_temp_inds']]))
@@ -503,7 +503,7 @@ class colradpy():
                  tmp(self.data['user']['temp_grid'][self.data['rates']['burg_tully']['interp_temp_inds']])
 
         else:
-            if(self.data['user']['log_rate']):
+            if(self.data['user']['log_rate_col']):
                 self.data['rates']['excit']['col_excit_interp'] = tmp(np.log(self.data['user']['temp_grid']))
             else:
                 self.data['rates']['excit']['col_excit_interp'] = tmp(self.data['user']['temp_grid'])
