@@ -773,7 +773,15 @@ class colradpy():
                                                              0:len(self.data['atomic']['energy']),:] + \
                                    np.einsum('ij,j->ij',self.data['rates']['ioniz']['ionization'][:,p,:],
                                                        self.data['user']['dens_grid'])
+            if(self.data['user']['use_cx']):
 
+                for p in range(0,nsigmaplus_cx):
+                    self.data['cr_matrix']['cr'][0:len(self.data['atomic']['energy']),
+                                                 len(self.data['atomic']['energy'])+nsigmaplus+p,:] =\
+                    self.data['cr_matrix']['cr'][0:len(self.data['atomic']['energy']),
+                                                 len(self.data['atomic']['energy'])+nsigmaplus+p,:] + \
+                    np.einsum('ij,j->ij',self.data['rates']['cx']['cx'][:,p,:],
+                              self.data['user']['hdens_grid'])
         else:
 
             for i in range(0,len(self.data['atomic']['energy'])):
@@ -1107,7 +1115,33 @@ class colradpy():
                                )
 
                 self.data['processed']['acd'] = self.data['processed']['acd'] + recomb_coeff[self.data['atomic']['metas'],:,:]
-            
+
+
+            if(self.data['user']['use_cx']):
+                #effective recombination rate
+                self.data['processed']['ccd'] = -np.einsum('njk,jmk->nmk',
+
+                               self.data['cr_matrix']['cr'][np.c_[self.data['atomic']['metas']], levels_to_keep,:],
+                               np.einsum('ijk,jmk->imk', self.data['cr_matrix']['cr_red_inv'][0:len(self.data['atomic']['energy']),
+                               0:len(self.data['atomic']['energy']),:],
+                               self.data['rates']['cx']['cx'][levels_to_keep,:,:])
+                               )
+
+                self.data['processed']['ccd'] = self.data['processed']['ccd'] + self.data['rates']['cx']['cx'][self.data['atomic']['metas'],:,:]
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
             self.data['processed']['qcd'] = np.zeros((len(self.data['atomic']['metas']),
                                                       len(self.data['atomic']['metas']),
                                                       len(self.data['user']['temp_grid'])))
@@ -1184,6 +1218,11 @@ class colradpy():
                                                       len(self.data['atomic']['ion_pot']),
                                                       len(self.data['user']['temp_grid']),
                                                       len(self.data['user']['dens_grid'])))
+            self.data['processed']['ccd'] = np.zeros((len(self.data['atomic']['metas']),
+                                                      len(self.data['atomic']['ion_pot']),
+                                                      len(self.data['user']['temp_grid']),
+                                                      len(self.data['user']['dens_grid'])))
+            
             self.data['processed']['xcd'] = np.zeros((len(self.data['atomic']['ion_pot']),
                                                       len(self.data['atomic']['ion_pot']),
                                                       len(self.data['user']['temp_grid']),
@@ -1250,6 +1289,27 @@ class colradpy():
 
                 self.data['processed']['acd'] = self.data['processed']['acd'] + recomb_coeff[self.data['atomic']['metas'],:,:,:]
 
+
+
+            if(self.data['user']['use_cx']):
+                #effective recombination rate
+                
+                cx_coeff = self.data['rates']['cx']['cx'][:,:,:,None]
+
+                self.data['processed']['ccd'] = -np.einsum('njkl,jmkl->nmkl',
+
+                               self.data['cr_matrix']['cr'][np.c_[self.data['atomic']['metas']], levels_to_keep,:,:],
+                               np.einsum('ijkl,jmkl->imkl', self.data['cr_matrix']['cr_red_inv'][0:len(self.data['atomic']['energy']),
+                               0:len(self.data['atomic']['energy']),:,:],
+                               cx_coeff[levels_to_keep,:,:,:])
+                               )
+
+                self.data['processed']['ccd'] = self.data['processed']['ccd'] + cx_coeff[self.data['atomic']['metas'],:,:,:]
+
+
+
+
+                
             self.data['processed']['qcd'] = np.zeros((len(self.data['atomic']['metas']),
                                                       len(self.data['atomic']['metas']),
                                                       len(self.data['user']['temp_grid']),
