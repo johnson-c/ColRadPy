@@ -215,7 +215,7 @@ def read_adf04(fil):
                         
                 else:
 
-                    last_temp = tmp[tmp_inds[i+3]][0:7]
+                    las_temp = tmp[tmp_inds[i+3]][0:7]
                     inf_temp =  tmp[tmp_inds[i+3]][8:15]
                     if( '+' in last_temp):
                         col_excit_row[i] = float(last_temp.replace('+','E'))
@@ -282,6 +282,36 @@ def read_adf04(fil):
 
 
 
+
+    #check if energies indexes wrong
+    sort_energy = np.argsort(adf04['atomic']['energy'])
+    indd = np.where( np.linspace(0,len(adf04['atomic']['energy'])-1,len(adf04['atomic']['energy']),dtype=int) -\
+                       sort_energy !=0)[0]
+
+    if(indd.size > 0):
+        print('Energy levels in adf04 are not in order')
+        print(indd,sort_energy[indd])
+        col_transitions_tmp = np.asarray(col_transitions)
+        col_transitions = np.asarray(col_transitions)
+        for ii in range(0,len(indd)):
+            col_transitions_tmp[np.where(col_transitions == indd[ii])] = sort_energy[indd[ii]]
+
+        col_transitions = col_transitions_tmp
+
+        adf04['atomic']['config'] =       adf04['atomic']['config'][sort_energy]
+        adf04['atomic']['L'] =            adf04['atomic']['L'][sort_energy]
+        adf04['atomic']['S'] =            adf04['atomic']['S'][sort_energy]
+        adf04['atomic']['w'] =            adf04['atomic']['w'][sort_energy]
+        adf04['atomic']['energy'] =       adf04['atomic']['energy'][sort_energy]
+        adf04['atomic']['zpla'] =         adf04['atomic']['zpla'][sort_energy]
+        adf04['atomic']['zpla1'] =        adf04['atomic']['zpla1'][sort_energy]
+        
+        ttt = np.where(col_transitions[:,0] < col_transitions[:,1])[0]
+        if(ttt.size>0):
+            ttmp = col_transitions[ttt,0]
+            col_transitions[ttt,0] = col_transitions[ttt,1]
+            col_transitions[ttt,1] = ttmp
+        
             
     adf04['rates']['excit'] = {}
     adf04['rates']['excit']['col_transitions'] = np.asarray(col_transitions)
