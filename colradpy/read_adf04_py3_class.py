@@ -296,7 +296,7 @@ def read_adf04(fil):
         for ii in range(0,len(indd)):
             col_transitions_tmp[np.where(col_transitions == indd[ii])] = sort_energy[indd[ii]]
 
-        col_transitions = col_transitions_tmp
+        #col_transitions = col_transitions_tmp
 
         adf04['atomic']['config'] =       adf04['atomic']['config'][sort_energy]
         adf04['atomic']['L'] =            adf04['atomic']['L'][sort_energy]
