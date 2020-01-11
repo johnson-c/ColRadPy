@@ -398,7 +398,6 @@ def burgess_tully_rates(user_temp_grid, calc_temp_grid, col_transitions,col_exci
     type2_energies =  np.array([energy[col_transitions
                                 [burgtully_dict['burg_tully']['ind_arrs'][1]][:,0] -1],energy[col_transitions[
                                     burgtully_dict['burg_tully']['ind_arrs'][1]][:,1] -1]])
-
     burgtully_dict['burg_tully']['xval_arrs'].append(type2_xconvert(calc_temp_grid, type2_energies,c))
     burgtully_dict['burg_tully']['yval_arrs'].append(type2_yconvert(\
                                                     col_excit[burgtully_dict['burg_tully']['ind_arrs'][1]]))
@@ -449,7 +448,7 @@ def burgess_tully_rates(user_temp_grid, calc_temp_grid, col_transitions,col_exci
                                                                   burgtully_dict['burg_tully']['xval_arrs'][0],
                                                                   burgtully_dict['burg_tully']['yval_arrs'][0]))
 
-    burgtully_dict['burg_tully']['zero_inds'].append( np.where(np.isinf(burgtully_dict['burg_tully']['coeffs_a'][0]))[0])
+    burgtully_dict['burg_tully']['zero_inds'].append( np.where(np.isinf(burgtully_dict['burg_tully']['coeffs_a'][0])| np.isnan(burgtully_dict['burg_tully']['coeffs_a'][0]))[0])
     burgtully_dict['burg_tully']['coeffs_lin_m'].append(calc_coeffs_lin_m(type1_xconvert(calc_temp_grid,
                                                   type1_energies,c)[burgtully_dict['burg_tully']['zero_inds'][0],:],
                                                                   type1_yconvert(calc_temp_grid,
@@ -501,7 +500,7 @@ def burgess_tully_rates(user_temp_grid, calc_temp_grid, col_transitions,col_exci
                                                                   burgtully_dict['burg_tully']['xval_arrs'][1],
                                                                   burgtully_dict['burg_tully']['yval_arrs'][1]))
 
-    burgtully_dict['burg_tully']['zero_inds'].append( np.where(np.isinf(burgtully_dict['burg_tully']['coeffs_a'][1]))[0])
+    burgtully_dict['burg_tully']['zero_inds'].append( np.where(np.isinf(burgtully_dict['burg_tully']['coeffs_a'][1]) | np.isnan(burgtully_dict['burg_tully']['coeffs_a'][1]))[0])
 
     burgtully_dict['burg_tully']['coeffs_lin_m'].append(calc_coeffs_lin_m(burgtully_dict['burg_tully']['xval_arrs'][1][burgtully_dict['burg_tully']['zero_inds'][1]],
                                                                   burgtully_dict['burg_tully']['yval_arrs'][1][burgtully_dict['burg_tully']['zero_inds'][1]]))
@@ -531,8 +530,8 @@ def burgess_tully_rates(user_temp_grid, calc_temp_grid, col_transitions,col_exci
             burgtully_dict['burg_tully']['excit_extrap_lin'].append(type2_yconvert( burgtully_dict['burg_tully']['yval_extrap_lin'][1],direct='B'))
 
         else:
-            burg_tully_dict['burg_tully']['yval_extrap_lin'] = np.append(np.array([-1]))
-            burg_tully_dict['burg_tully']['excit_extrap_lin'] = np.append(np.array([-1]))                
+            burgtully_dict['burg_tully']['yval_extrap_lin'].append(np.array([-1]))
+            burgtully_dict['burg_tully']['excit_extrap_lin'].append(np.array([-1]))                
 
 
 ####################################################################################################
@@ -545,7 +544,7 @@ def burgess_tully_rates(user_temp_grid, calc_temp_grid, col_transitions,col_exci
                                                                   burgtully_dict['burg_tully']['xval_arrs'][2],
                                                                   burgtully_dict['burg_tully']['yval_arrs'][2]))
 
-    burgtully_dict['burg_tully']['zero_inds'].append( np.where(np.isinf(burgtully_dict['burg_tully']['coeffs_a'][2]))[0])
+    burgtully_dict['burg_tully']['zero_inds'].append( np.where(np.isinf(burgtully_dict['burg_tully']['coeffs_a'][2])| np.isnan(burgtully_dict['burg_tully']['coeffs_a'][2]))[0])
 
     burgtully_dict['burg_tully']['coeffs_lin_m'].append(calc_coeffs_lin_m(burgtully_dict['burg_tully']['xval_arrs'][2][burgtully_dict['burg_tully']['zero_inds'][2]],
                                                                   burgtully_dict['burg_tully']['yval_arrs'][2][burgtully_dict['burg_tully']['zero_inds'][2]]))
@@ -575,8 +574,8 @@ def burgess_tully_rates(user_temp_grid, calc_temp_grid, col_transitions,col_exci
             burgtully_dict['burg_tully']['excit_extrap_lin'].append(type3_yconvert(user_temp_grid[extrap_temp_inds_hi]*11604.5,type3_energies[:,burgtully_dict['burg_tully']['zero_inds'][2]], burgtully_dict['burg_tully']['yval_extrap_lin'][2],direct='B'))
 
         else:
-            burg_tully_dict['burg_tully']['yval_extrap_lin'] = np.append(np.array([-1]))
-            burg_tully_dict['burg_tully']['excit_extrap_lin'] = np.append(np.array([-1]))
+            burgtully_dict['burg_tully']['yval_extrap_lin'].append(np.array([]))#np.append(np.array([-1]))
+            burgtully_dict['burg_tully']['excit_extrap_lin'].append(np.array([]))#np.append(np.array([-1]))
 
 
 
@@ -590,7 +589,7 @@ def burgess_tully_rates(user_temp_grid, calc_temp_grid, col_transitions,col_exci
                                                                   burgtully_dict['burg_tully']['xval_arrs'][3],
                                                                   burgtully_dict['burg_tully']['yval_arrs'][3]))
 
-    burgtully_dict['burg_tully']['zero_inds'].append( np.where(np.isinf(burgtully_dict['burg_tully']['coeffs_a'][3]))[0])
+    burgtully_dict['burg_tully']['zero_inds'].append( np.where(np.isinf(burgtully_dict['burg_tully']['coeffs_a'][3])| np.isnan(burgtully_dict['burg_tully']['coeffs_a'][3]))[0])
 
     burgtully_dict['burg_tully']['coeffs_lin_m'].append(calc_coeffs_lin_m(burgtully_dict['burg_tully']['xval_arrs'][3][burgtully_dict['burg_tully']['zero_inds'][3]],
                                                                   burgtully_dict['burg_tully']['yval_arrs'][3][burgtully_dict['burg_tully']['zero_inds'][3]]))
@@ -621,8 +620,8 @@ def burgess_tully_rates(user_temp_grid, calc_temp_grid, col_transitions,col_exci
 
 
         else:
-            burg_tully_dict['burg_tully']['yval_extrap_lin'] = np.append(np.array([-1]))
-            burg_tully_dict['burg_tully']['excit_extrap_lin'] = np.append(np.array([-1]))
+            burgtully_dict['burg_tully']['yval_extrap_lin'].append(np.array([]))#np.append(np.array([-1]))
+            burgtully_dict['burg_tully']['excit_extrap_lin'].append(np.array([]))#np.append(np.array([-1]))
 
 
 
