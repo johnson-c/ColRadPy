@@ -112,7 +112,7 @@ class colradpy():
                  use_recombination = True, td_t = np.array([]), td_n0=np.array([]),td_source=np.array([]),
                   default_pop_norm=True,temp_dens_pair=False,rate_interp_ion = 'slinear',
                  rate_interp_recomb='log_slinear',rate_interp_col='log_slinear',
-                 rate_interp_cx='log_slinear',use_cx=False):
+                 rate_interp_cx='log_slinear',use_cx=False,scale_file_ioniz=False):
         
         """The initializing method. Sets up the nested list for data storage and starts to populate with user data
            as well as reading in the adf04 file
@@ -131,6 +131,7 @@ class colradpy():
         self.data['user']['use_recombination_three_body'] = use_recombination_three_body
         self.data['user']['use_recombination'] = use_recombination
         self.data['user']['use_cx'] = use_cx
+        self.data['user']['scale_file_ioniz'] = scale_file_ioniz
         self.data['user']['metas'] = 'look at [atomic][metas] for values'
         self.data['user']['td_t'] = np.asarray(td_t)# seconds
         self.data['user']['td_n0'] = np.asarray(td_n0)
@@ -313,7 +314,13 @@ class colradpy():
 
             ion_excit_interp_grid = ion_excit_interp(self.data['user']['temp_grid'])
             
+            if(self.data['user']['scale_file_ioniz']):
+                for ii in range(0,len(self.data['rates']['ioniz']['ion_transitions'])):
+                    scale = np.abs(self.data['atomic']['zpla'][self.data['rates']['ioniz']['ion_transitions'][ii,0]-1,
+                                                    self.data['rates']['ioniz']['ion_transitions'][ii,1]-1])
+                    ion_excit_interp_grid = ion_excit_interp_grid *scale
 
+                    
         for i in range(0,len(self.data['rates']['ioniz']['ion_transitions'])):
             for j in range(0,len(self.data['user']['temp_grid'])):
 
@@ -364,7 +371,7 @@ class colradpy():
            adf04 file.
         """
 
-        
+
         if(self.data['user']['log_rate_cx']):
             cx_excit_interp = interp1d(np.log(self.data['input_file']['temp_grid']/11604.5),
                                            self.data['rates']['cx']['cx_excit'],
@@ -484,17 +491,24 @@ class colradpy():
             elif(len(self.data['atomic']['ion_term'][p]) ==3):
                 w_ion = float(self.data['atomic']['ion_term'][p][2])
             else:
-                w_ion=1e30
+                w_ion=1e30 #was 1e30 changed 1/10/2020
             self.data['rates']['recomb']['w_ion'] = w_ion#1.656742E-22
             #this is from detailed balance
             self.data['rates']['recomb']['recomb_three_body'][:,p,:] = 1.656742E-22* \
                 (self.data['atomic']['w'].reshape(len(self.data['atomic']['w']),1)*2+1)/ \
                 w_ion*np.exp( (self.data['atomic']['ion_pot'][p] - \
                 self.data['atomic']['energy']).reshape(len(self.data['atomic']['energy']),1) / \
-                (self.data['user']['temp_grid']/0.000123985)) *\
+                (self.data['user']['temp_grid']/0.000123985))*\
                 self.data['rates']['ioniz']['ionization'][:,p,:] / \
                 (self.data['user']['temp_grid'])**(1.5)
-        #rates of this are in cm3
+
+        recomb_3b_ind = np.where(np.isnan(self.data['rates']['recomb']['recomb_three_body']))
+
+        if(recomb_3b_ind[0].size > 0):
+            print('There were NaNs in three body recombination making those zero')
+            self.data['rates']['recomb']['recomb_three_body'][recomb_3b_ind] = 0.0
+            
+            #rates of this are in cm3
 
         
     def make_electron_excitation_rates(self):
@@ -520,6 +534,11 @@ class colradpy():
         self.data['rates']['excit']['col_excit_interp'] = np.zeros((len(self.data['rates']['excit']['col_excit']),
                                                                          len(self.data['user']['temp_grid'])))
 
+        if(self.data['user']['log_rate_col']):
+            self.data['rates']['excit']['col_excit_interp'] = tmp(np.log(self.data['user']['temp_grid']))
+        else:
+            self.data['rates']['excit']['col_excit_interp'] = tmp(self.data['user']['temp_grid'])
+
 
         if( ('burg_tully' not in self.data['rates'].keys()) and (np.max(self.data['input_file']\
                                 ['temp_grid'])/11604.5 < np.max(self.data['user']['temp_grid']) )):
@@ -530,7 +549,6 @@ class colradpy():
                                 ['temp_grid'])/11604.5 < np.min(self.data['user']['temp_grid']) )):
             print('Atleast one user temp point below last calculated temperature using extrapolation be carefull')
             self.make_burgess_tully()
-
 
 
 
@@ -553,6 +571,13 @@ class colradpy():
                                         self.data['rates']['burg_tully']['extrap_temp_inds_hi'][i] ] =\
                                         self.data['rates']['burg_tully']['excit_extrap_lin'][j][:,i]
 
+
+            tttmp = np.where(np.isnan(self.data['rates']['excit']['col_excit_interp']))
+            if(tttmp[0].size>0):
+                print('NaNs in electron excitations where set to zero')
+                self.data['rates']['excit']['col_excit_interp'][tttmp] = 0.
+                        
+            '''
             if(self.data['user']['log_rate_col']):
                 self.data['rates']['excit']['col_excit_interp']\
                  [:,self.data['rates']['burg_tully']['interp_temp_inds']] =\
@@ -561,12 +586,8 @@ class colradpy():
                 self.data['rates']['excit']['col_excit_interp']\
                  [:,self.data['rates']['burg_tully']['interp_temp_inds']] =\
                  tmp(self.data['user']['temp_grid'][self.data['rates']['burg_tully']['interp_temp_inds']])
+            '''
 
-        else:
-            if(self.data['user']['log_rate_col']):
-                self.data['rates']['excit']['col_excit_interp'] = tmp(np.log(self.data['user']['temp_grid']))
-            else:
-                self.data['rates']['excit']['col_excit_interp'] = tmp(self.data['user']['temp_grid'])
 
     def populate_cr_matrix(self):
         """This function will populate the collision radiative matrix with all the rates that
@@ -1685,6 +1706,10 @@ class colradpy():
             self.make_recombination_rates_from_file()
         if(self.data['user']['use_recombination_three_body']):
             self.make_three_body_recombination()
+        if((self.data['user']['use_cx']) & (self.data['rates']['cx']['cx_excit'].size > 0)):
+            self.make_cx_rates_from_file()
+        else:
+            self.data['user']['use_cx'] = False
         self.make_electron_excitation_rates()
         self.populate_cr_matrix()
         self.solve_quasi_static()
