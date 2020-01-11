@@ -59,10 +59,12 @@ class ionization_balance():
 
     """
  
-    def __init__(self,fils,metas,temp_grid, dens_grid, soln_times=np.array([]), use_ionization=True,
+    def __init__(self,fils,metas,temp_grid, dens_grid, htemp_grid=np.array([]), hdens_grid=np.array([]),
+                 soln_times=np.array([]), use_ionization=True,
                  suppliment_with_ecip=True, use_recombination_three_body=True,use_recombination=True,
+                 use_cx=True,
                  keep_charge_state_data=False,init_abund = np.array([]), source= np.array([]),
-                 temp_dens_pair=False):
+                 temp_dens_pair=False,scale_file_ioniz=False):
         self.data = {}
 
         self.data['cr_data'] = {}
@@ -70,6 +72,8 @@ class ionization_balance():
         self.data['user'] = {}
         self.data['user']['temp_grid'] = np.asarray(temp_grid) #eV
         self.data['user']['dens_grid'] = np.asarray(dens_grid)#cm-3
+        self.data['user']['htemp_grid'] = np.asarray(htemp_grid) #eV
+        self.data['user']['hdens_grid'] = np.asarray(hdens_grid) #cm-3
         self.data['user']['fils'] = np.asarray(fils)
         self.data['user']['init_abund'] = np.asarray(init_abund)
         self.data['user']['soln_times'] = np.asarray(soln_times)
@@ -99,9 +103,18 @@ class ionization_balance():
             self.data['user']['use_recombination'] = np.ones_like(fils,dtype=bool)
             self.data['user']['use_recombination'][:] = use_recombination
 
+        if(type(use_cx) == bool):
+            self.data['user']['use_cx'] = np.ones_like(fils,dtype=bool)
+            self.data['user']['use_cx'][:] = use_cx
+        else:
+            self.data['user']['use_cx'] = use_cx
+
         if(type(use_ionization) == bool):
             self.data['user']['use_ionization'] = np.ones_like(fils,dtype=bool)
             self.data['user']['use_ionization'][:] = use_ionization
+        if(type(scale_file_ioniz) == bool):
+            self.data['user']['scale_file_ioniz'] = np.ones_like(fils,dtype=bool)
+            self.data['user']['scale_file_ioniz'][:] = scale_file_ioniz
 
 
         self.data['user']['keep_charge_state_data'] = keep_charge_state_data
@@ -127,11 +140,13 @@ class ionization_balance():
                     m = np.shape(self.data['gcrs'][str(i -1)]['scd'])[1]
                     meta = np.linspace(0,m-1,m,dtype=int)
             #setup the CR
-            tmp = colradpy(str(fils[i]),meta,temp_grid,dens_grid,
-                           self.data['user']['use_ionization'][i],
-                           self.data['user']['suppliment_with_ecip'][i],
-                           self.data['user']['use_recombination_three_body'][i],
-                           self.data['user']['use_recombination'][i],
+            tmp = colradpy(fil=str(fils[i]),metas=meta,temp_grid=temp_grid,electron_den=dens_grid,
+                           htemp_grid = htemp_grid, hdens_grid = hdens_grid,
+                           use_ionization = self.data['user']['use_ionization'][i],
+                           suppliment_with_ecip = self.data['user']['suppliment_with_ecip'][i],
+                           use_recombination_three_body = self.data['user']['use_recombination_three_body'][i],
+                           use_recombination = self.data['user']['use_recombination'][i],
+                           use_cx = self.data['user']['use_cx'][i],
                            temp_dens_pair = self.data['user']['temp_dens_pair'])
             
             tmp.solve_cr()
@@ -143,7 +158,9 @@ class ionization_balance():
             self.data['cr_data']['gcrs'][str(i)]['qcd'] = tmp.data['processed']['qcd']
             self.data['cr_data']['gcrs'][str(i)]['scd'] = tmp.data['processed']['scd']
             self.data['cr_data']['gcrs'][str(i)]['acd'] = tmp.data['processed']['acd']
-            self.data['cr_data']['gcrs'][str(i)]['xcd'] = tmp.data['processed']['xcd']            
+            self.data['cr_data']['gcrs'][str(i)]['xcd'] = tmp.data['processed']['xcd']
+            if(self.data['user']['use_cx'][i]):
+                self.data['cr_data']['gcrs'][str(i)]['ccd'] = tmp.data['processed']['ccd']
 
     def populate_ion_matrix(self):
         """This will populate the ionization matrix from the various GCR coefficients
@@ -206,6 +223,16 @@ class ionization_balance():
                                 self.data['ion_matrix'][m:m+num_met,m+num_met:m+num_met+num_ion,:] \
                                                  +  self.data['cr_data']['gcrs'][str(i)]['acd']
 
+                #populate CCDs in ion balance
+                if(self.data['user']['use_cx'][i]):
+                    self.data['ion_matrix'][m+num_met+diag_ion[0], m+num_met+diag_ion[1] ] = \
+                                                self.data['ion_matrix'][m+num_met+diag_ion[0], m+num_met+diag_ion[1] ]-\
+                                                       np.sum(self.data['cr_data']['gcrs'][str(i)]['ccd'],axis=0)
+
+                    self.data['ion_matrix'][m:m+num_met,m+num_met:m+num_met+num_ion,:] = \
+                                    self.data['ion_matrix'][m:m+num_met,m+num_met:m+num_met+num_ion,:] \
+                                                     +  self.data['cr_data']['gcrs'][str(i)]['ccd']
+
                 #populate XCD in ion balance
                 self.data['ion_matrix'][m+num_met+diag_ion[0], m+num_met+diag_ion[1] ] = \
                                             self.data['ion_matrix'][m+num_met+diag_ion[0], m+num_met+diag_ion[1] ]-\
@@ -258,6 +285,16 @@ class ionization_balance():
                 self.data['ion_matrix'][m:m+num_met,m+num_met:m+num_met+num_ion,:,:] = \
                                 self.data['ion_matrix'][m:m+num_met,m+num_met:m+num_met+num_ion,:,:] \
                                                  +  self.data['cr_data']['gcrs'][str(i)]['acd']
+                #populate CCDs in ion balance
+                self.data['ion_matrix'][m+num_met+diag_ion[0], m+num_met+diag_ion[1] ] = \
+                                            self.data['ion_matrix'][m+num_met+diag_ion[0], m+num_met+diag_ion[1] ]-\
+                                                   np.sum(np.einsum('ijk,k->ijk',self.data['cr_data']['gcrs'][str(i)]['ccd'],
+                                                                    self.data['user']['hdens_grid']/self.data['user']['dens_grid']),axis=0)
+
+                self.data['ion_matrix'][m:m+num_met,m+num_met:m+num_met+num_ion,:,:] = \
+                                self.data['ion_matrix'][m:m+num_met,m+num_met:m+num_met+num_ion,:,:] \
+                                                 +  np.einsum('ijk,k->ijk',self.data['cr_data']['gcrs'][str(i)]['ccd'],
+                                                              self.data['user']['hdens_grid']/self.data['user']['dens_grid'])
 
                 #populate XCD in ion balance
                 self.data['ion_matrix'][m+num_met+diag_ion[0], m+num_met+diag_ion[1] ] = \
