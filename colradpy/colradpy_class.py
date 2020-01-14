@@ -112,7 +112,7 @@ class colradpy():
                  use_recombination = True, td_t = np.array([]), td_n0=np.array([]),td_source=np.array([]),
                   default_pop_norm=True,temp_dens_pair=False,rate_interp_ion = 'slinear',
                  rate_interp_recomb='log_slinear',rate_interp_col='log_slinear',
-                 rate_interp_cx='log_slinear',use_cx=False,scale_file_ioniz=False):
+                 rate_interp_cx='log_quadratic',use_cx=False,scale_file_ioniz=False):
         
         """The initializing method. Sets up the nested list for data storage and starts to populate with user data
            as well as reading in the adf04 file
@@ -126,6 +126,12 @@ class colradpy():
         self.data['user']['dens_grid'] = np.asarray(electron_den)#cm-3
         self.data['user']['htemp_grid'] = np.asarray(htemp_grid) #eV
         self.data['user']['hdens_grid'] = np.asarray(hdens_grid) #cm-3
+        if(len(self.data['user']['dens_grid']) != len(self.data['user']['hdens_grid'])):
+            print('Electron density and neutral density grids must be the same length')
+            sys.exit()
+        if(len(self.data['user']['temp_grid']) != len(self.data['user']['htemp_grid'])):
+            print('Electron temperature and neutral temperature grids must be the same length')
+            sys.exit()
         self.data['user']['use_ionization'] = use_ionization
         self.data['user']['suppliment_with_ecip'] = suppliment_with_ecip
         self.data['user']['use_recombination_three_body'] = use_recombination_three_body
@@ -391,7 +397,8 @@ class colradpy():
             self.data['rates']['cx']['cx_excit_interp_grid'] =\
                                         cx_excit_interp(self.data['user']['htemp_grid'])
 
-
+        #make sure that we can get negative rates
+        self.data['rates']['cx']['cx_excit_interp_grid'][np.where(self.data['rates']['cx']['cx_excit_interp_grid'] <0)] = 0.0
 
         nsigmaplus_cx = 0
         if(self.data['user']['use_cx']):
@@ -1065,6 +1072,9 @@ class colradpy():
             self.data['processed']['acd'] = np.zeros((len(self.data['atomic']['metas']),
                                                       len(self.data['atomic']['ion_pot']),
                                                       len(self.data['user']['temp_grid'])))
+            self.data['processed']['ccd'] = np.zeros((len(self.data['atomic']['metas']),
+                                                      len(self.data['atomic']['ion_pot']),
+                                                      len(self.data['user']['temp_grid'])))
             self.data['processed']['xcd'] = np.zeros((len(self.data['atomic']['ion_pot']),
                                                       len(self.data['atomic']['ion_pot']),
                                                       len(self.data['user']['temp_grid'])))
@@ -1137,7 +1147,6 @@ class colradpy():
 
                 self.data['processed']['acd'] = self.data['processed']['acd'] + recomb_coeff[self.data['atomic']['metas'],:,:]
 
-
             if(self.data['user']['use_cx']):
                 #effective recombination rate
                 self.data['processed']['ccd'] = -np.einsum('njk,jmk->nmk',
@@ -1149,19 +1158,6 @@ class colradpy():
                                )
 
                 self.data['processed']['ccd'] = self.data['processed']['ccd'] + self.data['rates']['cx']['cx'][self.data['atomic']['metas'],:,:]
-
-
-
-
-
-
-
-
-
-
-
-
-
                 
             self.data['processed']['qcd'] = np.zeros((len(self.data['atomic']['metas']),
                                                       len(self.data['atomic']['metas']),
