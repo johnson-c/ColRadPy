@@ -90,19 +90,23 @@ class ionization_balance():
         if(type(use_ionization) == bool):
             self.data['user']['use_ionization'] = np.ones_like(fils,dtype=bool)
             self.data['user']['use_ionization'][:] = use_ionization
-
+        else:
+            self.data['user']['use_ionization'] = use_ionization
         if(type(suppliment_with_ecip) == bool):
             self.data['user']['suppliment_with_ecip'] = np.ones_like(fils,dtype=bool)
             self.data['user']['suppliment_with_ecip'][:] = suppliment_with_ecip
-
+        else:
+            self.data['user']['suppliment_with_ecip'] = suppliment_with_ecip
         if(type(use_recombination_three_body) == bool):
             self.data['user']['use_recombination_three_body'] = np.ones_like(fils,dtype=bool)
             self.data['user']['use_recombination_three_body'][:] = use_recombination_three_body
-
+        else:
+            self.data['user']['use_recombination_three_body'] = use_recombination_three_body
         if(type(use_recombination) == bool):
             self.data['user']['use_recombination'] = np.ones_like(fils,dtype=bool)
             self.data['user']['use_recombination'][:] = use_recombination
-
+        else:
+            self.data['user']['use_recombination'] = use_recombination
         if(type(use_cx) == bool):
             self.data['user']['use_cx'] = np.ones_like(fils,dtype=bool)
             self.data['user']['use_cx'][:] = use_cx
@@ -112,10 +116,13 @@ class ionization_balance():
         if(type(use_ionization) == bool):
             self.data['user']['use_ionization'] = np.ones_like(fils,dtype=bool)
             self.data['user']['use_ionization'][:] = use_ionization
+        else:
+            self.data['user']['use_ionization'] = use_ionization
         if(type(scale_file_ioniz) == bool):
             self.data['user']['scale_file_ioniz'] = np.ones_like(fils,dtype=bool)
             self.data['user']['scale_file_ioniz'][:] = scale_file_ioniz
-
+        else:
+            self.data['user']['scale_file_ioniz'] = scale_file_ioniz
 
         self.data['user']['keep_charge_state_data'] = keep_charge_state_data
 
@@ -149,7 +156,7 @@ class ionization_balance():
                            use_cx = self.data['user']['use_cx'][i],
                            temp_dens_pair = self.data['user']['temp_dens_pair'])
             
-            tmp.solve_cr()
+            tmp.solve_cr() #Solving the CR set of equations
             #keep all the CR data if requested
             if(keep_charge_state_data):
                 self.data['cr_data']['stage_data'][str(i)] = tmp.data
@@ -244,17 +251,11 @@ class ionization_balance():
 
                 m = m + num_met
 
-
-
-
-
             
         else:
             self.data['ion_matrix'] = np.zeros((m, m,len(self.data['user']['temp_grid']),
                                                      len(self.data['user']['dens_grid'])))
                                                      
-
-            
             m = 0
             for i in range(0,len(self.data['cr_data']['gcrs'])):
                 num_met = np.shape(self.data['cr_data']['gcrs'][str(i)]['qcd'])[0]
@@ -286,15 +287,16 @@ class ionization_balance():
                                 self.data['ion_matrix'][m:m+num_met,m+num_met:m+num_met+num_ion,:,:] \
                                                  +  self.data['cr_data']['gcrs'][str(i)]['acd']
                 #populate CCDs in ion balance
-                self.data['ion_matrix'][m+num_met+diag_ion[0], m+num_met+diag_ion[1] ] = \
+                if(self.data['user']['use_cx'][i]):                
+                    self.data['ion_matrix'][m+num_met+diag_ion[0], m+num_met+diag_ion[1] ] = \
                                             self.data['ion_matrix'][m+num_met+diag_ion[0], m+num_met+diag_ion[1] ]-\
-                                                   np.sum(np.einsum('ijk,k->ijk',self.data['cr_data']['gcrs'][str(i)]['ccd'],
+                                                   np.sum(np.einsum('ijkn,n->ijkn',self.data['cr_data']['gcrs'][str(i)]['ccd'],
                                                                     self.data['user']['hdens_grid']/self.data['user']['dens_grid']),axis=0)
 
-                self.data['ion_matrix'][m:m+num_met,m+num_met:m+num_met+num_ion,:,:] = \
-                                self.data['ion_matrix'][m:m+num_met,m+num_met:m+num_met+num_ion,:,:] \
-                                                 +  np.einsum('ijk,k->ijk',self.data['cr_data']['gcrs'][str(i)]['ccd'],
-                                                              self.data['user']['hdens_grid']/self.data['user']['dens_grid'])
+                    self.data['ion_matrix'][m:m+num_met,m+num_met:m+num_met+num_ion,:,:] = \
+                                    self.data['ion_matrix'][m:m+num_met,m+num_met:m+num_met+num_ion,:,:] \
+                                                     +  np.einsum('ijkn,n->ijkn',self.data['cr_data']['gcrs'][str(i)]['ccd'],
+                                                                  self.data['user']['hdens_grid']/self.data['user']['dens_grid'])
 
                 #populate XCD in ion balance
                 self.data['ion_matrix'][m+num_met+diag_ion[0], m+num_met+diag_ion[1] ] = \
@@ -333,7 +335,7 @@ class ionization_balance():
             self.data['processed']['eigen_val'] = 0
             self.data['processed']['eigen_vec'] = 0
 
-
+            #solve the ionization balance set of equation with no source term
             if(self.data['user']['temp_dens_pair']):
                 self.data['processed']['pops'],\
                     self.data['processed']['eigen_val'],\
@@ -414,25 +416,6 @@ class ionization_balance():
         #for the steady state the initial conditions don't matter so just make it simple        
         n0 = np.zeros((len(self.data['ion_matrix'])))
         n0[0] = 1.
-        '''
-        #run the first time at t=0 just to get eigenvals
-        self.data['processed']['pops_ss'],\
-        self.data['processed']['eigen_val'],\
-        self.data['processed']['eigen_vec'] = solve_matrix_exponential(
-                                                np.einsum('ijkl,l->ijkl',self.data['ion_matrix'],
-                                                self.data['user']['dens_grid']),n0,np.array([0]))
-        #get the second smallest time
-        time = np.max(1/np.abs(np.sort(self.data['processed']['eigen_val'][:,:,:],
-                                       axis=0)[len(self.data['ion_matrix']) -2]))
-
-        #solve at the 8 e-fold time
-        self.data['processed']['pops_ss'],\
-        self.data['processed']['eigen_val'],\
-        self.data['processed']['eigen_vec'] = solve_matrix_exponential(
-                                                np.einsum('ijkl,l->ijkl',self.data['ion_matrix'],
-                                                self.data['user']['dens_grid']),n0,np.array([time]))
-
-        '''
 
         if(self.data['user']['temp_dens_pair']):
             self.data['processed']['pops_ss'],\
