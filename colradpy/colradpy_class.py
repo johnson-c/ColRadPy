@@ -126,10 +126,10 @@ class colradpy():
         self.data['user']['dens_grid'] = np.asarray(electron_den)#cm-3
         self.data['user']['htemp_grid'] = np.asarray(htemp_grid) #eV
         self.data['user']['hdens_grid'] = np.asarray(hdens_grid) #cm-3
-        if(len(self.data['user']['dens_grid']) != len(self.data['user']['hdens_grid'])):
+        if((len(self.data['user']['dens_grid']) != len(self.data['user']['hdens_grid'])) & use_cx):
             print('Electron density and neutral density grids must be the same length')
             sys.exit()
-        if(len(self.data['user']['temp_grid']) != len(self.data['user']['htemp_grid'])):
+        if((len(self.data['user']['temp_grid']) != len(self.data['user']['htemp_grid'])) & use_cx):
             print('Electron temperature and neutral temperature grids must be the same length')
             sys.exit()
         self.data['user']['use_ionization'] = use_ionization
@@ -373,7 +373,7 @@ class colradpy():
             self.data['rates']['ioniz']['ionization'][to_use,p,:] =\
                                         self.data['rates']['ioniz']['ecip'][to_use,p,:]
     def make_cx_rates_from_file(self):
-        """This function will make charge exchange rates from the rates that are provided in the
+        """This function will make thermal charge exchange rates from the rates that are provided in the
            adf04 file.
         """
 
@@ -1061,9 +1061,6 @@ class colradpy():
                                                        convert_to_air(self.data['processed']['wave_vac'])
         self.data['processed']['pec_levels'] = np.asarray(self.data['processed']['pec_levels'])
 
-
-
-
         if(self.data['user']['temp_dens_pair']):
 
             self.data['processed']['scd'] = np.zeros((len(self.data['atomic']['metas']),
@@ -1088,20 +1085,11 @@ class colradpy():
                                                           self.data['cr_matrix']['cr_red_inv'],
                                                           self.data['cr_matrix']['beta'][:,:,:])
 
-
-
-
             self.data['processed']['pops_no_norm'] = np.sum(self.data['processed']['pop_lvl'],axis=1)
 
             if(self.data['processed']['driving_populations_norm']):
                 self.data['processed']['pop_lvl'] = self.data['processed']['pop_lvl']/   \
                                                 (1+np.sum(np.sum(self.data['processed']['pop_lvl'],axis=1),axis=0))
-
-
-
-
-
-
             
             #the F matrix
             self.data['processed']['F'] = np.sum(self.data['processed']['pop_lvl']\
@@ -1142,22 +1130,21 @@ class colradpy():
                                self.data['cr_matrix']['cr'][np.c_[self.data['atomic']['metas']], levels_to_keep,:],
                                np.einsum('ijk,jmk->imk', self.data['cr_matrix']['cr_red_inv'][0:len(self.data['atomic']['energy']),
                                0:len(self.data['atomic']['energy']),:],
-                               recomb_coeff[levels_to_keep,:,:])
-                               )
+                               recomb_coeff[levels_to_keep,:,:]))
 
                 self.data['processed']['acd'] = self.data['processed']['acd'] + recomb_coeff[self.data['atomic']['metas'],:,:]
 
             if(self.data['user']['use_cx']):
-                #effective recombination rate
+                #effective thermal charge exchange coefficient
                 self.data['processed']['ccd'] = -np.einsum('njk,jmk->nmk',
 
                                self.data['cr_matrix']['cr'][np.c_[self.data['atomic']['metas']], levels_to_keep,:],
                                np.einsum('ijk,jmk->imk', self.data['cr_matrix']['cr_red_inv'][0:len(self.data['atomic']['energy']),
                                0:len(self.data['atomic']['energy']),:],
-                               self.data['rates']['cx']['cx'][levels_to_keep,:,:])
-                               )
+                               self.data['rates']['cx']['cx'][levels_to_keep,:,:]))
 
-                self.data['processed']['ccd'] = self.data['processed']['ccd'] + self.data['rates']['cx']['cx'][self.data['atomic']['metas'],:,:]
+                self.data['processed']['ccd'] = self.data['processed']['ccd'] + \
+                                                self.data['rates']['cx']['cx'][self.data['atomic']['metas'],:,:]
                 
             self.data['processed']['qcd'] = np.zeros((len(self.data['atomic']['metas']),
                                                       len(self.data['atomic']['metas']),
@@ -1181,24 +1168,6 @@ class colradpy():
                                             self.data['processed']['F'][:,metas_to_keep_ind,:])
                                             ,1/self.data['user']['dens_grid'])
 
-
-                ####################################################################################################################
-                # self.data['processed']['qcd'][metas_to_keep_ind,n,:,:] = np.einsum('nkl,l->nkl',                                 #
-                #                                                                                                                  #
-                #                         self.data['cr_matrix']['cr'][self.data['atomic']['metas'][n],metas_to_keep,:,:] +\       #
-                #                         np.einsum('mkl,mnkl->nkl', self.data['cr_matrix']['cr'][self.data['atomic']['metas'][n], #
-                #                         levels_to_keep,:,:],                                                                     #
-                #                         self.data['processed']['F'][:,metas_to_keep_ind,:,:]                                     #
-                #                         ),1/self.data['user']['dens_grid'])                                                      #
-                ####################################################################################################################
-
-
-
-
-
-
-                    
-
             if(self.data['user']['use_recombination'] or self.data['user']['use_recombination_three_body']):            
                 for m in range(0,len(self.data['atomic']['ion_pot'])):
 
@@ -1214,18 +1183,9 @@ class colradpy():
                                 self.data['rates']['ioniz']['ionization'][levels_to_keep,m,:],np.einsum('ijk,jmk->imk',
                                 self.data['cr_matrix']['cr_red_inv'][0:len(self.data['atomic']['energy']),
                                                                      0:len(self.data['atomic']['energy']),:],
-                                recomb_coeff[len(self.data['atomic']['metas']):len(self.data['atomic']['energy']),metasplus_to_keep,:])
-                                )
-
-                
-
-
-
-                
+                                recomb_coeff[len(self.data['atomic']['metas']):len(self.data['atomic']['energy']),metasplus_to_keep,:]))
 
         else:
-
-            
         
             self.data['processed']['scd'] = np.zeros((len(self.data['atomic']['metas']),
                                                       len(self.data['atomic']['ion_pot']),
@@ -1281,7 +1241,6 @@ class colradpy():
                     self.data['processed']['scd'] = self.data['processed']['scd'] + \
                                              self.data['rates']['ioniz']['ionization'][self.data['atomic']['metas'],:,:,None]
 
-
             if(self.data['user']['use_recombination'] and self.data['user']['use_recombination_three_body']):
                 #this is the total recombination with three body and the rates that in included in the adf04 file
                 recomb_coeff = np.einsum('ijk,l->ijkl',
@@ -1301,12 +1260,9 @@ class colradpy():
                                self.data['cr_matrix']['cr'][np.c_[self.data['atomic']['metas']], levels_to_keep,:,:],
                                np.einsum('ijkl,jmkl->imkl', self.data['cr_matrix']['cr_red_inv'][0:len(self.data['atomic']['energy']),
                                0:len(self.data['atomic']['energy']),:,:],
-                               recomb_coeff[levels_to_keep,:,:,:])
-                               )
+                               recomb_coeff[levels_to_keep,:,:,:]))
 
                 self.data['processed']['acd'] = self.data['processed']['acd'] + recomb_coeff[self.data['atomic']['metas'],:,:,:]
-
-
 
             if(self.data['user']['use_cx']):
                 #effective recombination rate
@@ -1318,15 +1274,10 @@ class colradpy():
                                self.data['cr_matrix']['cr'][np.c_[self.data['atomic']['metas']], levels_to_keep,:,:],
                                np.einsum('ijkl,jmkl->imkl', self.data['cr_matrix']['cr_red_inv'][0:len(self.data['atomic']['energy']),
                                0:len(self.data['atomic']['energy']),:,:],
-                               cx_coeff[levels_to_keep,:,:,:])
-                               )
+                               cx_coeff[levels_to_keep,:,:,:]))
 
                 self.data['processed']['ccd'] = self.data['processed']['ccd'] + cx_coeff[self.data['atomic']['metas'],:,:,:]
 
-
-
-
-                
             self.data['processed']['qcd'] = np.zeros((len(self.data['atomic']['metas']),
                                                       len(self.data['atomic']['metas']),
                                                       len(self.data['user']['temp_grid']),
@@ -1361,11 +1312,7 @@ class colradpy():
                             self.data['rates']['ioniz']['ionization'][levels_to_keep,m,:],np.einsum('ijkl,jmkl->imkl',
                             self.data['cr_matrix']['cr_red_inv'][0:len(self.data['atomic']['energy']),
                                                                  0:len(self.data['atomic']['energy']),:,:],
-                            recomb_coeff[len(self.data['atomic']['metas']):len(self.data['atomic']['energy']),metasplus_to_keep,:,:])
-                            )
-
-
-
+                            recomb_coeff[len(self.data['atomic']['metas']):len(self.data['atomic']['energy']),metasplus_to_keep,:,:]))
 
                     
     def solve_time_dependent(self):
@@ -1416,7 +1363,6 @@ class colradpy():
            split by this.
 
         """
-        
         if('processed' not in self.data.keys()):
             self.solve_quasi_static()
 
@@ -1474,9 +1420,6 @@ class colradpy():
                         self.data['processed']['split']['wave_air'].append(
                          1/(self.data['processed']['split']['energy'][up_id[0]] - \
                             self.data['processed']['split']['energy'][low_id[0]]+1.e-20)*1e7)
-
-
-
                             
             else:
                 self.data['processed']['split']['pecs'].append(self.data['processed']['pecs'][i])
@@ -1553,16 +1496,10 @@ class colradpy():
         #because NIST is apparently incapable of creating a standard scheme for the configuration string
         #we are goin got add in all the closed subshells only to remove them later...who came up with this
         #stuff :'(
-
-
-
-
         shells_arr_tmp = np.empty_like(self.data['processed']['split']['config'].astype('<U1000'))
 
         test = np.where(np.char.find(closed_shells,
                               self.data['processed']['split']['config'][0][0:2])==0)[0]
-
-
         #need the if statement here to easily account for hydrogenic species
         if(test[0] >0):
             for ij in range(0,len(test)):
@@ -1658,11 +1595,6 @@ class colradpy():
         self.data['nist']['levels'] = get_nist_clean(self.data['atomic']['element'].replace(' ', ''),
                                                      self.data['atomic']['charge_state'] + 1)
 
-
-
-
-
-
     def get_nist_levels_txt(self):
         """ get_nist_levels grabs the nist energy levels from the NIST mysql database. The mysql NIST database must
             be installed. There is a plain text file in the works to get around this and simplify for users.
@@ -1676,8 +1608,6 @@ class colradpy():
         self.data['nist']['levels'] = get_nist_txt(tmp ,self.data['atomic']['element'].replace(' ', ''),
                                                      self.data['atomic']['charge_state'] + 1)
 
-        
-    
     def solve_cr(self):
         """Solve_cr automates the calls to various function to make the data for
            need to solve the CR equations and get to the quanties that users want.
@@ -1710,7 +1640,7 @@ class colradpy():
         self.populate_cr_matrix()
         self.solve_quasi_static()
 
-
+        
     def plot_pec_sticks(self,temp=[0],dens=[0],meta=[0]):
         """plot_pec_sticks will plot the the PEC values versus wavelength.
            **WARNING** wavelngth values will be wrong unless energy levels in the file
@@ -1860,6 +1790,3 @@ class colradpy():
                 if(scale=='log'):
                     plt.semilogx()
                 plt.legend(loc='best')
-
-
-
