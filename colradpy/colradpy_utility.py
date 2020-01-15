@@ -1,4 +1,13 @@
 def rate_interp_parse(rate_interp_str):
+    """parse the possible interperolation rates
+
+
+    :param rate_interp_str: The initial populations of levels at t=0
+    :type rate_interp_str: str
+
+
+    :returns: bool: log rate :interp_kind str
+    """
     
     if(rate_interp_str[0:3] =='log'):
         log_rate = True
