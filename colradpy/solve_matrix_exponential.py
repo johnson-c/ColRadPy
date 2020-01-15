@@ -48,6 +48,10 @@ def solve_matrix_exponential_steady_state(matrix):
        Mathemat), Society for Industrial and Applied Mathematics,
        Philadelphia, PA, USA, 2007.
 
+    In steady state only the smallest eigenval survives
+    so find the smallest eigenval and the corresponding eigenvector 
+    then solve for the populations with just that eigen value.
+
 
 
     Args:
@@ -62,21 +66,29 @@ def solve_matrix_exponential_steady_state(matrix):
     #becuase this is steady state the initial populations don't matter
     td_n0 = np.zeros(np.shape(matrix)[0]) 
     td_n0[0] = 1.
-
     #sort on the eigenval index to find the longest lived state
     #that will give the equilibrium populuations
+    if(len(np.shape(matrix)) ==4):
+        
+        eigenvals, eigenvectors = np.linalg.eig(matrix.transpose(2,3,0,1))
+        axis=2
+    if(len(np.shape(matrix)) ==3):
+        eigenvals, eigenvectors = np.linalg.eig(matrix.transpose(2,0,1))
+        axis=1
 
-    eigenvals, eigenvectors = np.linalg.eig(matrix.transpose(2,3,0,1))
+        
     v0 = np.dot(np.linalg.inv(eigenvectors),td_n0)
 
-
-    axis=2
     index = list(np.ix_(*[np.arange(i) for i in eigenvals.shape]))
     index[axis] = np.abs(eigenvals).argsort(axis)
 
-    
-    ev = eigenvectors.transpose(0,1,3,2)[index]#egienvectors sorted on eigenvals
-    ss_pop = np.einsum('kl,klj->klj',v0[index][:,:,0],ev[:,:,0,:]).transpose(2,0,1)
+    if(len(np.shape(matrix)) ==4):    
+        ev = eigenvectors.transpose(0,1,3,2)[index]#egienvectors sorted on eigenvals
+        ss_pop = np.einsum('kl,klj->klj',v0[index][:,:,0],ev[:,:,0,:]).transpose(2,0,1)
+    if(len(np.shape(matrix)) ==3):
+        ev = eigenvectors.transpose(0,2,1)[index]#egienvectors sorted on eigenvals
+        ss_pop = np.einsum('k,kj->kj',v0[index][:,0],ev[:,0,:]).transpose(1,0)
+
     return ss_pop, eigenvals, eigenvectors
     
 

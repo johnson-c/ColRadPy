@@ -174,6 +174,9 @@ def read_adf04(fil):
     #declare the ion stuff
     ion_excit = []
     ion_transitions = []
+    #declare the cx stuff
+    cx_excit = []
+    cx_transitions = []
     #declare the a value stuff
     a_val = []
     inf_engy= []
@@ -212,7 +215,7 @@ def read_adf04(fil):
                         
                 else:
 
-                    last_temp = tmp[tmp_inds[i+3]][0:7]
+                    las_temp = tmp[tmp_inds[i+3]][0:7]
                     inf_temp =  tmp[tmp_inds[i+3]][8:15]
                     if( '+' in last_temp):
                         col_excit_row[i] = float(last_temp.replace('+','E'))
@@ -259,6 +262,57 @@ def read_adf04(fil):
                 elif('-' in tmp[tmp_inds[i+3]]):
                     ion_excit_row[i] = float(tmp[tmp_inds[i+3]].replace('-','E-'))
             ion_excit.append(ion_excit_row)
+
+    ######################################################################
+    #
+    # end ionization and values from the adf04, start looking for cx
+    #
+    ######################################################################
+
+        elif(tmp[0] == 'H' or tmp[0] =='h'):
+            tmp_inds = np.where(tmp!='')[0]
+            cx_transitions.append(np.array([int(tmp[tmp_inds[1]]),int(tmp[tmp_inds[2]])]))
+            cx_excit_row = np.zeros(len(adf04['input_file']['temp_grid']))
+            for i in range(0,len(adf04['input_file']['temp_grid'])):
+                if( '+' in tmp[tmp_inds[i+3]]):
+                    cx_excit_row[i] = float(tmp[tmp_inds[i+3]].replace('+','E'))
+                elif('-' in tmp[tmp_inds[i+3]]):
+                    cx_excit_row[i] = float(tmp[tmp_inds[i+3]].replace('-','E-'))
+            cx_excit.append(cx_excit_row)
+
+
+
+
+    #check if energies indexes wrong
+    sort_energy = np.argsort(adf04['atomic']['energy'])
+    indd = np.where( np.linspace(0,len(adf04['atomic']['energy'])-1,len(adf04['atomic']['energy']),dtype=int) -\
+                       sort_energy !=0)[0]
+
+    if(indd.size > 0):
+        print('Energy levels in adf04 are not in order')
+        print(indd,sort_energy[indd])
+        col_transitions_tmp = np.asarray(col_transitions)
+        col_transitions = np.asarray(col_transitions)
+        for ii in range(0,len(indd)):
+            col_transitions_tmp[np.where(col_transitions == indd[ii])] = sort_energy[indd[ii]]
+
+        #col_transitions = col_transitions_tmp
+
+        adf04['atomic']['config'] =       adf04['atomic']['config'][sort_energy]
+        adf04['atomic']['L'] =            adf04['atomic']['L'][sort_energy]
+        adf04['atomic']['S'] =            adf04['atomic']['S'][sort_energy]
+        adf04['atomic']['w'] =            adf04['atomic']['w'][sort_energy]
+        adf04['atomic']['energy'] =       adf04['atomic']['energy'][sort_energy]
+        adf04['atomic']['zpla'] =         adf04['atomic']['zpla'][sort_energy]
+        adf04['atomic']['zpla1'] =        adf04['atomic']['zpla1'][sort_energy]
+        
+        ttt = np.where(col_transitions[:,0] < col_transitions[:,1])[0]
+        if(ttt.size>0):
+            ttmp = col_transitions[ttt,0]
+            col_transitions[ttt,0] = col_transitions[ttt,1]
+            col_transitions[ttt,1] = ttmp
+        
+            
     adf04['rates']['excit'] = {}
     adf04['rates']['excit']['col_transitions'] = np.asarray(col_transitions)
     adf04['rates']['excit']['col_excit'] = np.asarray(col_excit)
@@ -270,6 +324,11 @@ def read_adf04(fil):
     adf04['rates']['ioniz'] = {}
     adf04['rates']['ioniz']['ion_transitions'] = np.asarray(ion_transitions)
     adf04['rates']['ioniz']['ion_excit'] = np.asarray(ion_excit)
+    adf04['rates']['cx'] = {}
+    adf04['rates']['cx']['cx_transitions'] = np.asarray(cx_transitions)
+    adf04['rates']['cx']['cx_excit'] = np.asarray(cx_excit)
+
+    
 
     adf04['input_file']['rates'] = {}
     adf04['input_file']['atomic'] = {}
