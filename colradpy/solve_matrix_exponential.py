@@ -48,6 +48,9 @@ def solve_matrix_exponential_steady_state(matrix):
        Mathemat), Society for Industrial and Applied Mathematics,
        Philadelphia, PA, USA, 2007.
 
+    In steady state only the smallest eigenval survives
+    so find the smallest eigenval and the corresponding eigenvector 
+    then solve for the populations with just that eigen value.
 
 
     Args:
@@ -62,7 +65,6 @@ def solve_matrix_exponential_steady_state(matrix):
     #becuase this is steady state the initial populations don't matter
     td_n0 = np.zeros(np.shape(matrix)[0]) 
     td_n0[0] = 1.
-
     #sort on the eigenval index to find the longest lived state
     #that will give the equilibrium populuations
     if(len(np.shape(matrix)) ==4):
@@ -85,6 +87,7 @@ def solve_matrix_exponential_steady_state(matrix):
     if(len(np.shape(matrix)) ==3):
         ev = eigenvectors.transpose(0,2,1)[index]#egienvectors sorted on eigenvals
         ss_pop = np.einsum('k,kj->kj',v0[index][:,0],ev[:,0,:]).transpose(1,0)
+
     return ss_pop, eigenvals, eigenvectors
     
 
