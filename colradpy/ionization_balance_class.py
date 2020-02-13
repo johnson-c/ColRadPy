@@ -231,14 +231,21 @@ class ionization_balance():
                                                  +  self.data['cr_data']['gcrs'][str(i)]['acd']
 
                 #populate CCDs in ion balance
+
+
+
+                
                 if(self.data['user']['use_cx'][i]):
                     self.data['ion_matrix'][m+num_met+diag_ion[0], m+num_met+diag_ion[1] ] = \
                                                 self.data['ion_matrix'][m+num_met+diag_ion[0], m+num_met+diag_ion[1] ]-\
-                                                       np.sum(self.data['cr_data']['gcrs'][str(i)]['ccd'],axis=0)
+                                                       np.sum(np.einsum('ijn,n->ijn',self.data['cr_data']['gcrs'][str(i)]['ccd'],
+                                                                        self.data['user']['hdens_grid']/self.data['user']['dens_grid']),axis=0)
+
 
                     self.data['ion_matrix'][m:m+num_met,m+num_met:m+num_met+num_ion,:] = \
                                     self.data['ion_matrix'][m:m+num_met,m+num_met:m+num_met+num_ion,:] \
-                                                     +  self.data['cr_data']['gcrs'][str(i)]['ccd']
+                                                     +  np.einsum('ijn,n->ijn',self.data['cr_data']['gcrs'][str(i)]['ccd'],
+                                                                  self.data['user']['hdens_grid']/self.data['user']['dens_grid'])                                                                  
 
                 #populate XCD in ion balance
                 self.data['ion_matrix'][m+num_met+diag_ion[0], m+num_met+diag_ion[1] ] = \
