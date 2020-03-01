@@ -24,7 +24,7 @@ def solve_matrix_exponential(matrix,td_n0,td_t):
 
 
     Returns:
-      This returns three arrays the time dependent populations, eigenvals and eigenvectors
+      This returns three arrays the time dependent populations, eigenvals and eigenvectorsimport matplotlib.pyplot as plt
 
     """
     
@@ -32,7 +32,6 @@ def solve_matrix_exponential(matrix,td_n0,td_t):
     v0 = np.dot(np.linalg.inv(eigenvectors),td_n0)
     vt = v0[:,:,:,None]*np.exp(eigenvals[:,:,:,None]*td_t)
     td_pop = np.einsum('klij,kljt->itkl', eigenvectors, vt)
-
     eigenvals = eigenvals.transpose(2,0,1)
     eigenvectors = eigenvectors.transpose(2,3,0,1)
     return td_pop, eigenvals, eigenvectors
@@ -123,16 +122,18 @@ def solve_matrix_exponential_source(matrix, td_n0, source, td_t):
 
     CC = np.dot(np.linalg.inv(eigenvectors),source)
     V0 = np.dot(np.linalg.inv(eigenvectors),td_n0)
-
-    eig_zero_ind = np.where(eigenvals == 0)            
+    #this number might need to change to reject larger eigen values
+    eig_zero_ind = np.where(np.abs(eigenvals) < np.finfo(np.float64).eps*8000)[2]
     eig_non_zero = np.delete(eigenvals, eig_zero_ind, axis=2)
-
+    
     amplitude_non = np.delete(V0,eig_zero_ind,axis=2) + np.delete(CC,eig_zero_ind,axis=2)/eig_non_zero
-    amplitude_zer = V0[:,:,eig_zero_ind[2]]
+    amplitude_zer = V0[:,:,eig_zero_ind]
     
     v_non = amplitude_non[:,:,:,None]*np.exp(eig_non_zero[:,:,:,None]*td_t) - \
                                np.delete(CC,eig_zero_ind,axis=2)[:,:,:,None]/eig_non_zero[:,:,:,None]
-    v_zer = CC[:,:,eig_zero_ind[2]][:,:,:,None]*td_t + amplitude_zer[:,:,:,None]
-    v = np.insert(v_non,eig_zero_ind[2],v_zer,axis=2)
+    v_zer = CC[:,:,eig_zero_ind][:,:,:,None]*td_t + amplitude_zer[:,:,:,None]
+    
+    v = np.insert(v_non,eig_zero_ind,v_zer,axis=2)
     td_pop = np.einsum('klij,kljt->itkl', eigenvectors,v)
+    
     return td_pop, eigenvals,eigenvectors
