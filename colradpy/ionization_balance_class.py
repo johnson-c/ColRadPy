@@ -1,6 +1,6 @@
 import numpy as np
-from .colradpy_class import colradpy
-from .solve_matrix_exponential import *
+from colradpy.colradpy_class import *
+from colradpy.solve_matrix_exponential import *
 
 class ionization_balance():
     """The ionization balance class takes adf04 file inputs runs CR calcualations
@@ -382,18 +382,35 @@ class ionization_balance():
                 s0 = self.data['user']['source']
 
 
-
                 
         if('processed' not in self.data.keys()):
             self.data['processed'] = {}
 
+
+
+
+        if(self.data['user']['temp_dens_pair']):
+            self.data['processed']['pops_source'],\
+                self.data['processed']['eigen_val'],\
+                self.data['processed']['eigen_vec'] = solve_matrix_exponential_source(
+                                               np.einsum('ijk,k->ijk',self.data['ion_matrix'],
+                                               self.data['user']['dens_grid']),n0,s0,td_t)
+        else:
+            self.data['processed']['pops_source'],\
+                self.data['processed']['eigen_val'],\
+                self.data['processed']['eigen_vec'] = solve_matrix_exponential_source(
+                                               np.einsum('ijkl,l->ijkl',self.data['ion_matrix'],
+                                               self.data['user']['dens_grid']),n0,s0,td_t)
+
+
+
+        '''
         self.data['processed']['pops'],\
         self.data['processed']['eigen_val'],\
         self.data['processed']['eigen_vec'] = solve_matrix_exponential_source(
                                                  np.einsum('ijkl,l->ijkl',self.data['ion_matrix'],
                                                  self.data['user']['dens_grid']),n0,s0,td_t)
-
-
+        '''
 
     def solve_time_independent(self):
         """Solves the ionization balance matrix for the steady-state (time-independent) solution.
