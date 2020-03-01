@@ -117,23 +117,36 @@ def solve_matrix_exponential_source(matrix, td_n0, source, td_t):
       This returns three arrays the time dependent populations, eigenvals and eigenvectors
 
     """
-    
-    eigenvals,eigenvectors = np.linalg.eig(matrix.transpose(2,3,0,1))
+
+    if(len(np.shape(matrix)) ==4):
+        
+        eigenvals, eigenvectors = np.linalg.eig(matrix.transpose(2,3,0,1))
+        axis=2
+    if(len(np.shape(matrix)) ==3):
+        eigenvals, eigenvectors = np.linalg.eig(matrix.transpose(2,0,1))
+        axis=1
 
     CC = np.dot(np.linalg.inv(eigenvectors),source)
     V0 = np.dot(np.linalg.inv(eigenvectors),td_n0)
     #this number might need to change to reject larger eigen values
-    eig_zero_ind = np.where(np.abs(eigenvals) < np.finfo(np.float64).eps*8000)[2]
-    eig_non_zero = np.delete(eigenvals, eig_zero_ind, axis=2)
+    eig_zero_ind = np.where(np.abs(eigenvals) < np.finfo(np.float64).eps*8000)[axis]
+    eig_non_zero = np.delete(eigenvals, eig_zero_ind, axis=axis)
     
-    amplitude_non = np.delete(V0,eig_zero_ind,axis=2) + np.delete(CC,eig_zero_ind,axis=2)/eig_non_zero
-    amplitude_zer = V0[:,:,eig_zero_ind]
+    amplitude_non = np.delete(V0,eig_zero_ind,axis=axis) + np.delete(CC,eig_zero_ind,axis=axis)/eig_non_zero
+    amplitude_zer = V0[...,eig_zero_ind]
     
-    v_non = amplitude_non[:,:,:,None]*np.exp(eig_non_zero[:,:,:,None]*td_t) - \
-                               np.delete(CC,eig_zero_ind,axis=2)[:,:,:,None]/eig_non_zero[:,:,:,None]
-    v_zer = CC[:,:,eig_zero_ind][:,:,:,None]*td_t + amplitude_zer[:,:,:,None]
+    v_non = amplitude_non[...,None]*np.exp(eig_non_zero[...,None]*td_t) - \
+                               np.delete(CC,eig_zero_ind,axis=axis)[...,None]/eig_non_zero[...,None]
+    v_zer = CC[...,eig_zero_ind][...,None]*td_t + amplitude_zer[...,None]
     
-    v = np.insert(v_non,eig_zero_ind,v_zer,axis=2)
-    td_pop = np.einsum('klij,kljt->itkl', eigenvectors,v)
+    v = np.insert(v_non,eig_zero_ind,v_zer,axis=axis)
+
+
+
+    if(len(np.shape(matrix)) ==4):
+        td_pop = np.einsum('klij,kljt->itkl', eigenvectors,v)
+    if(len(np.shape(matrix)) ==3): 
+        td_pop = np.einsum('lij,ljt->itl', eigenvectors,v)
+
     
     return td_pop, eigenvals,eigenvectors
