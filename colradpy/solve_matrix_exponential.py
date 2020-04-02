@@ -27,13 +27,23 @@ def solve_matrix_exponential(matrix,td_n0,td_t):
       This returns three arrays the time dependent populations, eigenvals and eigenvectorsimport matplotlib.pyplot as plt
 
     """
-    
-    eigenvals, eigenvectors = np.linalg.eig(matrix.transpose(2,3,0,1))
+
+    if(len(np.shape(matrix)) ==4):
+        eigenvals, eigenvectors = np.linalg.eig(matrix.transpose(2,3,0,1))
+        axis=2
+    if(len(np.shape(matrix)) ==3):
+        eigenvals, eigenvectors = np.linalg.eig(matrix.transpose(2,0,1))
+        axis=1
+
     v0 = np.dot(np.linalg.inv(eigenvectors),td_n0)
-    vt = v0[:,:,:,None]*np.exp(eigenvals[:,:,:,None]*td_t)
-    td_pop = np.einsum('klij,kljt->itkl', eigenvectors, vt)
-    eigenvals = eigenvals.transpose(2,0,1)
-    eigenvectors = eigenvectors.transpose(2,3,0,1)
+    vt = v0[...,None]*np.exp(eigenvals[...,None]*td_t)
+
+
+    if(len(np.shape(matrix)) ==4):
+        td_pop = np.einsum('klij,kljt->itkl', eigenvectors,vt)
+    if(len(np.shape(matrix)) ==3): 
+        td_pop = np.einsum('lij,ljt->itl', eigenvectors,vt)
+    
     return td_pop, eigenvals, eigenvectors
 
 
@@ -89,7 +99,8 @@ def solve_matrix_exponential_steady_state(matrix):
         ss_pop = np.einsum('k,kj->kj',v0[index][:,0],ev[:,0,:]).transpose(1,0)
 
     return ss_pop, eigenvals, eigenvectors
-    
+
+
 
 def solve_matrix_exponential_source(matrix, td_n0, source, td_t):
     """This definition will solve a 4 dimensional matrix using the matrix expoentiaiation method
@@ -129,24 +140,40 @@ def solve_matrix_exponential_source(matrix, td_n0, source, td_t):
     CC = np.dot(np.linalg.inv(eigenvectors),source)
     V0 = np.dot(np.linalg.inv(eigenvectors),td_n0)
     #this number might need to change to reject larger eigen values
-    eig_zero_ind = np.where(np.abs(eigenvals) < np.finfo(np.float64).eps*8000)[axis]
-    eig_non_zero = np.delete(eigenvals, eig_zero_ind, axis=axis)
+
+
     
-    amplitude_non = np.delete(V0,eig_zero_ind,axis=axis) + np.delete(CC,eig_zero_ind,axis=axis)/eig_non_zero
-    amplitude_zer = V0[...,eig_zero_ind]
+    v_tmp = []
+        
+    eig_zero_ind = np.where(np.abs(eigenvals) < 1.e-10)#np.finfo(np.float64).eps*40000)
+    eig_non_zero = np.copy(eigenvals)
+    eig_non_zero[eig_zero_ind] = 1.
+
+    amplitude_zer = np.zeros_like(V0)
+    amplitude_zer[eig_zero_ind] =V0[eig_zero_ind]
     
+    CC_zer = np.zeros_like(CC)
+    CC_zer[eig_zero_ind] = CC[eig_zero_ind]
+    V0[eig_zero_ind] = 0.
+    CC[eig_zero_ind] = 0.
+
+    
+    
+    amplitude_non = V0 +CC/eig_non_zero
+
+
     v_non = amplitude_non[...,None]*np.exp(eig_non_zero[...,None]*td_t) - \
-                               np.delete(CC,eig_zero_ind,axis=axis)[...,None]/eig_non_zero[...,None]
-    v_zer = CC[...,eig_zero_ind][...,None]*td_t + amplitude_zer[...,None]
-    
-    v = np.insert(v_non,eig_zero_ind,v_zer,axis=axis)
+                               CC[...,None]/eig_non_zero[...,None]
+
+    if(eig_zero_ind[0].size > 0):
+        v_zer = CC_zer[...,None]*td_t + amplitude_zer[...,None]
+        v_non[eig_zero_ind] = v_zer[eig_zero_ind]
 
 
-
+    v_non[np.abs(v_non) <1.e-10] = 0
     if(len(np.shape(matrix)) ==4):
-        td_pop = np.einsum('klij,kljt->itkl', eigenvectors,v)
+        td_pop = np.einsum('klij,kljt->itkl', eigenvectors,v_non)
     if(len(np.shape(matrix)) ==3): 
-        td_pop = np.einsum('lij,ljt->itl', eigenvectors,v)
-
-    
+        td_pop = np.einsum('lij,ljt->itl', eigenvectors,v_non)
+        
     return td_pop, eigenvals,eigenvectors
