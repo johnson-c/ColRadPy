@@ -350,7 +350,7 @@ def burgess_tully_rates(user_temp_grid, calc_temp_grid, col_transitions,col_exci
     burgtully_dict = {}
     burgtully_dict['burg_tully'] = {}
     burgtully_dict['burg_tully']['interp_temp_inds'] = np.where( (user_temp_grid < np.max(calc_temp_grid)/11604.5) &
-                                                                 (user_temp_grid < np.min(calc_temp_grid)/11604.5))[0]
+                                                                 (user_temp_grid > np.min(calc_temp_grid)/11604.5))[0]#this was changed 12_02_20
     burgtully_dict['burg_tully']['extrap_temp_inds_hi'] = np.where( user_temp_grid > np.max(calc_temp_grid)/11604.5)[0]
     extrap_temp_inds_hi = np.where( user_temp_grid > np.max(calc_temp_grid)/11604.5)[0]
     burgtully_dict['burg_tully']['extrap_temp_inds_low'] = np.where( user_temp_grid < np.min(calc_temp_grid)/11604.5)[0]
@@ -523,7 +523,14 @@ def burgess_tully_rates(user_temp_grid, calc_temp_grid, col_transitions,col_exci
         burgtully_dict['burg_tully']['excit_extrap'].append(type2_yconvert(burgtully_dict['burg_tully']['yval_extrap'][1],direct='B'))
 
         if(burgtully_dict['burg_tully']['zero_inds'][1].size > 0):
-            
+
+
+            if('yval_extrap_lin' not in burgtully_dict['burg_tully']):
+                burgtully_dict['burg_tully']['yval_extrap_lin'] = []
+                burgtully_dict['burg_tully']['excit_extrap_lin'] = []
+                burgtully_dict['burg_tully']['yval_extrap_lin'].append(np.array([]))
+                burgtully_dict['burg_tully']['excit_extrap_lin'].append(np.array([]))
+                
             burgtully_dict['burg_tully']['yval_extrap_lin'].append(lin_yconvert(burgtully_dict['burg_tully']['coeffs_lin_b'][1],
                                                                                 burgtully_dict['burg_tully']['coeffs_lin_m'][1],
                                                                                 burgtully_dict['burg_tully']['xval_extrap'][1][burgtully_dict['burg_tully']['zero_inds'][1]]))
