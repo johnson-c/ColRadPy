@@ -64,7 +64,7 @@ class ionization_balance():
                  suppliment_with_ecip=True, use_recombination_three_body=True,use_recombination=True,
                  use_cx=True,
                  keep_charge_state_data=False,init_abund = np.array([]), source= np.array([]),
-                 temp_dens_pair=False,scale_file_ioniz=False):
+                 temp_dens_pair=False,scale_file_ioniz=False, ne_tau=np.array([-1])):
         self.data = {}
 
         self.data['cr_data'] = {}
@@ -80,10 +80,25 @@ class ionization_balance():
         self.data['user']['source'] = np.asarray(source)
         self.data['user']['metas'] = np.asarray(metas)
         self.data['user']['temp_dens_pair'] = temp_dens_pair
+        self.data['user']['ne_tau'] = ne_tau
         if(self.data['user']['init_abund'].size <1):
             self.data['user']['init_abund'] = np.zeros((np.sum(list(map(len,metas))) +1))
             self.data['user']['init_abund'][0] = 1.
-        
+
+
+
+        if( (self.data['user']['ne_tau'][0] != -1) or (self.data['user']['ne_tau'][0] != -1)):
+            if(self.data['user']['ne_tau'][0] == -1):
+                nt = ne_tau
+            else:
+                nt = self.data['user']['ne_tau']
+            td_t = np.einsum('i,j->ij', nt, 1/self.data['user']['dens_grid'])
+            print('ne_tau was not equal to -1 so overwiting solution times with ne_tau calculated values')
+            self.data['user']['soln_times'] = td_t 
+
+
+
+            
         # give the option to the user to choose different
         # ionization and recombination settings for each charge state
         # this also just allows the same thing to be specified for all charge states
@@ -340,23 +355,22 @@ class ionization_balance():
             self.data['processed'] = {}
             self.data['processed']['pops'] = 0
             self.data['processed']['eigen_val'] = 0
-            self.data['processed']['eigen_vec'] = 0
-
+            self.data['processed']['eigen_vec'] = 0            
             #solve the ionization balance set of equation with no source term
-            if(self.data['user']['temp_dens_pair']):
-                self.data['processed']['pops'],\
-                    self.data['processed']['eigen_val'],\
-                    self.data['processed']['eigen_vec'] = solve_matrix_exponential(
-                                                   np.einsum('ijk,k->ijk',self.data['ion_matrix'],
-                                                   self.data['user']['dens_grid']),n0,td_t)                
-            else:
-                self.data['processed']['pops'],\
-                    self.data['processed']['eigen_val'],\
-                    self.data['processed']['eigen_vec'] = solve_matrix_exponential(
-                                                   np.einsum('ijkl,l->ijkl',self.data['ion_matrix'],
-                                                   self.data['user']['dens_grid']),n0,td_t)
-                
-    def solve_source(self,n0=np.array([]), s0=np.array([]), td_t=np.array([])):
+        if(self.data['user']['temp_dens_pair']):
+            self.data['processed']['pops'],\
+                self.data['processed']['eigen_val'],\
+                self.data['processed']['eigen_vec'] = solve_matrix_exponential(
+                                               np.einsum('ijk,k->ijk',self.data['ion_matrix'],
+                                               self.data['user']['dens_grid']),n0,td_t)
+
+        else:
+            self.data['processed']['pops'],\
+                self.data['processed']['eigen_val'],\
+                self.data['processed']['eigen_vec'] = solve_matrix_exponential(
+                                               np.einsum('ijkl,l->ijkl',self.data['ion_matrix'],
+                                               self.data['user']['dens_grid']),n0,td_t)
+    def solve_source(self,n0=np.array([]), s0=np.array([]), td_t=np.array([]),ne_tau = np.array([-1])):
         """Solves the ionization balance matrix given an
              initial populations and times when a source term is present
 
@@ -375,6 +389,16 @@ class ionization_balance():
             n0 = self.data['user']['init_abund']
         if(td_t.size < 1):
             td_t = self.data['user']['soln_times']
+
+        if( (self.data['user']['ne_tau'][0] != -1) or (self.data['user']['ne_tau'][0] != -1)):
+            if(self.data['user']['ne_tau'][0] == -1):
+                nt = ne_tau
+            else:
+                nt = self.data['user']['ne_tau']
+            td_t = np.einsum('i,j->ij', nt, 1/self.data['user']['dens_grid'])
+            print('ne_tau was not equal to -1 so overwiting solution times with ne_tau calculated values')
+            self.data['user']['soln_times'] = td_t 
+            
         if(s0.size < 1):
             if(self.data['user']['source'].size < 1):
                 s0 = np.zeros((np.sum(list(map(len,self.data['user']['metas']))) +1))

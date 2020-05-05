@@ -27,22 +27,44 @@ def solve_matrix_exponential(matrix,td_n0,td_t):
       This returns three arrays the time dependent populations, eigenvals and eigenvectorsimport matplotlib.pyplot as plt
 
     """
-
+    #calculate the eigenvectors and values for the matrix
+    #the last two dimensions have to be the ij parts so we need to transpose matrix
+    #string logic for the einsums based on matrix dimensions        
     if(len(np.shape(matrix)) ==4):
         eigenvals, eigenvectors = np.linalg.eig(matrix.transpose(2,3,0,1))
-        axis=2
+
+        eval_str = 'klj'
+        evec_str = 'klij'
+        vt_str1 = 'klj'
+        pop_str='ikl'
     if(len(np.shape(matrix)) ==3):
         eigenvals, eigenvectors = np.linalg.eig(matrix.transpose(2,0,1))
-        axis=1
 
-    v0 = np.dot(np.linalg.inv(eigenvectors),td_n0)
-    vt = v0[...,None]*np.exp(eigenvals[...,None]*td_t)
+        eval_str = 'lj'
+        evec_str = 'lij'
+        vt_str1 = 'lj'
+        pop_str = 'il'
 
+    if(len(np.shape(td_t)) > 1):    
+        if(np.shape(td_t)[0] ==1):
+            td_t = td_t[0,:]
+            td_t_str = 'l'
+            vt_str2 = ''
+        else:
+            td_t_str = 'lt'
+            pop_str = pop_str[0:1] +'t' + pop_str[1:]
+            vt_str2='t'
+    else:
+        td_t_str = 't'
+        vt_str2 = 't'
+        pop_str = pop_str[0:1] +'t' + pop_str[1:]
 
-    if(len(np.shape(matrix)) ==4):
-        td_pop = np.einsum('klij,kljt->itkl', eigenvectors,vt)
-    if(len(np.shape(matrix)) ==3): 
-        td_pop = np.einsum('lij,ljt->itl', eigenvectors,vt)
+    v0 = np.dot(np.linalg.inv(eigenvectors),td_n0)        
+    #vt = v0[:,:,:,None]*np.exp(eigenvals[:,:,:,None]*td_t)
+    vt = np.einsum(eval_str+ ',' +vt_str1+vt_str2 +'->'+vt_str1+vt_str2,v0,
+                   np.exp(np.einsum(eval_str+','+td_t_str+'->'+vt_str1+vt_str2  ,eigenvals,td_t)))
+
+    td_pop = np.einsum(evec_str+','+vt_str1+vt_str2+'->'+pop_str  , eigenvectors,vt)
     
     return td_pop, eigenvals, eigenvectors
 
@@ -102,6 +124,9 @@ def solve_matrix_exponential_steady_state(matrix):
 
 
 
+
+
+
 def solve_matrix_exponential_source(matrix, td_n0, source, td_t):
     """This definition will solve a 4 dimensional matrix using the matrix expoentiaiation method
        when a source term is also included
@@ -128,23 +153,48 @@ def solve_matrix_exponential_source(matrix, td_n0, source, td_t):
       This returns three arrays the time dependent populations, eigenvals and eigenvectors
 
     """
-
+    
+    #calculate the eigenvectors and values for the matrix
+    #the last two dimensions have to be the ij parts so we need to transpose matrix
+    #string logic for the einsums based on matrix dimensions        
     if(len(np.shape(matrix)) ==4):
-        
         eigenvals, eigenvectors = np.linalg.eig(matrix.transpose(2,3,0,1))
-        axis=2
+
+        eval_str = 'klj'
+        evec_str = 'klij'
+        vt_str1 = 'klj'
+        pop_str='ikl'
     if(len(np.shape(matrix)) ==3):
         eigenvals, eigenvectors = np.linalg.eig(matrix.transpose(2,0,1))
-        axis=1
 
+        eval_str = 'lj'
+        evec_str = 'lij'
+        vt_str1 = 'lj'
+        pop_str = 'il'
+
+    if(len(np.shape(td_t)) > 1):    
+        if(np.shape(td_t)[0] ==1):
+            td_t = td_t[0,:]
+            td_t_str = 'l'
+            vt_str2 = ''
+        else:
+            td_t_str = 'lt'
+            pop_str = pop_str[0:1] +'t' + pop_str[1:]
+            vt_str2='t'
+    else:
+        td_t_str = 't'
+        vt_str2 = 't'
+        pop_str = pop_str[0:1] +'t' + pop_str[1:]
+
+    #the math equations for this solution
+    #are in Johnson thesis 2020 apprendix A
     CC = np.dot(np.linalg.inv(eigenvectors),source)
     V0 = np.dot(np.linalg.inv(eigenvectors),td_n0)
-    #this number might need to change to reject larger eigen values
 
-
-    
     v_tmp = []
-        
+    
+    #this number might need to change to reject larger eigen values
+    #there are numerical problems with small eigenvalues so just treat them like zero eigenvalues
     eig_zero_ind = np.where(np.abs(eigenvals) < 1.e-10)#np.finfo(np.float64).eps*40000)
     eig_non_zero = np.copy(eigenvals)
     eig_non_zero[eig_zero_ind] = 1.
@@ -156,24 +206,40 @@ def solve_matrix_exponential_source(matrix, td_n0, source, td_t):
     CC_zer[eig_zero_ind] = CC[eig_zero_ind]
     V0[eig_zero_ind] = 0.
     CC[eig_zero_ind] = 0.
-
-    
     
     amplitude_non = V0 +CC/eig_non_zero
 
+    ttmp = CC/eig_non_zero
+    
+    #these are the coded up equations but allowing for the different combinations of matrix and
+    # time dimensions
+    # v_non = amplitude_non[:,:,:,None]*np.exp(eig_non_zero[:,:,:,None]*td_t) - \
+    #                           np.delete(CC,eig_zero_ind,axis=2)[:,:,:,None]/eig_non_zero[:,:,:,None]
+    #v_zer = CC[:,:,eig_zero_ind[2]][:,:,:,None]*td_t + amplitude_zer[:,:,:,None]
 
-    v_non = amplitude_non[...,None]*np.exp(eig_non_zero[...,None]*td_t) - \
-                               CC[...,None]/eig_non_zero[...,None]
+    #if there is a time dependence the ttmp array needs to add on another dimension
+    if(vt_str2 == 't'):
 
+        v_non = np.einsum( eval_str+ ',' +vt_str1+vt_str2 +'->'+vt_str1+vt_str2, amplitude_non,
+                       np.exp(np.einsum(eval_str+','+td_t_str+'->'+vt_str1+vt_str2  ,eig_non_zero,td_t))) - \
+                ttmp[...,None]
+    else:
+        v_non = np.einsum( eval_str+ ',' +vt_str1+vt_str2 +'->'+vt_str1+vt_str2, amplitude_non,
+                       np.exp(np.einsum(eval_str+','+td_t_str+'->'+vt_str1+vt_str2  ,eig_non_zero,td_t))) - \
+                ttmp
+
+    #if there is a time dependence the amplitude_zer array needs to add on another dimension    
     if(eig_zero_ind[0].size > 0):
-        v_zer = CC_zer[...,None]*td_t + amplitude_zer[...,None]
+
+        if(vt_str2 == 't'):        
+            v_zer = np.einsum(eval_str+','+td_t_str+'->'+vt_str1+vt_str2, CC_zer,td_t) + amplitude_zer[...,None]
+        else:
+            v_zer = np.einsum(eval_str+','+td_t_str+'->'+vt_str1+vt_str2, CC_zer,td_t) + amplitude_zer
+            
         v_non[eig_zero_ind] = v_zer[eig_zero_ind]
 
-
     v_non[np.abs(v_non) <1.e-10] = 0
-    if(len(np.shape(matrix)) ==4):
-        td_pop = np.einsum('klij,kljt->itkl', eigenvectors,v_non)
-    if(len(np.shape(matrix)) ==3): 
-        td_pop = np.einsum('lij,ljt->itl', eigenvectors,v_non)
-        
+
+    td_pop = np.einsum(evec_str+','+vt_str1+vt_str2+'->'+pop_str  , eigenvectors,v_non)
+    
     return td_pop, eigenvals,eigenvectors
