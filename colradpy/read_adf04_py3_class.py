@@ -215,7 +215,7 @@ def read_adf04(fil):
                         
                 else:
 
-                    last_temp = tmp[tmp_inds[i+3]][0:7]
+                    las_temp = tmp[tmp_inds[i+3]][0:7]
                     inf_temp =  tmp[tmp_inds[i+3]][8:15]
                     if( '+' in last_temp):
                         col_excit_row[i] = float(last_temp.replace('+','E'))
@@ -281,23 +281,60 @@ def read_adf04(fil):
             cx_excit.append(cx_excit_row)
 
 
-
-
     #check if energies indexes wrong
-    sort_energy = np.argsort(adf04['atomic']['energy'])
+    #Can these atomic physics people ever get a file format correct.........
+    sort_energy = np.argsort(adf04['atomic']['energy'])#the correct sorted indexes
+    #indexes that need to swapped around
     indd = np.where( np.linspace(0,len(adf04['atomic']['energy'])-1,len(adf04['atomic']['energy']),dtype=int) -\
                        sort_energy !=0)[0]
-    '''
+    #indexes as listed in the adf04 file
+    inds = np.linspace(1,len(adf04['atomic']['energy']),len(adf04['atomic']['energy']),dtype=int)
     if(indd.size > 0):
         print('Energy levels in adf04 are not in order')
-        print(indd,sort_energy[indd])
+        print(inds[indd],sort_energy[indd])
+        #create tmp arrays to hold the corrected swapped levels
         col_transitions_tmp = np.asarray(col_transitions)
         col_transitions = np.asarray(col_transitions)
-        for ii in range(0,len(indd)):
-            #col_transitions_tmp[np.where(col_transitions == indd[ii]+1)] = np.where(sort_energy == indd[ii])[0]#sort_energy[indd[ii]]
-            col_transitions_tmp[np.where(col_transitions == indd[ii])] = sort_energy[indd[ii]]
-        #col_transitions = col_transitions_tmp
 
+        ion_transitions_tmp = np.asarray(ion_transitions)
+        ion_transitions = np.asarray(ion_transitions)
+        
+        recomb_transitions_tmp = np.asarray(recomb_transitions)
+        recomb_transitions = np.asarray(recomb_transitions)
+
+        cx_transitions_tmp = np.asarray(cx_transitions)
+        cx_transitions = np.asarray(cx_transitions)
+
+        
+        for ii in range(0,len(indd)):
+
+            swap_indexes = np.where(col_transitions == sort_energy[indd[ii]]+1)
+            col_transitions_tmp[swap_indexes] = inds[indd[ii]]#swapping around the indexes
+
+
+            if(ion_transitions.size >0):            
+                if(np.where(ion_transitions[:,0] == sort_energy[indd[ii]]+1)[0].size >0):
+                    #swapping ionization
+                    ion_transitions_tmp[np.where(ion_transitions[:,0] == sort_energy[indd[ii]]+1)[0],0] =  inds[indd[ii]]
+                    
+            if(recomb_transitions.size >0):
+                if(np.where(recomb_transitions[:,1] == sort_energy[indd[ii]]+1)[0].size >0):
+                    #swapping recombination
+                    recomb_transitions_tmp[np.where(recomb_transitions[:,1] == sort_energy[indd[ii]]+1),1] =  inds[indd[ii]]
+                
+            if(cx_transitions.size >0):
+                if(np.where(cx_transitions[:,0] == sort_energy[indd[ii]]+1)[0].size >0):
+                    #swapping charge exchange
+                    cx_transitions_tmp[np.where(cx_transitions[:,0] == sort_energy[indd[ii]]+1)[0],0] =  inds[indd[ii]]
+
+
+            #col_transitions_tmp[np.where(col_transitions == sort_energy[indd[ii]]+1)] = inds[indd[ii]]
+        col_transitions = col_transitions_tmp
+        recomb_transitions = recomb_transitions_tmp
+        ion_transitions = ion_transitions_tmp
+        cx_transitions = cx_transitions_tmp
+
+        #swapping around the level labeling information
         adf04['atomic']['config'] =       adf04['atomic']['config'][sort_energy]
         adf04['atomic']['L'] =            adf04['atomic']['L'][sort_energy]
         adf04['atomic']['S'] =            adf04['atomic']['S'][sort_energy]
@@ -305,13 +342,17 @@ def read_adf04(fil):
         adf04['atomic']['energy'] =       adf04['atomic']['energy'][sort_energy]
         adf04['atomic']['zpla'] =         adf04['atomic']['zpla'][sort_energy]
         adf04['atomic']['zpla1'] =        adf04['atomic']['zpla1'][sort_energy]
-        
+
+        #there are some instances where the level transistions are backwards
+        #again can the atomic people get anything right?
         ttt = np.where(col_transitions[:,0] < col_transitions[:,1])[0]
         if(ttt.size>0):
             ttmp = col_transitions[ttt,0]
             col_transitions[ttt,0] = col_transitions[ttt,1]
             col_transitions[ttt,1] = ttmp
-    '''
+
+
+
     adf04['rates']['excit'] = {}
     adf04['rates']['excit']['col_transitions'] = np.asarray(col_transitions)
     adf04['rates']['excit']['col_excit'] = np.asarray(col_excit)
