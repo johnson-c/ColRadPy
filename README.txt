@@ -1,3 +1,6 @@
+There is now a ColRadPy discord. https://discord.gg/xMN8nJq
+
+
 Look at the documentation in the 'user_doc' folder.
 Open with whatever brower you have example below for firefox
 
