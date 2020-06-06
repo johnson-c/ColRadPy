@@ -24,9 +24,13 @@ def read_adf11(fil):
     adf11['input_file']['charge_max'] = int(tmp[4])
 
     f.readline() #reading '-------------'
-    adf11['input_file']['metas'] = np.array(list(   #metastables
-                   map(int,re.findall('(\d+)',f.readline()))))
-    f.readline() #reading '---------------'
+
+    if( 'r' in re.split('/',fil)[-1]):
+        adf11['input_file']['metas'] = np.array(list(   #metastables
+                       map(int,re.findall('(\d+)',f.readline()))))
+        f.readline() #reading '---------------'
+    else:
+        adf11['input_file']['metas'] = np.ones(adf11['input_file']['charge_max']+1,dtype='int')
 
     #read in the density grid
     adf11['input_file']['dens'] = np.array([])
@@ -84,3 +88,4 @@ def read_adf11(fil):
                 temp_count = temp_count + 1
                 dens_count = 0
         gcr_line = f.readline()
+    return adf11
