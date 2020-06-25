@@ -67,7 +67,7 @@ def read_adf11(fil):
     gcr_line = f.readline()
     ii = 0
     
-    while 'C-' not in gcr_line:
+    while len(gcr_line.strip()) != 0 and 'C-' not in gcr_line:
         #look for the stage identifying line
         if('---' in gcr_line):
             dens_count = 0
