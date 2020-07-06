@@ -215,7 +215,7 @@ def read_adf04(fil):
                         
                 else:
 
-                    las_temp = tmp[tmp_inds[i+3]][0:7]
+                    last_temp = tmp[tmp_inds[i+3]][0:7]
                     inf_temp =  tmp[tmp_inds[i+3]][8:15]
                     if( '+' in last_temp):
                         col_excit_row[i] = float(last_temp.replace('+','E'))
