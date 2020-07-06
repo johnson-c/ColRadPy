@@ -325,8 +325,7 @@ class colradpy():
                 for ii in range(0,len(self.data['rates']['ioniz']['ion_transitions'])):
                     scale = np.abs(self.data['atomic']['zpla'][self.data['rates']['ioniz']['ion_transitions'][ii,0]-1,
                                                     self.data['rates']['ioniz']['ion_transitions'][ii,1]-1])
-                    ion_excit_interp_grid = ion_excit_interp_grid *scale
-
+                    ion_excit_interp_grid[ii] = ion_excit_interp_grid[ii] *scale
                     
         for i in range(0,len(self.data['rates']['ioniz']['ion_transitions'])):
             for j in range(0,len(self.data['user']['temp_grid'])):
@@ -1409,7 +1408,9 @@ class colradpy():
         self.data['processed']['split']['wave_air'] = []
         self.data['processed']['split']['relative_inten'] = []
         self.data['processed']['split']['pec_levels'] = []
-
+        self.data['processed']['split']['unsplit_pec_levels'] = []
+        self.data['processed']['split']['unres_pec_map'] = []
+        
         for i in range(0,len(self.data['processed']['pec_levels'])):
             up = self.data['processed']['pec_levels'][i,0]
             low = self.data['processed']['pec_levels'][i,1]
@@ -1446,10 +1447,13 @@ class colradpy():
                         if(res.size == 1):
                             self.data['processed']['split']['pecs'].append(
                                                                      self.data['processed']['pecs'][i])
-
+                            self.data['processed']['split']['unsplit_pec_levels'].append(self.data['processed']['pec_levels'][i])
+                            self.data['processed']['split']['unres_pec_map'].append(i)
                         else:
                             self.data['processed']['split']['pecs'].append(
                                                    self.data['processed']['pecs'][i]*res[j]/np.sum(res))
+                            self.data['processed']['split']['unsplit_pec_levels'].append(self.data['processed']['pec_levels'][i])
+                            self.data['processed']['split']['unres_pec_map'].append(i)
                             
                         self.data['processed']['split']['wave_air'].append(
                          1/(self.data['processed']['split']['energy'][up_id[0]] - \
@@ -1457,7 +1461,11 @@ class colradpy():
                             
             else:
                 self.data['processed']['split']['pecs'].append(self.data['processed']['pecs'][i])
-        self.data['processed']['split']['wave_vac'] = np.asarray(self.data['processed']['split']['wave_air'])
+
+
+
+                
+        #self.data['processed']['split']['wave_vac'] = np.asarray(self.data['processed']['split']['wave_air'])
         self.data['processed']['split']['wave_air'] = np.asarray(self.data['processed']['split']['wave_air'])/\
                                                      convert_to_air( np.asarray(self.data['processed']['split']['wave_air']))
         self.data['processed']['split']['pecs'] =  np.asarray(self.data['processed']['split']['pecs'])
@@ -1533,9 +1541,9 @@ class colradpy():
         shells_arr_tmp = np.empty_like(self.data['processed']['split']['config'].astype('<U1000'))
 
         test = np.where(np.char.find(closed_shells,
-                              self.data['processed']['split']['config'][0][0:2])==0)[0]
+                              self.data['processed']['split']['config'][0][0:3])==0)[0]
         #need the if statement here to easily account for hydrogenic species
-        if(test[0] >0):
+        if(np.size(test) >0):
             for ij in range(0,len(test)):
 
                 add_shell = np.setdiff1d(range(self.data['processed']['split']['config'].shape[0]),
@@ -1549,7 +1557,6 @@ class colradpy():
                         shells_arr_tmp[ik] = wat
 
             self.data['processed']['split']['config'] = shells_arr_tmp + self.data['processed']['split']['config']
-            
             shells_arr_tmp = np.empty_like(self.data['atomic']['nist_conf_form'].astype('<U1000'))
 
             test = np.where(np.char.find(closed_shells,
@@ -1586,7 +1593,6 @@ class colradpy():
                     if(in_all):
                         for kk in range(0,len(self.data['processed']['split']['config'])):
                             self.data['processed']['split']['config'][kk] = self.data['processed']['split']['config'][kk][4:]
-
         self.data['processed']['split']['L'] = np.concatenate(l,axis=0)
         self.data['processed']['split']['S'] = np.concatenate(s,axis=0)
         self.data['processed']['split']['j'] = np.concatenate(j,axis=0)
