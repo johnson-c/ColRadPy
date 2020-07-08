@@ -194,6 +194,47 @@ class colradpy():
         self.populate_data(fil)
         self.data['atomic']['metas'] = np.asarray(metas)
 
+
+        #check for levels that have identical identifications which can cause a problem for splitting later
+        #This happens when the parentage is not included in the configuration string leading to ambiguity
+        #This implimentation assumes that the order of energy is correct in terms of parentage
+        
+        tot_id_arr = np.array([self.data['atomic']['config'], #make a 2d array to search over
+                               self.data['atomic']['L'],
+                               self.data['atomic']['S'],
+                               self.data['atomic']['w']])
+        
+        uniq,uniq_idx, inv,counts= np.unique(tot_id_arr,#find the unique elements in the array
+                                             axis=1,
+                                             return_counts=True,
+                                             return_index=True,
+                                             return_inverse=True)
+        new_arr = uniq[:,counts == 1] #indexes of array that are unique
+        a_idx = np.arange(tot_id_arr.shape[1]) #array of every index
+        
+        self.data['atomic']['inds_same_id'] = a_idx[np.in1d(a_idx, uniq_idx[counts==1], invert=True)]
+        
+        self.data['atomic']['id_groups'] = []#we won't know how many levels are in a group
+
+        #this groups all of the duplicated identifications
+        #this is maybe a few line numpy call to do this but I can't figure it out
+        #this should be too slow so YOLO
+        for ij in self.data['atomic']['inds_same_id']:
+            if len(self.data['atomic']['id_groups']) >0:
+                if ij not in np.concatenate(self.data['atomic']['id_groups']):
+                    #if the ij index is not already in a group create a new group
+                    self.data['atomic']['id_groups'].append(np.where(
+                          (self.data['atomic']['config'] == self.data['atomic']['config'][[ij]]) &
+                          (self.data['atomic']['S'] == self.data['atomic']['S'][[ij]]) &
+                          (self.data['atomic']['L'] == self.data['atomic']['L'][[ij]]) &        
+                          (self.data['atomic']['w'] == self.data['atomic']['w'][[ij]]) )[0])
+            else:#creating the first group
+                self.data['atomic']['id_groups'].append(np.where(
+                          (self.data['atomic']['config'] == self.data['atomic']['config'][[ij]]) &
+                          (self.data['atomic']['S'] == self.data['atomic']['S'][[ij]]) &
+                          (self.data['atomic']['L'] == self.data['atomic']['L'][[ij]]) &        
+                          (self.data['atomic']['w'] == self.data['atomic']['w'][[ij]]) )[0])
+    
         
     def update_dict(self,d, u):
         """This function will update dictionary that is stores all parameter for the class
@@ -1356,7 +1397,6 @@ class colradpy():
                                             self.data['user']['td_t'])
 
 
-
         levels_to_keep = np.setdiff1d( np.linspace(0,len(self.data['atomic']['energy'])-1,
                                               len(self.data['atomic']['energy']) ,dtype='int64'),
                                        self.data['atomic']['metas'])
@@ -1371,21 +1411,9 @@ class colradpy():
 
                     self.data['processed']['td']['pecs'].append( self.data['cr_matrix']['A_ji'][levels_to_keep[j],i]*\
                                                         self.data['processed']['td']['td_pop'][levels_to_keep[j]])
-                    
-                    ###########################
-                    # if( (i==0) & (j==127)): #
-                    #     import pdb          #
-                    #     pdb.set_trace()     #
-                    ###########################
-                    
         
         self.data['processed']['td']['pecs'] = np.asarray(self.data['processed']['td']['pecs'])
             
-
-
-
-
-
             
 
 
@@ -1414,7 +1442,7 @@ class colradpy():
         for i in range(0,len(self.data['processed']['pec_levels'])):
             up = self.data['processed']['pec_levels'][i,0]
             low = self.data['processed']['pec_levels'][i,1]
-            
+            #splitting the multiplet based on Condon and Shotly
             ju,jl,res = split_multiplet( (self.data['atomic']['S'][low]-1)/2.,
                                          self.data['atomic']['L'][low],
                                          (self.data['atomic']['S'][up]-1)/2.,
@@ -1441,7 +1469,25 @@ class colradpy():
                                   (self.data['processed']['split']['L'] == self.data['atomic']['L'][low]) &
                                   (self.data['processed']['split']['S'] == self.data['atomic']['S'][low]) &
                                   (self.data['processed']['split']['j'] == jl[j]))[0]
-                        self.data['processed']['split']['pec_levels'].append(np.array([up_id[0],low_id[0]]))
+
+
+
+
+                        #Allows for solution to ambiguility when no parentage is specified in
+                        #configuations. 
+                        conf_id_u = 0
+                        conf_id_l = 0
+                        if(up in self.data['atomic']['inds_same_id']):
+                            for kk in range(0,len(self.data['atomic']['id_groups'])):
+                                if( up in self.data['atomic']['id_groups'][kk]):
+                                    conf_id_u = np.where( up == self.data['atomic']['id_groups'][kk])[0][0]
+                                        
+                        if(low in self.data['atomic']['inds_same_id']):
+                            for kk in range(0,len(self.data['atomic']['id_groups'])):
+                                if( low in self.data['atomic']['id_groups'][kk]):
+                                    conf_id_l = np.where( low == self.data['atomic']['id_groups'][kk])[0][0]
+
+                        self.data['processed']['split']['pec_levels'].append(np.array([up_id[conf_id_u],low_id[conf_id_l]]))
 
 
                         if(res.size == 1):
@@ -1489,7 +1535,7 @@ class colradpy():
         l = []
         s = []
         j = []
-
+        term_map = [] #this will allow for mapping level -> term later
         for i in range(0,len(self.data['atomic']['config'])):
             j_arr = np.arange( np.abs(self.data['atomic']['L'][i] -  (self.data['atomic']['S'][i]-1)/2.),
                        self.data['atomic']['L'][i] + (self.data['atomic']['S'][i]-1)/2.+1,1.)
@@ -1497,11 +1543,10 @@ class colradpy():
             conf_arr = np.empty_like(j_arr,dtype=object)
             l_arr = np.empty_like(j_arr,dtype=int)
             s_arr = np.empty_like(j_arr,dtype=int)
-
+            term_map_arr = np.ones_like(j_arr,dtype=int)*i
 
             st = self.data['atomic']['config'][i].lower()
             rem = list(re.finditer(r'\d\w1' , st))
-
             if rem:
                 tmpp = ''
                 for ii in range(0,len(rem)):
@@ -1529,7 +1574,10 @@ class colradpy():
             l.append(l_arr)
             s.append(s_arr)
             j.append(j_arr)
-
+            term_map.append(term_map_arr)
+            # if( i == 23 or i ==36):
+            #     import pdb
+            #     pdb.set_trace()
         self.data['processed']['split']['config'] = np.concatenate(conf,axis=0)
         #remove closed subshells because thats what NIST does
         #probably a better way to do this but I cant be bothered
@@ -1596,7 +1644,7 @@ class colradpy():
         self.data['processed']['split']['L'] = np.concatenate(l,axis=0)
         self.data['processed']['split']['S'] = np.concatenate(s,axis=0)
         self.data['processed']['split']['j'] = np.concatenate(j,axis=0)
-
+        self.data['processed']['split']['term_map'] = np.concatenate(term_map,axis=0)
 
 
 
@@ -1608,7 +1656,8 @@ class colradpy():
         if(conf == -1):
             conf = self.data['atomic']['config']
         
-        closed_shells = np.array(['1s2','2s2','2p6','3s2','3p6','4s2','3d10','4p6','5s2','4d10','5p6','6s2','4f14','5d10','6p6','7s2','5f14','6d10','7p6'])
+        closed_shells = np.array(['1s2','2s2','2p6','3s2','3p6','4s2','3d10','4p6','5s2',
+                                  '4d10','5p6','6s2','4f14','5d10','6p6','7s2','5f14','6d10','7p6'])
 
         #because NIST is apparently incapable of creating a standard scheme for the configuration string
         #we are goin got add in all the closed subshells only to remove them later...who came up with this
@@ -1620,7 +1669,7 @@ class colradpy():
         #need the if statement here to easily account for hydrogenic species
         if(test[0] >0):
             for ij in range(0,test[0]):
-                print(ij, closed_shells[ij])
+
                 add_shell = np.setdiff1d(range(conf.shape[0]),
                                         np.where(np.char.find(conf.astype('<U'),
                                                               closed_shells[ij][0:2])==0)[0])
@@ -1665,7 +1714,7 @@ class colradpy():
 
 
         
-    def shift_j_res_energy_to_nist(self,already_j=False):
+    def shift_j_res_energy_to_nist(self,already_j=False,fractional_diff_adf04_nist=0.05):
         """shift_j_res_energy_to_nist maps j resolved structure energy values to the NIST values
            if those values are availble. Saves these in the 'split' sub dictionary. This can be used
            with a j resolved file or with LS file if it is split to j resolution with the 
@@ -1688,13 +1737,20 @@ class colradpy():
                            filter(lambda ent: ent['j_val']==str(Fraction(self.data['processed']['split']['j'][i])),
                                                                   self.data['nist']['levels']))))
                  if(tmp):
-                             energy[i] = float(tmp[0]['energy'])
+                     #the or is to account for the ground state splitting which will definitely lead to bigger than 5% difference
+                     #or any term in the file that has a 
+                     if( (np.abs(float(tmp[0]['energy'])-self.data['atomic']['energy'][int(self.data['processed']['split']['term_map'][i])])/tmp[0]['energy'] < fractional_diff_adf04_nist) or
+                          self.data['atomic']['energy'][int(self.data['processed']['split']['term_map'][i])] < 10000):
+                         energy[i] = float(tmp[0]['energy'])
+
+                         
             self.data['processed']['split']['energy'] = energy
             
         else:
             energy = np.ones(len(self.data['atomic']['nist_conf_form']))
             energy = energy * -1.
             for i in range(0,len(self.data['atomic']['nist_conf_form'])):
+                
                  tmp = list( filter(lambda ent: ent['conf']== self.data['atomic']['nist_conf_form'][i],
                            filter(lambda ent: ent['term']== str(self.data['atomic']['S'][i]) +\
                                                                         l_map[self.data['atomic']['L'][i]],
@@ -1912,6 +1968,38 @@ class colradpy():
                               'Metastable ' + str(self.data['atomic']['metas'][k]),weight='semibold')
                 plt.legend(loc='best')
 
+
+
+
+
+    def return_level_info(self,level_num,split=False):
+        """Retrun all the level identifying information for a given level.
+           The default return is the normal level (adf04 file).
+           The split level information can also be returned with the flag.
+
+           :param level_num: Level number for info to be returned
+           :type level_num: int
+
+           :param split: Flag to return split values
+           :type split: bool
+
+        """
+
+        if(split):
+            return self.data['atomic']['split']['config'][level_num],\
+                   self.data['atomic']['split']['S'][level_num],\
+                   self.data['atomic']['split']['L'][level_num],\
+                   self.data['atomic']['split']['w'][level_num],\
+                   self.data['atomic']['split']['energy'][level_num]
+        else:
+                
+            return self.data['atomic']['config'][level_num],\
+                   self.data['atomic']['S'][level_num],\
+                   self.data['atomic']['L'][level_num],\
+                   self.data['atomic']['w'][level_num],\
+                   self.data['atomic']['energy'][level_num]
+           
+        
 
     def plot_pec_ratio_dens(self,pec1,pec2,temp=np.array([0]),meta = np.array([0]),scale='log'):
         """plot_pec_ratio_dens will plot the ratio of any two user defined PECs versus density.
