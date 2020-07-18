@@ -24,8 +24,8 @@ def read_adf11(fil):
     adf11['input_file']['charge_max'] = int(tmp[4])
 
     f.readline() #reading '-------------'
-
-    if( 'r' in re.split('/',fil)[-1]):
+    if( 'r' in re.split('_',re.split('/',fil)[-1])[0]):
+        
         adf11['input_file']['metas'] = np.array(list(   #metastables
                        map(int,re.findall('(\d+)',f.readline()))))
         f.readline() #reading '---------------'
@@ -74,12 +74,15 @@ def read_adf11(fil):
             temp_count = 0
             stage_id = np.array(list(map(int,re.findall('(\d+ )',gcr_line))))
             if('scd' in fil or 'acd' in fil):
-                tmp = stage_id[0]
-                stage_id[0] = stage_id[1]
-                stage_id[1] = tmp
+                if(len(stage_id) >1):
+                    tmp = stage_id[0]
+                    stage_id[0] = stage_id[1]
+                    stage_id[1] = tmp
+                else:#this accounts for unresolved files that don't follow the convection of resolved files
+                    tmp = stage_id[0]
+                    stage_id = np.array([1,1,tmp])
 
             ii = ii+1
-            
         else:
             gcr_vals = np.array(list(map(float,re.findall('(-\d+.\d+)',gcr_line))))
             adf11['input_file'][str(stage_id[2]-1)][stage_id[0]-1,stage_id[1]-1,
