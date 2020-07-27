@@ -24,7 +24,7 @@ initial_abundances = np.array([1,0,0,0,0,0,0]) #initial fractional abundances of
 
 ion = ionization_balance(fils, metas, temp, dens,
                          soln_times = time, init_abund = initial_abundances,
-                         keep_charge_state_data = True) #ionization balance call
+                         keep_charge_state_data = True,use_cx=False) #ionization balance call
 
 ion.populate_ion_matrix() #populating the matrix with the GCR coefficients
                                                
@@ -38,26 +38,26 @@ plt.ion
 fig, ax1 = plt.subplots(1,1,figsize=(16/3.,9/3.),dpi=300)
 fig.subplots_adjust(bottom=0.15,top=0.90,left=0.11,right=0.99)
 
-ax1.plot(time*1e3,ion.data['processed']['pops'][0,:,1,1],label='be0, met0',color='b')#time dependent
-ax1.hlines(ion.data['processed']['pops_ss'][0,0,1,1],0,10,color='b',linestyle=':')#time indpenent limit
+ax1.plot(time*1e3,ion.data['processed']['pops_td'][0,:,1,1],label='be0, met0',color='b')#time dependent
+ax1.hlines(ion.data['processed']['pops_ss'][0,1,1],0,10,color='b',linestyle=':')#time indpenent limit
 
-ax1.plot(time*1e3,ion.data['processed']['pops'][1,:,1,1],label='be0, met1',color='g')
-ax1.hlines(ion.data['processed']['pops_ss'][1,0,1,1],0,10,color='g',linestyle=':')
+ax1.plot(time*1e3,ion.data['processed']['pops_td'][1,:,1,1],label='be0, met1',color='g')
+ax1.hlines(ion.data['processed']['pops_ss'][1,1,1],0,10,color='g',linestyle=':')
 
-ax1.plot(time*1e3,ion.data['processed']['pops'][2,:,1,1],label='be1, met0',color='r')
-ax1.hlines(ion.data['processed']['pops_ss'][2,0,1,1],0,10,color='r',linestyle=':')
+ax1.plot(time*1e3,ion.data['processed']['pops_td'][2,:,1,1],label='be1, met0',color='r')
+ax1.hlines(ion.data['processed']['pops_ss'][2,1,1],0,10,color='r',linestyle=':')
 
-ax1.plot(time*1e3,ion.data['processed']['pops'][3,:,1,1],label='be2, met0',color='c')
-ax1.hlines(ion.data['processed']['pops_ss'][3,0,1,1],0,10,color='c',linestyle=':')
+ax1.plot(time*1e3,ion.data['processed']['pops_td'][3,:,1,1],label='be2, met0',color='c')
+ax1.hlines(ion.data['processed']['pops_ss'][3,1,1],0,10,color='c',linestyle=':')
 
-ax1.plot(time*1e3,ion.data['processed']['pops'][4,:,1,1],label='be2, met1',color='m')
-ax1.hlines(ion.data['processed']['pops_ss'][4,0,1,1],0,10,color='m',linestyle=':')
+ax1.plot(time*1e3,ion.data['processed']['pops_td'][4,:,1,1],label='be2, met1',color='m')
+ax1.hlines(ion.data['processed']['pops_ss'][4,1,1],0,10,color='m',linestyle=':')
 
-ax1.plot(time*1e3,ion.data['processed']['pops'][5,:,1,1],label='be3, met0',color='y')
-ax1.hlines(ion.data['processed']['pops_ss'][5,0,1,1],0,10,color='y',linestyle=':')
+ax1.plot(time*1e3,ion.data['processed']['pops_td'][5,:,1,1],label='be3, met0',color='y')
+ax1.hlines(ion.data['processed']['pops_ss'][5,1,1],0,10,color='y',linestyle=':')
 
-ax1.plot(time*1e3,ion.data['processed']['pops'][6,:,1,1],label='be4',color='k')
-ax1.hlines(ion.data['processed']['pops_ss'][6,0,1,1],0,10,color='k',linestyle=':')
+ax1.plot(time*1e3,ion.data['processed']['pops_td'][6,:,1,1],label='be4',color='k')
+ax1.hlines(ion.data['processed']['pops_ss'][6,1,1],0,10,color='k',linestyle=':')
 
 ax1.legend(fontsize='x-small')
 
@@ -75,7 +75,7 @@ plt.title('Temperature 28 eV, Density 1*10$^{14}$ cm$^{-3}$')
 
 
 temp = np.linspace(2,100,200) #temp grid
-ion = ionization_balance(fils, metas, temp, dens, keep_charge_state_data = False)
+ion = ionization_balance(fils, metas, temp, dens, keep_charge_state_data = False,use_cx=False)
 ion.populate_ion_matrix()
 ion.solve_time_independent()
 
@@ -83,19 +83,19 @@ ion.solve_time_independent()
 fig, ax1 = plt.subplots(1,1,figsize=(16/3.,9/3.),dpi=300)
 fig.subplots_adjust(bottom=0.15,top=0.99,left=0.11,right=0.99)
 
-ax1.plot(temp,ion.data['processed']['pops_ss'][0,0,:,1],label='be0, met0',color='b')
+ax1.plot(temp,ion.data['processed']['pops_ss'][0,:,1],label='be0, met0',color='b')
 
-ax1.plot(temp,ion.data['processed']['pops_ss'][1,0,:,1],label='be0, met1',color='g')
+ax1.plot(temp,ion.data['processed']['pops_ss'][1,:,1],label='be0, met1',color='g')
 
-ax1.plot(temp,ion.data['processed']['pops_ss'][2,0,:,1],label='be1, met0',color='r')
+ax1.plot(temp,ion.data['processed']['pops_ss'][2,:,1],label='be1, met0',color='r')
 
-ax1.plot(temp,ion.data['processed']['pops_ss'][3,0,:,1],label='be2, met0',color='c')
+ax1.plot(temp,ion.data['processed']['pops_ss'][3,:,1],label='be2, met0',color='c')
 
-ax1.plot(temp,ion.data['processed']['pops_ss'][4,0,:,1],label='be2, met1',color='m')
+ax1.plot(temp,ion.data['processed']['pops_ss'][4,:,1],label='be2, met1',color='m')
 
-ax1.plot(temp,ion.data['processed']['pops_ss'][5,0,:,1],label='be3, met0',color='y')
+ax1.plot(temp,ion.data['processed']['pops_ss'][5,:,1],label='be3, met0',color='y')
 
-ax1.plot(temp,ion.data['processed']['pops_ss'][6,0,:,1],label='be4',color='k')
+ax1.plot(temp,ion.data['processed']['pops_ss'][6,:,1],label='be4',color='k')
 
 ax1.legend(fontsize='x-small')
 
@@ -107,4 +107,4 @@ ax1.set_ylabel('Fractional Abundance (-)')
 
 
 
-#ion.solve_source(np.array([1,0,0,0,0,0,0]),np.array([1,0,0,0,0,0,0]),np.linspace(0,10,1e3))
+ion.solve_source(np.array([1,0,0,0,0,0,0]),np.array([1,0,0,0,0,0,0]),np.linspace(0,.06,1e3))
