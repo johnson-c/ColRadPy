@@ -362,15 +362,14 @@ class colradpy():
 
             ion_excit_interp_grid = ion_excit_interp(self.data['user']['temp_grid'])
             
-            if(self.data['user']['scale_file_ioniz']):
-                for ii in range(0,len(self.data['rates']['ioniz']['ion_transitions'])):
-                    scale = np.abs(self.data['atomic']['zpla'][self.data['rates']['ioniz']['ion_transitions'][ii,0]-1,
-                                                    self.data['rates']['ioniz']['ion_transitions'][ii,1]-1])
-                    ion_excit_interp_grid[ii] = ion_excit_interp_grid[ii] *scale
-                    
-        for i in range(0,len(self.data['rates']['ioniz']['ion_transitions'])):
+             if(self.data['user']['scale_file_ioniz']):
+                 for ii in range(0,len(self.data['rates']['ioniz']['ion_transitions'])):
+                     scale = np.abs(self.data['atomic']['zpla'][self.data['rates']['ioniz']['ion_transitions'][ii,0]-1,
+                                                     self.data['rates']['ioniz']['ion_transitions'][ii,1]-1])
+                     ion_excit_interp_grid[ii] = ion_excit_interp_grid[ii] *scale
+            
             for j in range(0,len(self.data['user']['temp_grid'])):
-
+                
                 self.data['rates']['ioniz']['ionization'][self.data['rates']['ioniz']\
                     ['ion_transitions'][i,0] -1,self.data['rates']['ioniz']\
                     ['ion_transitions'][i,1] -1, j] = ion_excit_interp_grid[i,j]/\
@@ -379,7 +378,6 @@ class colradpy():
                     [self.data['rates']['ioniz']['ion_transitions'][i,0] -1 ])\
                     *0.00012398774011749576/self.data['user']['temp_grid'][j])
                 
-
                 
     def suppliment_with_ecip(self):
         """This function will suppliment the ionization that is to be used in the CR matrix
@@ -1408,13 +1406,17 @@ class colradpy():
                 #for the PEC value and don't want to have to keep track of these.
 
                 if(levels_to_keep[j] > i ):#and self.data['cr_matrix']['A_ji'][j,i] > 1E-31):
-
+                    #same ways the SS version
                     self.data['processed']['td']['pecs'].append( self.data['cr_matrix']['A_ji'][levels_to_keep[j],i]*\
-                                                        self.data['processed']['td']['td_pop'][levels_to_keep[j]])
-        
+                                                                 self.data['processed']['td']['td_pop'][levels_to_keep[j]]/\
+                                                                 self.data['user']['dens_grid'])
+
         self.data['processed']['td']['pecs'] = np.asarray(self.data['processed']['td']['pecs'])
-            
-            
+
+        #just the time dependent version of the SCD coefficient,calculated the same as SS version
+        #just remember not to include the population from the + stage
+        self.data['processed']['td']['scd'] =  np.einsum('ipk,itkl->tpkl',self.data['rates']['ioniz']['ionization'],
+                            self.data['processed']['td']['td_pop'][0:len(self.data['rates']['ioniz']['ionization']),:,:,:])
 
 
     def split_pec_multiplet(self):
