@@ -362,12 +362,13 @@ class colradpy():
 
             ion_excit_interp_grid = ion_excit_interp(self.data['user']['temp_grid'])
             
-             if(self.data['user']['scale_file_ioniz']):
-                 for ii in range(0,len(self.data['rates']['ioniz']['ion_transitions'])):
-                     scale = np.abs(self.data['atomic']['zpla'][self.data['rates']['ioniz']['ion_transitions'][ii,0]-1,
-                                                     self.data['rates']['ioniz']['ion_transitions'][ii,1]-1])
-                     ion_excit_interp_grid[ii] = ion_excit_interp_grid[ii] *scale
-            
+            if(self.data['user']['scale_file_ioniz']):
+                for ii in range(0,len(self.data['rates']['ioniz']['ion_transitions'])):
+                    scale = np.abs(self.data['atomic']['zpla'][self.data['rates']['ioniz']['ion_transitions'][ii,0]-1,
+                                                    self.data['rates']['ioniz']['ion_transitions'][ii,1]-1])
+                    ion_excit_interp_grid[ii] = ion_excit_interp_grid[ii] *scale
+                    
+        for i in range(0,len(self.data['rates']['ioniz']['ion_transitions'])):            
             for j in range(0,len(self.data['user']['temp_grid'])):
                 
                 self.data['rates']['ioniz']['ionization'][self.data['rates']['ioniz']\
@@ -1415,7 +1416,7 @@ class colradpy():
 
         #just the time dependent version of the SCD coefficient,calculated the same as SS version
         #just remember not to include the population from the + stage
-        self.data['processed']['td']['scd'] =  np.einsum('ipk,itkl->tpkl',self.data['rates']['ioniz']['ionization'],
+        self.data['processed']['td']['scd'] =  np.einsum('ipk,itkl->ptkl',self.data['rates']['ioniz']['ionization'],
                             self.data['processed']['td']['td_pop'][0:len(self.data['rates']['ioniz']['ionization']),:,:,:])
 
 
