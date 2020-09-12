@@ -1132,6 +1132,12 @@ class colradpy():
                                                 (1+np.sum(np.sum(self.data['processed']['pop_lvl'],axis=1),axis=0))
             
             #the F matrix
+
+            ##############################################################
+            #
+            # NOT THE SAME AS THE ADAS DEFINITION, ADAS DIVIDES BY n_e
+            #
+            ###############################################################
             self.data['processed']['F'] = np.sum(self.data['processed']['pop_lvl']\
                                                  [:,:,0:len(self.data['atomic']['metas']),:],axis=1)
             #effective ionization rate
