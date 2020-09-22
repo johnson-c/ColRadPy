@@ -306,11 +306,11 @@ ColRadPy data
 +---------------------------------+-------------------------------------------------------------------+----------------+--------------------------------------------------------------------------------+
 |   pops_no_norm                  | populations of excited states with no normalization applied       | float arr      |(len(energy)-len(metas), len(energy)-len(metas), len(metas),user_temp,user_dens)|
 +---------------------------------+-------------------------------------------------------------------+----------------+--------------------------------------------------------------------------------+
-|   F                             | F matrix c-1_jic_isigma (note this is different from adas deff)   | float arr      | (len(energy)-len(metas), len(metas), user_temp, user_dens)                     |
+|   F                             |F matrix (note this is diff from adas deff they divide by n_e)     | float arr      | (len(energy)-len(metas), len(metas), user_temp, user_dens)                     |
 +---------------------------------+-------------------------------------------------------------------+----------------+--------------------------------------------------------------------------------+
-|   split                         | hold parameters from splitting LS to LSJ (spectroscopically acc)  | dictionary     |                                 -                                              |
+|   split                         | hold parameters from splitting LS to LSJ (spectroscopically acc)  | dict           |                                 -                                              |
 +---------------------------------+-------------------------------------------------------------------+----------------+--------------------------------------------------------------------------------+
-|      td                         | hold parameters for the time dependent solution  | dictionary     |                |                                 -                                              |
+|      td                         | hold parameters for the time dependent solution  | dictionary     | dict           |                                 -                                              |
 +---------------------------------+-------------------------------------------------------------------+----------------+--------------------------------------------------------------------------------+
 
 
