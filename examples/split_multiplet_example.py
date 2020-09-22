@@ -1,38 +1,66 @@
+import numpy as np 
+import matplotlib.pyplot as plt
 import sys
 sys.path.append('../')
 from colradpy import colradpy
-import numpy as np
 
-he = colradpy('./mom97_ls#he1.dat',[0],np.array([20]),np.array([1.e13]),use_recombination=False,use_recombination_three_body = False,use_ionization=True)
 
-he.solve_cr()
+fil = 'mom97_ls#he0.dat' #adf04 file location
+
+temp_grid = np.array([500]) #temperature grid in (eV) for steady state ionization balance
+dens_grid = np.array([1.e13]) # density grid in (cm-3) for steady state ionization balance
+meta = np.array([0]) #index of the chosen metastables here only the ground is chosen
+
+he = colradpy(fil,  #fil location
+               meta, #metastable indexes
+               temp_grid, #temperature grid
+               dens_grid, #density grid
+               use_ionization=True, #ionization rates included
+               suppliment_with_ecip=True, #ECIP filling in where ionization not available
+               use_recombination_three_body=False, #Do not use 3body recombination
+               use_recombination=False,   # Do not use recombination
+               rate_interp_col='cubic'
+              )
+
+he.make_electron_excitation_rates() #interpolate eciation rates on the user defined grid
+he.make_ioniz_from_reduced_ionizrates() #interpolate ionization rates on the user defined grid
+he.suppliment_with_ecip() #make ECIP rates where ionization not available
+he.populate_cr_matrix()  #place rates into the CR matrix
+he.solve_quasi_static()  #solve the CR matrix
+
+he.get_nist_levels_txt()
+he.split_structure_terms_to_levels()
+he.shift_j_res_energy_to_nist()
 he.split_pec_multiplet()
 
-wave_8_3 = np.array([468.5376849,468.5757974,468.5704380])
-ind_8_3 = np.where( (he.data['processed']['pec_levels'][:,0] == 8) & (he.data['processed']['pec_levels'][:,1] == 3))[0]
-
-wave_6_5 = np.array([468.5407225,468.5568006])
-ind_6_5 = np.where( (he.data['processed']['pec_levels'][:,0] == 6) & (he.data['processed']['pec_levels'][:,1] == 5))[0]
-
-wave_7_3 = np.array([468.5524404,468.5905553])
-ind_7_3 = np.where( (he.data['processed']['pec_levels'][:,0] == 7) & (he.data['processed']['pec_levels'][:,1] == 3))[0]
-
-wave_9_4 = np.array([468.5703849, 468.5830890, 468.5804092])
-ind_9_4 = np.where( (he.data['processed']['pec_levels'][:,0] == 9) & (he.data['processed']['pec_levels'][:,1] == 4))[0]
-
-wave_6_4 = np.array([ 468.5917884, 468.5757080, 468.5884123])
-ind_6_4 = np.where( (he.data['processed']['pec_levels'][:,0] == 6) & (he.data['processed']['pec_levels'][:,1] == 4))[0]
 
 
-wave_468 = np.hstack((wave_8_3,wave_6_5,wave_7_3,wave_9_4,wave_6_4))
-pecs_468 = np.vstack((he.data['processed']['split']['pecs'][ind_8_3[0]],
-                      he.data['processed']['split']['pecs'][ind_6_5[0]],
-                      he.data['processed']['split']['pecs'][ind_7_3[0]],
-                      he.data['processed']['split']['pecs'][ind_9_4[0]],
-                      he.data['processed']['split']['pecs'][ind_6_4[0]]))[np.argsort(wave_468)]
-wave_468 = wave_468[np.argsort(wave_468)]
+#Set up pretty plot settings
+plt.ion()
+plt.rc('font',size=8)
+plt.rcParams['font.weight'] = 'semibold'
+params = {'mathtext.default': 'regular' }
+plt.rcParams.update(params)
+
+
+fig, ax1 = plt.subplots(1,1,figsize = (6.5,3),dpi=300)
+fig.subplots_adjust(bottom=0.08,top=0.94,left=0.08,right=0.97,hspace=0.3,wspace=.35)
+ax1.tick_params(axis='both',direction='in')
 
 
 
-plt.figure()
-plt.vlines(wave_468,np.zeros_like(wave_468),pecs_468[:,0,0,0])
+
+ax1.vlines(he.data['processed']['wave_air'],
+           np.zeros_like(he.data['processed']['wave_air']),
+           he.data['processed']['pecs'][:,0,0,0],label='Term resolved')
+
+ax1.vlines(he.data['processed']['split']['wave_air'],
+           np.zeros_like(he.data['processed']['split']['wave_air']),
+           he.data['processed']['split']['pecs'][:,0,0,0],label='Level resolved',color='r')
+
+ax1.set_xlabel('Wavelength (nm)',weight='semibold')
+ax1.set_ylabel('Intensity (AU)',weight='semibold')
+ax1.set_xlim(587.5,587.7)
+plt.ylim(0,2e-10)
+plt.legend()
+plt.tight_layout()
