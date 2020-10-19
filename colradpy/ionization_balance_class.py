@@ -529,7 +529,7 @@ class ionization_balance():
                                                np.einsum('ijkl,l->ijkl',self.data['ion_matrix'],
                                                self.data['user']['dens_grid']),n0,s0,td_t)
 
-
+        self.data['processed']['pops_source'] = self.data['processed']['pops_td_source']
 
         '''
         self.data['processed']['pops_td'],\
