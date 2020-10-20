@@ -63,7 +63,6 @@ def convert_to_air(lam):
     return 1 + 0.0000834254 + 0.02406147 / (130 - s**2) + 0.00015998 / (38.9 - s**2)
 
 
-
 class colradpy():
     """The ColRadPy class, this class will store data and carry out calculation to solve
        the collisional radiative set of equations. A full tutorial is provided in the 
@@ -81,6 +80,12 @@ class colradpy():
 
       :param dens_grid: array of temperature for calculation (cm-3)
       :type metas: float array
+
+      :param htemp_grid: Temperature grid of thermal CX hydrogen
+      :type htemp_grid: float array
+
+      :param hdens_grid: Density grid of thermal CX hydrogen
+      :type hdens_grid: float array
 
       :param use_ionization: Flag to turn on ionization in calculation, default = True
       :type metas: bool
@@ -103,8 +108,34 @@ class colradpy():
       :param td_source: source term for populations in the TD CR equations
       :type metas: float array
 
-    """
+      :param default_pop_norm: Normalize to population within the charge state 
+      :type default_pop_norm: bool
 
+      :param temp_dens_pair: use temperature density pair array instead of temperature density grids
+      :type temp_dens_pair: bool
+
+      :param rate_interp_ion: Interpolation type for ionization
+      :type rate_interp_ion: string
+
+      :param rate_interp_recomb: Interpolation type for recombination
+      :type rate_interp_recomb: string
+
+      :param rate_interp_col: Interpolation type for excitation
+      :type rate_interp_col: string
+
+      :param rate_interp_cx: Interpolation type for charge exchange
+      :type rate_interp_cx: string
+
+      :param use_cx: Use charge exchange in the calculation
+      :type use_cx: bool
+
+      :param use_cx: Scale ionization in the file
+      :type use_cx: bool
+
+      :param ne_tau: n_e*tau values for time dependent calc to be evaluated at can not be defined at the same time as td_t
+      :type ne_tau: float array
+
+    """
     
     def __init__(self,fil,metas=np.array([]),temp_grid=np.array([]),electron_den=np.array([]),
                  htemp_grid = np.array([]), hdens_grid = np.array([]),
@@ -408,7 +439,11 @@ class colradpy():
             ion_inds = np.where( self.data['atomic']['zpla'][:,p] > -1)[0]
             ion_inds2 = np.where( self.data['atomic']['zpla1'] == p +1)[0]
             ion_inds = np.intersect1d(ion_inds,ion_inds2)
-            ecip_inds = np.where(self.data['rates']['ioniz']['ionization'][:,p,0] ==0)[0]
+            if(self.data['rates']['ioniz']['ionization'].size > 0):
+                ecip_inds = np.where(self.data['rates']['ioniz']['ionization'][:,p,0] ==0)[0]
+            else:
+                ecip_inds = np.linspace(0,len(self.data['atomic']['energy'])-1,
+                                       len(self.data['atomic']['energy']),dtype=int)
             to_use = np.intersect1d(ecip_inds,ion_inds)
             self.data['rates']['ioniz']['ionization'][to_use,p,:] =\
                                         self.data['rates']['ioniz']['ecip'][to_use,p,:]
@@ -1659,6 +1694,9 @@ class colradpy():
 
 
     def format_config_to_nist(self,conf=-1):
+        """
+            Formats the string for the configuration of the adf04 file to the NIST format
+        """
 
         #allowing for this is be called and operate
         #automatically on the store configuration
@@ -1826,6 +1864,7 @@ class colradpy():
     def get_nist_levels(self):
         """ get_nist_levels grabs the nist energy levels from the NIST mysql database. The mysql NIST database must
             be installed. There is a plain text file in the works to get around this and simplify for users.
+            use get_nist_levels_txt for this
         """
         
         self.data['nist'] = {}
@@ -1834,8 +1873,8 @@ class colradpy():
                                                      self.data['atomic']['charge_state'] + 1)
 
     def get_nist_levels_txt(self):
-        """ get_nist_levels grabs the nist energy levels from the NIST mysql database. The mysql NIST database must
-            be installed. There is a plain text file in the works to get around this and simplify for users.
+        """ get_nist_levels grabs the nist energy levels from the the stored txt files in 'atomic/nist_energies'.
+            This data comes from the NIST database ~09/2016
         """
         
         self.data['nist'] = {}
