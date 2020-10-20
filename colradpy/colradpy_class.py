@@ -81,10 +81,10 @@ class colradpy():
       :param dens_grid: array of temperature for calculation (cm-3)
       :type metas: float array
 
-      :param htemp_grid: Temperature grid of thermal CX hydrogen
+      :param htemp_grid: Temperature grid of thermal CX hydrogen (eV)
       :type htemp_grid: float array
 
-      :param hdens_grid: Density grid of thermal CX hydrogen
+      :param hdens_grid: Density grid of thermal CX hydrogen (cm-3)
       :type hdens_grid: float array
 
       :param use_ionization: Flag to turn on ionization in calculation, default = True
@@ -132,7 +132,7 @@ class colradpy():
       :param use_cx: Scale ionization in the file
       :type use_cx: bool
 
-      :param ne_tau: n_e*tau values for time dependent calc to be evaluated at can not be defined at the same time as td_t
+      :param ne_tau: n_e*tau values for time dependent calc to be evaluated at can not be defined at the same time as td_t (cm-3 s)
       :type ne_tau: float array
 
     """
