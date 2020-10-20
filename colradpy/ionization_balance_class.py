@@ -31,18 +31,29 @@ class ionization_balance():
       :param fils: Array of the input adf04 file
       :type fils: string array
 
-      :param temp_grid: Array of the temperatures in eV
+      :param metas: List of arrays for the metastable levels in a charge state
+      :type metas: list
+
+      :param temp_grid: Array of the temperatures in (eV)
       :type temp_grid: float array
 
-      :param dens_grid: Array of the densities in cm-3
+      :param dens_grid: Array of the densities in (cm-3)
       :type dens_grid: float array
+
+      :param htemp_grid: Temperature grid of thermal CX hydrogen (eV)
+      :type htemp_grid: float array
+
+      :param hdens_grid: Density grid of the thermal CX hydrogen densities in (cm-3)
+      :type hdens_grid: float array
+
+      :param soln_times: Times to calculate the solution for the time dependent solutions (s)
+      :type soln_times: float array
 
       :param use_ionization: Choose if ionization will be use. This will proced the SCD rates.
        This should probably always be true if running an ionization balance but the option is there.
                              Can be array of bools or just a single bool,
                              if just a single bool is supplied then all
                              charge states will have the same value.
-
       :type use_ionization: bool array or bool
 
       :param suppliment_with_ecip: Suppliments ionization rates with ECIP when ionization rates are not 
@@ -50,29 +61,46 @@ class ionization_balance():
                                Can be array of bools or just a single bool,
                              if just a single bool is supplied then all
                              charge states will have the same value.
-
       :type suppliment_with_ecip: bool array or bool
 
       :param use_recombination_three_body: Adds in three body recombination, there must be ionization present for this to work
                                Can be array of bools or just a single bool,
                              if just a single bool is supplied then all
                              charge states will have the same value.
-
       :type use_recombination_three_body: bool array or bool
 
-      :param use_recombination: Use recombination in the ionization balance. THis will produce the ACD and possible XCD rates
+      :param use_recombination: Use recombination in the ionization balance. This will produce the ACD and possible XCD rates
                                Can be array of bools or just a single bool,
                              if just a single bool is supplied then all
                              charge states will have the same value.
-
       :type use_recombination: bool array or bool
+
+
+      :param use_cx: Use thermal charge exchange  in the ionization balance. 
+                     This will produce the CCD rates the input can be array of bools or just a single bool,
+                             if just a single bool is supplied then all charge states will have the same value.
+      :type use_cx: bool array or bool
 
 
       :param keep_species_data: When True this will keep all of the data associated with the CR solutions for each charge state.
                                 The can potentially take up lots of memory, the default is False
+      :type keep_species_data: bool
 
-      :type use_recombination: bool
 
+      :param init_abund: The initial fractional abundances at t=0
+      :type init_abund: float array
+
+      :param source: Source rate into any charge state
+      :type source: float array
+
+      :param scale_file_ioniz: Scale ionization in the file
+      :type scale_file_ioniz: bool
+
+      :param ne_tau: n_e*tau values for time dependent calc to be evaluated at can not be defined at the same time as td_t (cm-3 s)
+      :type ne_tau: float array
+
+      :param adf11_files: the files provided are adf11 formatted files
+      :type adf11_files: bool
 
     """
  
