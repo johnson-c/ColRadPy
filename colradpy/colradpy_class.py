@@ -129,8 +129,8 @@ class colradpy():
       :param use_cx: Use charge exchange in the calculation
       :type use_cx: bool
 
-      :param use_cx: Scale ionization in the file
-      :type use_cx: bool
+      :param scale_file_ioniz: Scale ionization in the file
+      :type scale_file_ioniz: bool
 
       :param ne_tau: n_e*tau values for time dependent calc to be evaluated at can not be defined at the same time as td_t (cm-3 s)
       :type ne_tau: float array
@@ -1555,7 +1555,7 @@ class colradpy():
 
 
                 
-        #self.data['processed']['split']['wave_vac'] = np.asarray(self.data['processed']['split']['wave_air'])
+        self.data['processed']['split']['wave_vac'] = np.copy(np.asarray(self.data['processed']['split']['wave_air']))
         self.data['processed']['split']['wave_air'] = np.asarray(self.data['processed']['split']['wave_air'])/\
                                                      convert_to_air( np.asarray(self.data['processed']['split']['wave_air']))
         self.data['processed']['split']['pecs'] =  np.asarray(self.data['processed']['split']['pecs'])
