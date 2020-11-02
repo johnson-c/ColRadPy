@@ -750,6 +750,10 @@ class colradpy():
                                                self.data['rates']['excit']['col_transitions'][i,1]-1] = \
                                                                                             self.data['rates']['a_val'][i]
 
+
+        #sum up all the spontaneous emissions from a level for use in natural broadening
+        self.data['cr_matrix']['A_ji_loss'] = np.sum(self.data['cr_matrix']['A_ji'],axis=1)
+        
         #transpose the self.data['cr_matrix']['q_ij'] matrix so the indexes make sense
         self.data['cr_matrix']['q_ij'] = self.data['cr_matrix']['q_ij'].transpose(1,0,2)
 
