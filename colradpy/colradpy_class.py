@@ -30,6 +30,7 @@ import numpy as np
 import re
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
+from scipy import constants
 import sys
 sys.path.append('./')
 from colradpy.r8necip import *
@@ -2103,3 +2104,84 @@ class colradpy():
                 if(scale=='log'):
                     plt.semilogx()
                 plt.legend(loc='best')
+
+
+
+    def make_nat_broad(self,dw=0,n=1000):
+        """ Calculates the width of natural broadening from the addition of the upper and lower spontaneous emission.
+            Also creates wavelength and spectral intensity arrays for each spectral line.
+            The default grid shape is (#PECs,1000).
+        Args:
+          :param dw: +- from the central wavelength
+          :type dw: float
+
+          :param n: number of points in the wavelength array
+          :type n: int
+
+        """
+        
+        #check if other broadening processes have already be calculated
+        if( 'broadening' not in self.data['processed']):
+            self.data['processed']['broadening'] = {}
+        self.data['processed']['broadening']['nat'] = {}
+
+        # delta nu_L = A_{n'->n}/2/pi add up both the upper and lower loss rates of the levels
+        self.data['processed']['broadening']['nat']['d_nu_l'] = \
+                              self.data['cr_matrix']['A_ji_loss'][self.data['processed']['pec_levels'][:,0]]/2/np.pi+\
+                              self.data['cr_matrix']['A_ji_loss'][self.data['processed']['pec_levels'][:,1]]/2/np.pi
+
+        if(dw==0):
+            #The default lorentz function has 1000 grid points and 
+            self.data['processed']['broadening']['nat']['wave_arr'] = np.zeros((len(self.data['processed']['pec_levels']),
+                                                                                1000))
+            self.data['processed']['broadening']['nat']['theta'] = np.zeros((len(self.data['processed']['pec_levels']),
+                                                                             1000))
+
+            for i in range(0,len(self.data['processed']['pec_levels'])):
+                
+                qq = self.data['processed']['broadening']['nat']['d_nu_l'][i]
+                ww = self.data['processed']['wave_air'][i]
+                
+                #set the grid to allow for varrying natural line widths
+                dww = (ww*1.e-9)**2/constants.c*qq*1.e9*10
+                self.data['processed']['broadening']['nat']['wave_arr'][i,:] = np.linspace(ww-dww,ww+dww,n)
+                
+                self.data['processed']['broadening']['nat']['theta'][i,:] = self.lorentz(qq/2/np.pi,
+                                     constants.c/((self.data['processed']['broadening']['nat']['wave_arr'][i,:]/1.e9)),
+                                     constants.c/(ww/1.e9))
+
+        else:
+                
+            self.data['processed']['broadening']['nat']['wave_arr'] = np.zeros((len(self.data['processed']['pec_levels']),1000))
+            self.data['processed']['broadening']['nat']['theta'] = np.zeros((len(self.data['processed']['pec_levels']),1000))
+            
+            for i in range(0,len(self.data['processed']['pec_levels'])):
+                
+                qq = self.data['processed']['broadening']['nat']['d_nu_l'][i]
+                ww = self.data['processed']['wave_air'][i]
+                
+                dww = dw
+                self.data['processed']['broadening']['nat']['wave_arr'][i,:] = np.linspace(ww-dww,ww+dww,n)
+                
+                self.data['processed']['broadening']['nat']['theta'][i,:] = self.lorentz(qq/2/np.pi,
+                                     constants.c/((self.data['processed']['broadening']['nat']['wave_arr'][i,:]/1.e9)),
+                                     constants.c/(ww/1.e9))
+        
+
+        
+    def lorentz(self,vl,v,v0):
+        '''Lorentzian function used for natural line broadening vl/((v-v0)**2 + vl**2)
+
+        Args:
+          :param vl: width param
+          :type vl: float
+
+          :param v: x array
+          :type v: float
+
+          :param v0: center
+          :type v0: float
+
+        '''
+        return vl/((v-v0)**2 + vl**2)
+        
