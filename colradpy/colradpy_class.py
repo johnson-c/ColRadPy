@@ -2120,11 +2120,6 @@ class colradpy():
                 plt.legend(loc='best')
 
 
-
-
-
-                
-
     def make_nat_broad(self,calc_lorentz = True, dw=0,n=50,gs=5,split_wave=np.array([])):
         """ Calculates the width of natural broadening from the addition of the upper and lower spontaneous emission.
             Also creates wavelength and spectral intensity arrays for each spectral line.
@@ -2135,6 +2130,18 @@ class colradpy():
 
           :param n: number of points in the wavelength array
           :type n: int
+
+          :param calc_lorentz: calculated a number of Lorentzians=['processed']['pecs'] or len(split_wave)
+          :type calc_lorentz: bool
+
+          :param dw:  wavelength grid spacing if default not chosen
+          :type dw:  float
+
+          :param n:  length of wavelength grids
+          :type n:  int
+
+          :param split_wave:  PEC/wavelength array to be broadened
+          :type split_wave:  int
 
         """
         
@@ -2166,7 +2173,7 @@ class colradpy():
                 dww = dw
 
             self.data['processed']['broadening']['nat']['wave_arr'] =np.linspace(wave-dww,
-                                                                      wave + dww,n,axis=1)
+                                                                      wave + dww,n,axis=1)#create 2d wave array
 
             lor_tmp = self.lorentz(self.data['processed']['broadening']['nat']['dnu_l']/2/np.pi,
                                           constants.c/((self.data['processed']['broadening']['nat']['wave_arr']/1.e9)),
@@ -2178,7 +2185,8 @@ class colradpy():
                             1/np.trapz(lor_tmp,x=self.data['processed']['broadening']['nat']['wave_arr'],axis=1))
 
 
-    def make_dopp_broad(self, T, m, calc_gauss=True, dw=0, n=50,gs=5,split_wave=np.array([])):
+            
+    def make_dopp_broad(self, T, m, calc_gauss=True, dw=0., n=50,gs=5,split_wave=np.array([])):
         """ Make the doppler shift for spectral lines ues equation 1.25 and 1.26 from Stuart Lochs thesis
         Args:
           :param nu0: frequency of spectral line
@@ -2189,6 +2197,18 @@ class colradpy():
 
           :param m:  Mass of ion (kg)
           :type m: float
+
+          :param calc_gauss: calculated a number of gaussians=['processed']['pecs'] or len(split_wave)
+          :type calc_gauss: bool
+
+          :param dw:  wavelength grid spacing if default not chosen
+          :type dw:  float
+
+          :param n:  length of wavelength grids
+          :type n:  int
+
+          :param split_wave:  PEC/wavelength array to be broadened
+          :type split_wave:  int
 
         """
 
@@ -2227,8 +2247,6 @@ class colradpy():
 
 
 
-            
-                           
     def lorentz(self,vl,v,v0):
         '''Lorentzian function used for natural line broadening vl/((v-v0)**2 + vl**2)
 
