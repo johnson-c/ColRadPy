@@ -2235,6 +2235,13 @@ class colradpy():
                 dww = dw
 
             self.data['processed']['broadening']['dopp']['wave_arr'] =np.linspace(wave-dww, wave + dww,n,axis=1)#wavelength array
+
+
+            self.data['processed']['broadening']['dopp']['theta'] = self.gauss_dopp(self.data['processed']['broadening']['dopp']['wave_arr'],
+                                                                                    wave,
+                                                                                    self.data['processed']['broadening']['dopp']['dnu_g'])
+            
+            '''
             #see Loch's thesis equation 1.25
             gau_tmp = np.exp(-1*( (constants.c/(self.data['processed']['broadening']['dopp']['wave_arr']/1.e9) - constants.c/(wave[:,None]/1.e9))/\
                                                              self.data['processed']['broadening']['dopp']['dnu_g'][:,None])**2)/\
@@ -2245,7 +2252,24 @@ class colradpy():
                                                                               gau_tmp,
                                 1/np.trapz(gau_tmp,x=self.data['processed']['broadening']['dopp']['wave_arr'],axis=1))
 
+            '''
 
+
+
+    def gauss_dopp(self, wave_arr, wave, dnu_g):
+
+            gau_tmp = np.exp(-1*((constants.c/(wave_arr/1.e9)-constants.c/(wave[:,None]/1.e9))/dnu_g[:,None])**2)/\
+                                                                                     (np.sqrt(np.pi)*dnu_g[:,None])
+########################################################################################################################
+            #normalize so the area under the curve is 1
+            return np.einsum('ij,i->ij', gau_tmp,1/np.trapz(gau_tmp,x=wave_arr,axis=1))
+
+
+
+
+
+
+        
 
     def lorentz(self,vl,v,v0):
         '''Lorentzian function used for natural line broadening vl/((v-v0)**2 + vl**2)
