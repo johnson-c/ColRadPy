@@ -40,6 +40,7 @@ from colradpy.split_multiplet import *
 from colradpy.nist_read_txt import *
 from colradpy.solve_matrix_exponential import *
 from colradpy.colradpy_utility import *
+from colradpy.convert_eissner import *
 import collections
 from matplotlib import rc,rcParams
 from fractions import Fraction
@@ -324,6 +325,16 @@ class colradpy():
 
 
         inds_below = np.where( self.data['atomic']['energy'] < self.data['atomic']['ion_pot'][0])
+
+
+        if(np.where( self.data['atomic']['zpla'][:,0]>-1)[0].size == 0):
+            print("adf04 file specifies no ionization rates but you requested ECIP, the adf04 file creator"+ \
+                   "most likely forgot about specify this (looking at you R-matrix people). Blindly creating"+ \
+                   "ECIP rates for every transition, you don't want this specify in the file which levels" +    \
+                   "should and should not have ionization rates.")
+
+            self.data['atomic']['zpla'][:] = 1
+            self.data['atomic']['zpla1'][:] = 1.000
         
         self.data['rates']['ioniz']['ecip'][inds_below] = ecip_rates(self.data['atomic']['energy'][inds_below],
                                                   self.data['atomic']['ion_pot'],self.data['atomic']['zpla'][inds_below],
@@ -566,10 +577,10 @@ class colradpy():
                                   len(self.data['atomic']['ion_pot']),
                                   len(self.data['user']['temp_grid'])))
         for p in range(0,len(self.data['atomic']['ion_pot'])):
-            l_map = np.array(['S','P','D','F','G','H','I','J'])
+            l_map = np.array(['S','P','D','F','G','H','I','J','I','K'])
             if(len(self.data['atomic']['ion_term'][p]) ==2): # was -1)/2.
                 w_ion = ( int(self.data['atomic']['ion_term'][p][0]) * \
-                          (np.where(l_map==self.data['atomic']['ion_term'][p][1])[0][0]*2+1))
+                          (np.where(l_map==self.data['atomic']['ion_term'][p][1].upper())[0][0]*2+1))
             elif(len(self.data['atomic']['ion_term'][p]) ==3):
                 w_ion = float(self.data['atomic']['ion_term'][p][2])
             else:
@@ -1565,6 +1576,81 @@ class colradpy():
         self.data['processed']['split']['pecs'] =  np.asarray(self.data['processed']['split']['pecs'])
 
 
+
+
+
+
+
+
+    def get_nist_conf_form(self):
+
+        self.data['atomic']['nist_conf_form'] = np.empty_like(self.data['atomic']['config'])
+        for i in range(0,len(self.data['atomic']['config'])):
+
+            st = self.data['atomic']['config'][i].lower()
+            rem = list(re.finditer(r'\d\w1' , st))
+            if rem:
+                tmpp = ''
+                for ii in range(0,len(rem)):
+                    st = st[:rem[ii].span()[1]-1-ii] + st[rem[ii].span()[1]+1-1-ii:]
+            
+            self.data['atomic']['nist_conf_form'][i] = st
+        self.data['atomic']['nist_conf_form'] = self.data['atomic']['nist_conf_form'].astype('object')
+
+        #remove closed subshells because thats what NIST does
+        #probably a better way to do this but I cant be bothered
+        closed_shells = np.array(['1s2','2s2','2p6','3s2','3p6','4s2','3d10','4p6','5s2','4f14','5d10'])
+
+        #now do the stame thing for the NIST configurations
+        shells_arr_tmp = np.empty_like(self.data['atomic']['nist_conf_form'].astype('<U1000'))
+
+        test = np.where(np.char.find(closed_shells,
+                              self.data['atomic']['nist_conf_form'][0][0:3])==0)[0] #[0:2]
+
+
+
+        if(test.size >0):
+            for ij in range(0,test[0]):
+
+                add_shell = np.setdiff1d(range(self.data['atomic']['nist_conf_form'].shape[0]),
+                                         np.where(np.char.find(self.data['atomic']['nist_conf_form'].astype('<U'),
+                                                               closed_shells[ij][0:2])==0)[0])
+                if(add_shell.size>0):
+                    for ik in add_shell:
+
+                        if(ij == 0):
+                            if(ij == test[0] -1):
+                                wat = shells_arr_tmp[ik] +  closed_shells[ij] + '.'
+                                shells_arr_tmp[ik] = wat
+
+                            else:
+                                wat = shells_arr_tmp[ik] +  closed_shells[ij]
+                                shells_arr_tmp[ik] = wat
+
+
+                        else:
+                            if(ij != test[0] -1):
+                                wat = shells_arr_tmp[ik] + '.' + closed_shells[ij]
+                                shells_arr_tmp[ik] = wat
+                            else:
+                                wat = shells_arr_tmp[ik] + '.' + closed_shells[ij] + '.'
+                                shells_arr_tmp[ik] = wat
+
+
+            self.data['atomic']['nist_conf_form'] = shells_arr_tmp + self.data['atomic']['nist_conf_form']
+
+            in_all = True
+            while(in_all):
+                for ij in range(0,len(closed_shells)):
+                    in_all = in_all and closed_shells[ij][0:2] not in self.data['nist']['levels'][0]['conf']
+                    if(in_all):
+
+                        for kk in range(0,len(self.data['atomic']['nist_conf_form'])):
+
+                            self.data['atomic']['nist_conf_form'][kk] = re.sub(closed_shells[ij]+'.', '', self.data['atomic']['nist_conf_form'][kk])
+                            self.data['atomic']['nist_conf_form'][kk] = re.sub(r'\.\.', r'\.', self.data['atomic']['nist_conf_form'][kk])
+
+        
     def split_structure_terms_to_levels(self):
         """ split_structure_term_to_levels will take an LS resolved file like is common for low-z
             species and split it to j resolution. This is so the file can be shifted to NIST energy
@@ -1610,7 +1696,8 @@ class colradpy():
                 nstring = nstring + st[rem[ii].span()[1]:]
                 conf_arr[:] = nstring
                 '''
-
+            import pdb
+            pdb.set_trace()
             conf_arr[:] = st
             self.data['atomic']['nist_conf_form'][i] = st
             self.data['atomic']['nist_conf_form'] = self.data['atomic']['nist_conf_form'].astype('object')
@@ -1623,10 +1710,12 @@ class colradpy():
             s.append(s_arr)
             j.append(j_arr)
             term_map.append(term_map_arr)
+            
             # if( i == 23 or i ==36):
             #     import pdb
             #     pdb.set_trace()
         self.data['processed']['split']['config'] = np.concatenate(conf,axis=0)
+        
         #remove closed subshells because thats what NIST does
         #probably a better way to do this but I cant be bothered
         closed_shells = np.array(['1s2','2s2','2p6','3s2','3p6','4s2','3d10','4p6','5s2','4f14','5d10'])
@@ -1639,8 +1728,9 @@ class colradpy():
         test = np.where(np.char.find(closed_shells,
                               self.data['processed']['split']['config'][0][0:3])==0)[0]
         #need the if statement here to easily account for hydrogenic species
+        
         if(np.size(test) >0):
-            for ij in range(0,len(test)):
+            for ij in range(0,test[0]):#len(test)
 
                 add_shell = np.setdiff1d(range(self.data['processed']['split']['config'].shape[0]),
                                         np.where(np.char.find(self.data['processed']['split']['config'].astype('<U'),
@@ -1649,15 +1739,35 @@ class colradpy():
                 if(add_shell.size>0):
                     for ik in add_shell:
 
-                        wat = closed_shells[ij] + '.' + shells_arr_tmp[ik]
-                        shells_arr_tmp[ik] = wat
+                        if(ij == 0):
+                            if(ij == test[0] -1):
+                                wat = shells_arr_tmp[ik] +  closed_shells[ij] + '.'
+                                shells_arr_tmp[ik] = wat
+                                
+                            else:
+                                wat = shells_arr_tmp[ik] +  closed_shells[ij]
+                                shells_arr_tmp[ik] = wat
 
-            self.data['processed']['split']['config'] = shells_arr_tmp + self.data['processed']['split']['config']
+
+                        else:
+                            if(ij != test[0] -1):
+                                wat = shells_arr_tmp[ik] + '.' + closed_shells[ij]
+                                shells_arr_tmp[ik] = wat
+                            else:
+                                wat = shells_arr_tmp[ik] + '.' + closed_shells[ij] + '.'
+                                shells_arr_tmp[ik] = wat
+                                
+
+
+            self.data['processed']['split']['config'] =   shells_arr_tmp +self.data['processed']['split']['config']
+
+            #now do the stame thing for the NIST configurations
             shells_arr_tmp = np.empty_like(self.data['atomic']['nist_conf_form'].astype('<U1000'))
 
             test = np.where(np.char.find(closed_shells,
-                                  self.data['atomic']['nist_conf_form'][0][0:2])==0)[0]
-            for ij in range(0,len(test)):
+                                  self.data['atomic']['nist_conf_form'][0][0:3])==0)[0] #[0:2]
+            
+            for ij in range(0,test[0]):
 
                 add_shell = np.setdiff1d(range(self.data['atomic']['nist_conf_form'].shape[0]),
                                          np.where(np.char.find(self.data['atomic']['nist_conf_form'].astype('<U'),
@@ -1665,30 +1775,56 @@ class colradpy():
                 if(add_shell.size>0):
                     for ik in add_shell:
 
-                        wat = closed_shells[ij] + '.' + shells_arr_tmp[ik]
-                        shells_arr_tmp[ik] = wat
+                        if(ij == 0):
+                            if(ij == test[0] -1):
+                                wat = shells_arr_tmp[ik] +  closed_shells[ij] + '.'
+                                shells_arr_tmp[ik] = wat
+                                
+                            else:
+                                wat = shells_arr_tmp[ik] +  closed_shells[ij]
+                                shells_arr_tmp[ik] = wat
+
+                            
+                        else:
+                            if(ij != test[0] -1):
+                                wat = shells_arr_tmp[ik] + '.' + closed_shells[ij]
+                                shells_arr_tmp[ik] = wat
+                            else:
+                                wat = shells_arr_tmp[ik] + '.' + closed_shells[ij] + '.'
+                                shells_arr_tmp[ik] = wat
+
 
             self.data['atomic']['nist_conf_form'] = shells_arr_tmp + self.data['atomic']['nist_conf_form']
+            
+            
 
             in_all = True
             while(in_all):
                 for ij in range(0,len(closed_shells)):
                     in_all = in_all and closed_shells[ij] not in self.data['nist']['levels'][0]['conf']
                     if(in_all):
+                        
                         for kk in range(0,len(self.data['atomic']['nist_conf_form'])):
-                            self.data['atomic']['nist_conf_form'][kk] = self.data['atomic']['nist_conf_form'][kk][4:]
-
+                            
+                            ttmp = self.data['atomic']['nist_conf_form'][kk][4:]
+                            self.data['atomic']['nist_conf_form'][kk] = ttmp
+                            
             #remove closed subshells because thats what NIST does
             #probably a better way to do this but I cant be bothered
             closed_shells = np.array(['1s2','2s2','2p6','3s2','3p6','4s2','3d10','4p6','5s2','4f14','5d10'])
+
+
+
+            
             in_all = True
             while(in_all):
                 for ij in range(0,len(closed_shells)):
                     in_all = in_all and closed_shells[ij] not in self.data['nist']['levels'][0]['conf']
-
                     if(in_all):
+
                         for kk in range(0,len(self.data['processed']['split']['config'])):
                             self.data['processed']['split']['config'][kk] = self.data['processed']['split']['config'][kk][4:]
+                            
         self.data['processed']['split']['L'] = np.concatenate(l,axis=0)
         self.data['processed']['split']['S'] = np.concatenate(s,axis=0)
         self.data['processed']['split']['j'] = np.concatenate(j,axis=0)
@@ -1773,7 +1909,7 @@ class colradpy():
         """
 
 
-        l_map = np.array(['S','P','D','F','G','H','I','J']) #map of l values to the letters, NIST uses letters        
+        l_map = np.array(['S','P','D','F','G','H','I','J','K','O','P']) #map of l values to the letters, NIST uses letters        
         if( not already_j):#added check for already at j resolution in which case no need to split
             if('split' not in self.data['processed']):
                 if('config' not in self.data['processed']['split']):
@@ -1815,9 +1951,37 @@ class colradpy():
             self.data['atomic']['energy'] = energy
             print('Energy values that could be shifted to NIST energies have been. Original energies now stored in [atomic][adf04_energies')
 
+            
 
 
 
+
+
+    def shift_j_res_pecs(self):
+        
+        a = np.where( self.data['atomic']['energy'] > -1)[0] #levels that are not in NIST have be given -1 for energies
+        in_upper = np.in1d(self.data['processed']['pec_levels'][:,0],a) #find all the levels that have be shifted upp and lower
+        in_lower = np.in1d(self.data['processed']['pec_levels'][:,1],a) 
+
+
+        #set up 'shift' wave and pecs 
+        self.data['processed']['pecs_shift'] = self.data['processed']['pecs'][np.logical_and(in_upper,in_lower)]
+        self.data['processed']['pec_levels_shift'] = self.data['processed']['pec_levels'][np.logical_and(in_upper,in_lower)]
+        self.data['processed']['wave_vac_shift'] = np.zeros(len(self.data['processed']['pec_levels_shift']))
+        
+        for i in range(0,len(self.data['processed']['pec_levels_shift'])):
+            self.data['processed']['wave_vac_shift'][i] =  1.e7/abs(self.data['atomic']['energy'][self.data['processed']['pec_levels_shift'][i,0]]\
+                                                                        - self.data['atomic']['energy'][self.data['processed']['pec_levels_shift'][i,1]])
+
+        self.data['processed']['wave_air_shift'] = self.data['processed']['wave_vac_shift']/ \
+                                                       convert_to_air(self.data['processed']['wave_vac_shift'])
+
+        
+        lt_air = np.where(self.data['processed']['wave_air_shift'] < 185)[0]#find wavelengths below air cut off these have to be at vacc
+        self.data['processed']['wave_air_shift'][lt_air] = self.data['processed']['wave_vac_shift'][lt_air]
+
+
+        
 
     def shift_j_res_energy_to_nist2(self,already_j=False):
         """shift_j_res_energy_to_nist maps j resolved structure energy values to the NIST values
@@ -1920,6 +2084,15 @@ class colradpy():
         self.make_electron_excitation_rates()
         self.populate_cr_matrix()
         self.solve_quasi_static()
+
+
+    def convert_eissner_to_ls(self):
+
+        for i in range(0,len(self.data['atomic']['config'])):
+            self.data['atomic']['config'][i] = convert_eissner(self.data['atomic']['config'][i])
+                
+
+
 
         
     def plot_pec_sticks(self,temp=[0],dens=[0],meta=[0]):
@@ -2038,11 +2211,11 @@ class colradpy():
         """
 
         if(split):
-            return self.data['atomic']['split']['config'][level_num],\
-                   self.data['atomic']['split']['S'][level_num],\
-                   self.data['atomic']['split']['L'][level_num],\
-                   self.data['atomic']['split']['w'][level_num],\
-                   self.data['atomic']['split']['energy'][level_num]
+            return self.data['processed']['split']['config'][level_num],\
+                   self.data['processed']['split']['S'][level_num],\
+                   self.data['processed']['split']['L'][level_num],\
+                   self.data['processed']['split']['j'][level_num],\
+                   self.data['processed']['split']['energy'][level_num]
         else:
                 
             return self.data['atomic']['config'][level_num],\
