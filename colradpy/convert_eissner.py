@@ -18,16 +18,27 @@ def convert_eissner(eissner_config):
                 'k': '10s', 'l': '10p', 'm': '10d', 'n': '10f', 'o': '10g', 'p': '10h', 'q': '10i', 'r': '10k',
                 's': '10l', 't': '10m', 'u': '11s', 'v': '11p', 'w': '11d', 'x': '11f', 'y': '11g', 'z': '11h'}
 
-    if('0' in eissner_config):#somethings ADAS goes deep into the closed shells,
+
+
+    elec  = {'1': '1', '2': '2', '3': '3', '4': '4', '5': '5', '6': '6', '7': '7', '8': '8', '9': '9',
+                'A': '10', 'B': '11', 'C': '12', 'D': '13', 'E': '14', 'F': '15', 'G': '16', 'H': '17', 'I': '18'}
+
+
+    if('0' == eissner_config[1]):#somethings ADAS goes deep into the closed shells,
                               #not sure whats going on with that just remove
         eissner_config = eissner_config[re.search('5',eissner_config).start():]
 
+
+    eissner_config = re.sub('0','A',eissner_config)
+        
     eissner_config = re.sub( '^5', '', eissner_config )#sometimes there is 5 at start
 
     ls_notat = ''
+
+
     for i in range(0,len(eissner_config),3):
 
-        num_elec = int(eissner_config[i]) #electron number in the first space
+        num_elec = int(elec[eissner_config[i]]) #electron number in the first space
         orb_num = nl_pairs[eissner_config[i+1]] #orbital is in the second space
                                                #Note 5 is a delimiter in the 3rd spot
 
@@ -43,5 +54,4 @@ def convert_eissner(eissner_config):
 
         if(i <len(eissner_config)-2):#add in the . separation, consistent with NSIT
             ls_notat = ls_notat + '.'
-            
     return ls_notat.upper()
