@@ -41,6 +41,7 @@ from colradpy.nist_read_txt import *
 from colradpy.solve_matrix_exponential import *
 from colradpy.colradpy_utility import *
 from colradpy.convert_eissner import *
+from colradpy.adf04_file_paths import *
 import collections
 from matplotlib import rc,rcParams
 from fractions import Fraction
@@ -153,6 +154,12 @@ class colradpy():
         """
 
         self.data = {}
+
+        self.data['openadas_loc'] = return_local_adf04_dict()
+
+
+
+        
         self.processed = {} 
         self.data['user'] = {}
         self.data['user']['temp_grid'] = np.asarray(temp_grid) #eV
@@ -222,7 +229,7 @@ class colradpy():
                 print("Temperature and density were chosen to be pairs not grid. There for the length of temperature and density arrays must be the same")
                 print('Exit here fix to run')
                 sys.exit()
-                
+
         self.populate_data(fil)
         self.data['atomic']['metas'] = np.asarray(metas)
 
@@ -285,6 +292,7 @@ class colradpy():
                 d[k] = v
         return d
 
+        
     
     def populate_data(self,fil):
         """This function will populate atomic data. Currently this only uses the
@@ -298,9 +306,21 @@ class colradpy():
 
         """
         if(type(fil) == str or type(fil) == np.str_):
+            try:
+                self.data = self.update_dict(self.data,read_adf04(fil))
+                self.data['user']['file_loc'] = fil
+            except:
+                
+                q = fil.index('adf04_downloaded_from_open_adas')
+                tt = re.split('/',fil[q:])[1]
 
-            self.data = self.update_dict(self.data,read_adf04(fil))
-            self.data['user']['file_loc'] = fil
+                charge_state = np.where(self.data['openadas_loc'][tt] == fil)[0]
+                if(charge_state.size):
+                    get_from_open_adas(tt,charge_state[0])
+
+                self.data = self.update_dict(self.data,read_adf04(fil))
+                self.data['user']['file_loc'] = fil
+                    
         else:
             if(self.data):
                 self.data = self.update_dict(self.data,fil)
@@ -1588,18 +1608,27 @@ class colradpy():
         for i in range(0,len(self.data['atomic']['config'])):
 
             st = self.data['atomic']['config'][i].lower()
-            rem = list(re.finditer(r'\d\w1' , st))
+            
+            #rem1 = list(re.finditer(r'\d\w1' , st))
+            #rem2 = list(re.finditer(r'\d\w1\d' , st))
+            #we want to remove '1' from the configuration string however there are 10 electons in the d
+            # this grabs all the '1's that are at the end of the string or followed by '.'
+            rem = list(re.finditer(r'\d\w1$' , st))
+            rem2 = list(re.finditer(r'\d\w1\.' , st))
+            rem = rem + rem2
             if rem:
                 tmpp = ''
                 for ii in range(0,len(rem)):
                     st = st[:rem[ii].span()[1]-1-ii] + st[rem[ii].span()[1]+1-1-ii:]
+            st = re.sub(r'a\.', '10.', st)#there is the possiblity of foolishness like 3dA in configuration strings get rid
             
             self.data['atomic']['nist_conf_form'][i] = st
         self.data['atomic']['nist_conf_form'] = self.data['atomic']['nist_conf_form'].astype('object')
 
         #remove closed subshells because thats what NIST does
         #probably a better way to do this but I cant be bothered
-        closed_shells = np.array(['1s2','2s2','2p6','3s2','3p6','4s2','3d10','4p6','5s2','4f14','5d10'])
+        closed_shells = np.array(['1s2','2s2','2p6','3s2','3p6','4s2','3d10','4p6','5s2',
+                                  '4d10','5p6','6s2','4f14','5d10','6p6','7s2','5f14','6d10','7p6'])
 
         #now do the stame thing for the NIST configurations
         shells_arr_tmp = np.empty_like(self.data['atomic']['nist_conf_form'].astype('<U1000'))
@@ -1615,7 +1644,11 @@ class colradpy():
                 add_shell = np.setdiff1d(range(self.data['atomic']['nist_conf_form'].shape[0]),
                                          np.where(np.char.find(self.data['atomic']['nist_conf_form'].astype('<U'),
                                                                closed_shells[ij][0:2])==0)[0])
+
+
+                
                 if(add_shell.size>0):
+                    
                     for ik in add_shell:
 
                         if(ij == 0):
@@ -1635,22 +1668,60 @@ class colradpy():
                             else:
                                 wat = shells_arr_tmp[ik] + '.' + closed_shells[ij] + '.'
                                 shells_arr_tmp[ik] = wat
+                                
+            #sometimes if there is a closed shell after an open one like Mo XVI there was a problem
+            #where there wouldn't be '.' at the end of the shells_arr_tmp
+            if(any(shells_arr_tmp)):
+                for jj in range(0,len(shells_arr_tmp)):
+                    if('.' != shells_arr_tmp[jj][-1]):
+                        shells_arr_tmp[jj] = shells_arr_tmp[jj] + '.'
 
-
+                
             self.data['atomic']['nist_conf_form'] = shells_arr_tmp + self.data['atomic']['nist_conf_form']
-
+            '''
             in_all = True
             while(in_all):
                 for ij in range(0,len(closed_shells)):
                     in_all = in_all and closed_shells[ij][0:2] not in self.data['nist']['levels'][0]['conf']
+                    import pdb
+                    pdb.set_trace()
                     if(in_all):
 
                         for kk in range(0,len(self.data['atomic']['nist_conf_form'])):
-
                             self.data['atomic']['nist_conf_form'][kk] = re.sub(closed_shells[ij]+'.', '', self.data['atomic']['nist_conf_form'][kk])
                             self.data['atomic']['nist_conf_form'][kk] = re.sub(r'\.\.', r'\.', self.data['atomic']['nist_conf_form'][kk])
 
-        
+            '''
+            for ij in range(0,len(closed_shells)):
+                in_all = closed_shells[ij][0:2] not in self.data['nist']['levels'][0]['conf']
+                if(in_all):
+
+                    for kk in range(0,len(self.data['atomic']['nist_conf_form'])):
+                        self.data['atomic']['nist_conf_form'][kk] = re.sub(closed_shells[ij]+'.', '', self.data['atomic']['nist_conf_form'][kk])
+                        self.data['atomic']['nist_conf_form'][kk] = re.sub(r'\.\.', r'\.', self.data['atomic']['nist_conf_form'][kk])
+
+
+
+            for ik in range(0,len(self.data['atomic']['nist_conf_form'])):
+                qq = re.split('\.', self.data['atomic']['nist_conf_form'][ik])
+                aa,bb = np.unique(np.asarray(qq),return_index=True)
+                bb = np.sort(bb)
+                
+                t = ''
+                for iii in range(0,len(bb)):
+                    if(iii ==0):
+                        t = qq[bb[iii]] + '.'
+                    elif(iii == len(bb)-1):
+                        t = t + qq[bb[iii]]
+                    else:
+                        t = t  + qq[bb[iii]] + '.'
+                self.data['atomic']['nist_conf_form'][ik] = t
+                        
+
+
+
+
+            
     def split_structure_terms_to_levels(self):
         """ split_structure_term_to_levels will take an LS resolved file like is common for low-z
             species and split it to j resolution. This is so the file can be shifted to NIST energy
@@ -1718,8 +1789,9 @@ class colradpy():
         
         #remove closed subshells because thats what NIST does
         #probably a better way to do this but I cant be bothered
-        closed_shells = np.array(['1s2','2s2','2p6','3s2','3p6','4s2','3d10','4p6','5s2','4f14','5d10'])
-
+        closed_shells = np.array(['1s2','2s2','2p6','3s2','3p6','4s2','3d10','4p6','5s2',
+                                  '4d10','5p6','6s2','4f14','5d10','6p6','7s2','5f14','6d10','7p6'])
+        
         #because NIST is apparently incapable of creating a standard scheme for the configuration string
         #we are goin got add in all the closed subshells only to remove them later...who came up with this
         #stuff :'(
@@ -1811,7 +1883,7 @@ class colradpy():
                             
             #remove closed subshells because thats what NIST does
             #probably a better way to do this but I cant be bothered
-            closed_shells = np.array(['1s2','2s2','2p6','3s2','3p6','4s2','3d10','4p6','5s2','4f14','5d10'])
+            closed_shells = np.array(['1s2','2s2','2p6','3s2','3p6','4s2','4p6','3d10','5s2','4f14','5d10'])
 
 
 
@@ -1947,9 +2019,9 @@ class colradpy():
                              energy[i] = float(tmp[0]['energy'])
                              print(self.data['atomic']['nist_conf_form'][i],self.data['atomic']['S'][i],l_map[self.data['atomic']['L'][i]],Fraction(self.data['atomic']['w'][i]),tmp)
 
-            self.data['atomic']['adf04_energies'] = np.copy(self.data['atomic']['energy'])
+            self.data['atomic']['adf04_energy'] = np.copy(self.data['atomic']['energy'])
             self.data['atomic']['energy'] = energy
-            print('Energy values that could be shifted to NIST energies have been. Original energies now stored in [atomic][adf04_energies')
+            print('Energy values that could be shifted to NIST energies have been. Original energies now stored in [atomic][adf04_energy')
 
             
 
@@ -2086,11 +2158,26 @@ class colradpy():
         self.solve_quasi_static()
 
 
+    
+    def auto_check_eissner_config(self):
+
+        if(len(self.data['atomic']['config'][0]) < 3 and  (not any(c.isalpha() for c in self.data['atomic']['config'][0]) )):
+            self.convert_eissner_to_ls()
+        elif(len(self.data['atomic']['config'][0]) > 3 and (' ' not in self.data['atomic']['config'][0] and '.' not in self.data['atomic']['config'][0])):
+            self.convert_eissner_to_ls()
+        
+
+
+
+
+        
     def convert_eissner_to_ls(self):
 
+        config_tmp = []
         for i in range(0,len(self.data['atomic']['config'])):
-            self.data['atomic']['config'][i] = convert_eissner(self.data['atomic']['config'][i])
-                
+            config_tmp.append(convert_eissner(self.data['atomic']['config'][i]))
+
+        self.data['atomic']['config'] = np.asarray(config_tmp)
 
 
 
