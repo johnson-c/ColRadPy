@@ -9,3 +9,5 @@ from .ecip_rates import *
 from .burgess_tully_rates import *
 from .split_multiplet import *
 from .nist_read_txt import *
+from .adf04_file_paths import *
+
