@@ -1673,8 +1673,9 @@ class colradpy():
             #where there wouldn't be '.' at the end of the shells_arr_tmp
             if(any(shells_arr_tmp)):
                 for jj in range(0,len(shells_arr_tmp)):
-                    if('.' != shells_arr_tmp[jj][-1]):
-                        shells_arr_tmp[jj] = shells_arr_tmp[jj] + '.'
+                    if(len(shells_arr_tmp[jj]) >0):
+                        if('.' != shells_arr_tmp[jj][-1]):
+                            shells_arr_tmp[jj] = shells_arr_tmp[jj] + '.'
 
                 
             self.data['atomic']['nist_conf_form'] = shells_arr_tmp + self.data['atomic']['nist_conf_form']
@@ -2017,7 +2018,7 @@ class colradpy():
                                                                   self.data['nist']['levels']))))
                  if(tmp):
                              energy[i] = float(tmp[0]['energy'])
-                             print(self.data['atomic']['nist_conf_form'][i],self.data['atomic']['S'][i],l_map[self.data['atomic']['L'][i]],Fraction(self.data['atomic']['w'][i]),tmp)
+                             #print(self.data['atomic']['nist_conf_form'][i],self.data['atomic']['S'][i],l_map[self.data['atomic']['L'][i]],Fraction(self.data['atomic']['w'][i]),tmp)
 
             self.data['atomic']['adf04_energy'] = np.copy(self.data['atomic']['energy'])
             self.data['atomic']['energy'] = energy
