@@ -100,10 +100,11 @@ def get_from_open_adas(tt,charge_state, path='../atomic/adf04_downloaded_from_op
     if( '(' not in re.split('\n',ttmp[0:200])[0]):#check if the people even added the term
         ttmp = re.sub(r'\n',r'(   )\n',ttmp,count=1)
         
+    base_path = os.path.dirname(os.path.realpath(__file__))
+    base_path = base_path[0:len(base_path) - 8] + 'atomic/'
+        
     if(charge_state < len(adas_paths[tt]) -1):
 
-        base_path = os.path.dirname(os.path.realpath(__file__))
-        base_path = base_path[0:len(base_path) - 8] + 'atomic/'
 
         ter = get_nist_txt(base_path+'nist_energies/',tt.lower(),charge_state+2)[0]['term']
         ttmp = re.sub(r'\(\s+\)','(' + ter + ')',ttmp)
@@ -132,7 +133,7 @@ def return_local_adf04_dict():
     paths['Fe'] =  np.array([base_path + 'Fe/ssh41_cs_ic#fe0.mod',       base_path + 'Fe/ssh41_cs_ic#fe1.mod',
                              base_path + 'Fe/crlike_nrb13#fe2.mod',      base_path + 'Fe/ssh41_cs_ic#fe3.mod',
                              base_path + 'Fe/ssh41_cs_ic#fe4.mod',       base_path + 'Fe/ssh41_cs_ic#fe5.mod',
-                             base_path + 'Fe/calike_mcw07#fe6.mod',      'klike_gdz14#fe7.mod',
+                             base_path + 'Fe/calike_mcw07#fe6.mod',      base_path + 'Fe/like_gdz14#fe7.mod',
                              base_path + 'Fe/arlike_dgz14#fe8.mod',      base_path + 'Fe/ssh41_cs_ic#fe9.mod',
                              base_path + 'Fe/ssh41_cs_ic#fe10.mod',      base_path + 'Fe/ssh41_cs_ic#fe11.mod',
                              base_path + 'Fe/ssh41_cs_ic#fe12.mod',      base_path + 'Fe/ssh41_cs_ic#fe13.mod',
