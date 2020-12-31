@@ -146,7 +146,7 @@ def return_local_adf04_dict():
 
 
     
-    paths['Mo'] = np.array(['Mo/ic#mo0.mod',            base_path + 'Mo/ic#mo1.mod',
+    paths['Mo'] = np.array([base_path+ 'Mo/ic#mo0.mod',            base_path + 'Mo/ic#mo1.mod',
                            base_path + 'Mo/ic#mo2.mod',            base_path + 'Mo/ic#mo3.mod',
                            base_path + 'Mo/ic#mo4.mod',            base_path + 'Mo/ic#mo5.mod',
                            base_path + 'Mo/ic#mo6.mod',            base_path + 'Mo/ic#mo7.mod',
