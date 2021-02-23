@@ -1469,7 +1469,10 @@ class colradpy():
                                               len(self.data['atomic']['energy']) ,dtype='int64'),
                                        self.data['atomic']['metas'])
         
-        self.data['processed']['td']['pecs'] = [] 
+        self.data['processed']['td']['pecs'] = []#photon emissivity coefficients
+        self.data['processed']['td']['pls'] = []
+
+        
         for i in range(0,len(self.data['cr_matrix']['A_ji'])):
             for j in range(0,len(levels_to_keep)):
                 #if statement here because there will be a number of transitions that have zero
@@ -1481,7 +1484,17 @@ class colradpy():
                                                                  self.data['processed']['td']['td_pop'][levels_to_keep[j]]/\
                                                                  self.data['user']['dens_grid'])
 
+
+                    self.data['processed']['td']['pls'].append(np.abs(self.data['atomic']['energy'][levels_to_keep[j]] - \
+                                                                      self.data['atomic']['energy'][i])*1.9865e-23*\
+                                           (self.data['cr_matrix']['A_ji'][levels_to_keep[j],i]*self.data['processed']['td']['td_pop'][j]/ \
+                                                        self.data['user']['dens_grid']*1.e6))
+                    
+
         self.data['processed']['td']['pecs'] = np.asarray(self.data['processed']['td']['pecs'])
+        self.data['processed']['td']['pls'] = np.asarray(self.data['processed']['td']['pls'])
+        self.data['processed']['td']['plt'] =  np.sum(self.data['processed']['td']['pls'],axis=0)#sum up all contributions
+        
 
         #just the time dependent version of the SCD coefficient,calculated the same as SS version
         #just remember not to include the population from the + stage
