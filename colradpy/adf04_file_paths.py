@@ -85,12 +85,55 @@ def get_from_open_adas(tt,charge_state, path='../atomic/adf04_downloaded_from_op
 
 
 
+    adas_paths['W'] = np.array(['copssh][74/ssh41_cs_ic][w0.dat',               'copssh][74/ssh41_cs_ic][w1.dat',
+                                'copssh][74/ssh41_cs_ic][w2.dat',               'copssh][74/ssh41_cs_ic][w3.dat',
+                                'copssh][74/ssh41_cs_ic][w4.dat',               'copssh][74/ssh41_cs_ic][w5.dat',
+                                'copssh][74/ssh41_cs_ic][w6.dat',               'copssh][74/ssh41_cs_ic][w7.dat',
+                                'copssh][74/ssh41_cs_ic][w8.dat',               'copssh][74/ssh41_cs_ic][w9.dat',
+                                'copssh][74/ssh41_cs_ic][w10.dat',               'copssh][74/ssh41_cs_ic][w11.dat',
+                                'copssh][74/ssh41_cs_ic][w12.dat',               'copssh][74/ssh41_cs_ic][w13.dat',
+                                'copssh][74/ssh41_cs_ic][w14.dat',               'copssh][74/ssh41_cs_ic][w15.dat',
+                                'coparf][74/arf40_ic][w16.dat',                  'coparf][74/arf40_ic][w17.dat',
+                                'coparf][74/arf40_ic][w18.dat',                  'coparf][74/arf40_ic][w19.dat',
+                                'coparf][74/arf40_ic][w20.dat',                  'coparf][74/arf40_ic][w21.dat',
+                                'coparf][74/arf40_ic][w22.dat',                  'coparf][74/arf40_ic][w23.dat',
+                                'coparf][74/arf40_ic][w24.dat',                  'coparf][74/arf40_ic][w25.dat',
+                                'copssh][74/ssh41_cs_ic][w26.dat',               'copssh][74/ssh41_cs_ic][w27.dat',
+                                'copssh][74/ssh41_cs_ic][w28.dat',               'copssh][74/ssh41_cs_ic][w29.dat',
+                                'copssh][74/ssh41_cs_ic][w30.dat',               'copssh][74/ssh41_cs_ic][w31.dat',
+                                'copssh][74/ssh41_cs_ic][w32.dat',               'copssh][74/ssh41_cs_ic][w33.dat',
+                                'copssh][74/ssh41_cs_ic][w34.dat',               'copssh][74/ssh41_cs_ic][w35.dat',
+                                'copssh][74/ssh41_cs_ic][w36.dat',               'copssh][74/ssh41_cs_ic][w37.dat',
+                                'copssh][74/ssh41_cs_ic][w38.dat',               'copssh][74/ssh41_cs_ic][w39.dat',
+                                'copssh][74/ssh41_cs_ic][w40.dat',               'copssh][74/ssh41_cs_ic][w41.dat',
+                                'copssh][74/ssh41_cs_ic][w42.dat',               'copssh][74/ssh41_cs_ic][w43.dat',
+                                'znlike/znlike_cpb07][w44ic.dat',                'culike/culike_cpb07][w45ic.dat',
+                                'nilike/nilike_cpb06][w46ic.dat',                'copssh][74/ssh41_cs_ic][w47.dat',
+                                'copssh][74/ssh41_cs_ic][w48.dat',               'copssh][74/ssh41_cs_ic][w49.dat',
+                                'copssh][74/ssh41_cs_ic][w50.dat',               'copssh][74/ssh41_cs_ic][w51.dat',
+                                'copssh][74/ssh41_cs_ic][w52.dat',               'copssh][74/ssh41_cs_ic][w53.dat',
+                                'copssh][74/ssh41_cs_ic][w54.dat',               'copssh][74/ssh41_cs_ic][w55.dat',
+                                'copssh][74/ssh41_cs_ic][w56.dat',               'copssh][74/ssh41_cs_ic][w57.dat',
+                                'copssh][74/ssh41_cs_ic][w58.dat',               'copssh][74/ssh41_cs_ic][w59.dat',
+                                'copssh][74/ssh41_cs_ic][w60.dat',               'copssh][74/ssh41_cs_ic][w61.dat',
+                                'copssh][74/ssh41_cs_ic][w62.dat',               'copssh][74/ssh41_cs_ic][w63.dat',
+                                'copssh][74/ssh41_cs_ic][w64.dat',               'copssh][74/ssh41_cs_ic][w65.dat',
+                                'copssh][74/ssh41_cs_ic][w66.dat',               'copssh][74/ssh41_cs_ic][w67.dat',
+                                'copssh][74/ssh41_cs_ic][w68.dat',               'copssh][74/ssh41_cs_ic][w69.dat',
+                                'copssh][74/ssh41_cs_ic][w70.dat',               'copssh][74/ssh41_cs_ic][w71.dat',
+                                'copssh][74/ssh41_cs_ic][w72.dat',               'copssh][74/ssh41_cs_ic][w73.dat'])
+
+
+
+
+
 
 
     t = url + adas_paths[tt][charge_state]
     
     
     a = requests.get(t)
+    
     file_name = re.split('\.',re.split('=',a.headers['Content-Disposition'])[1])[0] + '.mod'
     ttmp = re.sub('\s+\n', '\n',a.text)#remove trailing white space if its in the file
     if(add_ionization_blind):
@@ -146,27 +189,6 @@ def return_local_adf04_dict():
 
 
     
-    paths['Mo'] = np.array([base_path+ 'Mo/ic#mo0.mod',            base_path + 'Mo/ic#mo1.mod',
-                           base_path + 'Mo/ic#mo2.mod',            base_path + 'Mo/ic#mo3.mod',
-                           base_path + 'Mo/ic#mo4.mod',            base_path + 'Mo/ic#mo5.mod',
-                           base_path + 'Mo/ic#mo6.mod',            base_path + 'Mo/ic#mo7.mod',
-                           base_path + 'Mo/ic#mo8.mod',            base_path + 'Mo/ic#mo9.mod',
-                           base_path + 'Mo/ic#mo10.mod',           base_path + 'Mo/ic#mo11.mod',
-                           base_path + 'Mo/ic#mo12.mod',           base_path + 'Mo/ic#mo13.mod',
-                           base_path + 'Mo/ic#mo14.mod',           base_path + 'Mo/ic#mo15.mod',
-                           base_path + 'Mo/ic#mo16.mod',           base_path + 'Mo/ic#mo17.mod',
-                           base_path + 'Mo/ic#mo18.mod',           base_path + 'Mo/ic#mo19.mod',
-                           base_path + 'Mo/ic#mo20.mod',           base_path + 'Mo/ic#mo21.mod',
-                           base_path + 'Mo/ic#mo22.mod',           base_path + 'Mo/ic#mo23.mod',
-                           base_path + 'Mo/ic#mo24.mod',           base_path + 'Mo/ic#mo25.mod',
-                           base_path + 'Mo/ic#mo26.mod',           base_path + 'Mo/ic#mo27.mod',
-                           base_path + 'Mo/ic#mo28.mod',           base_path + 'Mo/ic#mo29.mod',
-                           base_path + 'Mo/ic#mo30.mod',           base_path + 'Mo/ic#mo31.mod',
-                           base_path + 'Mo/ic#mo32.mod',           base_path + 'Mo/copsm#f_sm#mo33.mod',
-                           base_path + 'Mo/ic#mo34.mod',           base_path + 'Mo/ic#mo35.mod',
-                           base_path + 'Mo/ic#mo36.mod',           base_path + 'Mo/ic#mo37.mod',
-                           base_path + 'Mo/copsm#be_sm#mo38.mod',  base_path + 'Mo/ic#mo39.mod',
-                           base_path + 'Mo/ic#mo40.mod',           base_path + 'Mo/ic#mo41.mod'])
 
     
     paths['Kr'] =  np.array([base_path + 'Kr/ssh41_cs_ic#kr0.mod',       base_path + 'Kr/ssh41_cs_ic#kr1.mod',
@@ -189,6 +211,69 @@ def return_local_adf04_dict():
                            base_path + 'Kr/helike_adw05#kr34.mod',     base_path + 'Kr/ssh41_cs_ic#kr35.mod'])
 
 
+
+    paths['Mo'] = np.array([base_path+ 'Mo/ic#mo0.mod',            base_path + 'Mo/ic#mo1.mod',
+                           base_path + 'Mo/ic#mo2.mod',            base_path + 'Mo/ic#mo3.mod',
+                           base_path + 'Mo/ic#mo4.mod',            base_path + 'Mo/ic#mo5.mod',
+                           base_path + 'Mo/ic#mo6.mod',            base_path + 'Mo/ic#mo7.mod',
+                           base_path + 'Mo/ic#mo8.mod',            base_path + 'Mo/ic#mo9.mod',
+                           base_path + 'Mo/ic#mo10.mod',           base_path + 'Mo/ic#mo11.mod',
+                           base_path + 'Mo/ic#mo12.mod',           base_path + 'Mo/ic#mo13.mod',
+                           base_path + 'Mo/ic#mo14.mod',           base_path + 'Mo/ic#mo15.mod',
+                           base_path + 'Mo/ic#mo16.mod',           base_path + 'Mo/ic#mo17.mod',
+                           base_path + 'Mo/ic#mo18.mod',           base_path + 'Mo/ic#mo19.mod',
+                           base_path + 'Mo/ic#mo20.mod',           base_path + 'Mo/ic#mo21.mod',
+                           base_path + 'Mo/ic#mo22.mod',           base_path + 'Mo/ic#mo23.mod',
+                           base_path + 'Mo/ic#mo24.mod',           base_path + 'Mo/ic#mo25.mod',
+                           base_path + 'Mo/ic#mo26.mod',           base_path + 'Mo/ic#mo27.mod',
+                           base_path + 'Mo/ic#mo28.mod',           base_path + 'Mo/ic#mo29.mod',
+                           base_path + 'Mo/ic#mo30.mod',           base_path + 'Mo/ic#mo31.mod',
+                           base_path + 'Mo/ic#mo32.mod',           base_path + 'Mo/copsm#f_sm#mo33.mod',
+                           base_path + 'Mo/ic#mo34.mod',           base_path + 'Mo/ic#mo35.mod',
+                           base_path + 'Mo/ic#mo36.mod',           base_path + 'Mo/ic#mo37.mod',
+                           base_path + 'Mo/copsm#be_sm#mo38.mod',  base_path + 'Mo/ic#mo39.mod',
+                           base_path + 'Mo/ic#mo40.mod',           base_path + 'Mo/ic#mo41.mod'])
+
+
+    #paths['W'] = np.array([base_path+ 'W/ssh41_cs_ic#w0.mod'])#,            base_path + 'Mo/ic#mo1.mod',
+
+    paths['W'] = np.array([     base_path + 'W/ssh41_cs_ic#w0.mod',                base_path + 'W/ssh41_cs_ic#w1.mod',
+                                base_path + 'W/ssh41_cs_ic#w2.mod',                base_path + 'W/ssh41_cs_ic#w3.mod',
+                                base_path + 'W/ssh41_cs_ic#w4.mod',                base_path + 'W/ssh41_cs_ic#w5.mod',
+                                base_path + 'W/ssh41_cs_ic#w6.mod',                base_path + 'W/ssh41_cs_ic#w7.mod',
+                                base_path + 'W/ssh41_cs_ic#w8.mod',                base_path + 'W/ssh41_cs_ic#w9.mod',
+                                base_path + 'W/ssh41_cs_ic#w10.mod',               base_path + 'W/ssh41_cs_ic#w11.mod',
+                                base_path + 'W/ssh41_cs_ic#w12.mod',               base_path + 'W/ssh41_cs_ic#w13.mod',
+                                base_path + 'W/ssh41_cs_ic#w14.mod',               base_path + 'W/ssh41_cs_ic#w15.mod',
+                                base_path + 'W/arf40_ic#w16.mod',                  base_path + 'W/arf40_ic#w17.mod',
+                                base_path + 'W/arf40_ic#w18.mod',                  base_path + 'W/arf40_ic#w19.mod',
+                                base_path + 'W/arf40_ic#w20.mod',                  base_path + 'W/arf40_ic#w21.mod',
+                                base_path + 'W/arf40_ic#w22.mod',                  base_path + 'W/arf40_ic#w23.mod',
+                                base_path + 'W/arf40_ic#w24.mod',                  base_path + 'W/arf40_ic#w25.mod',
+                                base_path + 'W/ssh41_cs_ic#w26.mod',               base_path + 'W/ssh41_cs_ic#w27.mod',
+                                base_path + 'W/ssh41_cs_ic#w28.mod',               base_path + 'W/ssh41_cs_ic#w29.mod',
+                                base_path + 'W/ssh41_cs_ic#w30.mod',               base_path + 'W/ssh41_cs_ic#w31.mod',
+                                base_path + 'W/ssh41_cs_ic#w32.mod',               base_path + 'W/ssh41_cs_ic#w33.mod',
+                                base_path + 'W/ssh41_cs_ic#w34.mod',               base_path + 'W/ssh41_cs_ic#w35.mod',
+                                base_path + 'W/ssh41_cs_ic#w36.mod',               base_path + 'W/ssh41_cs_ic#w37.mod',
+                                base_path + 'W/ssh41_cs_ic#w38.mod',               base_path + 'W/ssh41_cs_ic#w39.mod',
+                                base_path + 'W/ssh41_cs_ic#w40.mod',               base_path + 'W/ssh41_cs_ic#w41.mod',
+                                base_path + 'W/ssh41_cs_ic#w42.mod',               base_path + 'W/ssh41_cs_ic#w43.mod',
+                                base_path + 'W/znlike_cpb07#w44ic.mod',            base_path + 'W/culike_cpb07#w45ic.mod',
+                                base_path + 'W/nilike_cpb07#w46ic.mod',            base_path + 'W/ssh41_cs_ic#w47.mod',
+                                base_path + 'W/ssh41_cs_ic#w48.mod',               base_path + 'W/ssh41_cs_ic#w49.mod',
+                                base_path + 'W/ssh41_cs_ic#w50.mod',               base_path + 'W/ssh41_cs_ic#w51.mod',
+                                base_path + 'W/ssh41_cs_ic#w52.mod',               base_path + 'W/ssh41_cs_ic#w53.mod',
+                                base_path + 'W/ssh41_cs_ic#w54.mod',               base_path + 'W/ssh41_cs_ic#w55.mod',
+                                base_path + 'W/ssh41_cs_ic#w56.mod',               base_path + 'W/ssh41_cs_ic#w57.mod',
+                                base_path + 'W/ssh41_cs_ic#w58.mod',               base_path + 'W/ssh41_cs_ic#w59.mod',
+                                base_path + 'W/ssh41_cs_ic#w60.mod',               base_path + 'W/ssh41_cs_ic#w61.mod',
+                                base_path + 'W/ssh41_cs_ic#w62.mod',               base_path + 'W/ssh41_cs_ic#w63.mod',
+                                base_path + 'W/ssh41_cs_ic#w64.mod',               base_path + 'W/ssh41_cs_ic#w65.mod',
+                                base_path + 'W/ssh41_cs_ic#w66.mod',               base_path + 'W/ssh41_cs_ic#w67.mod',
+                                base_path + 'W/ssh41_cs_ic#w68.mod',               base_path + 'W/ssh41_cs_ic#w69.mod',
+                                base_path + 'W/ssh41_cs_ic#w70.mod',               base_path + 'W/ssh41_cs_ic#w71.mod'])
+    
     return paths
 
 
