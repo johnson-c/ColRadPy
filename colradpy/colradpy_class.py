@@ -1143,10 +1143,12 @@ class colradpy():
                     self.data['processed']['pecs'].append( self.data['cr_matrix']['A_ji'][levels_to_keep[j],i]*\
                                                         self.data['processed']['pops'][j]/ \
                                                         self.data['user']['dens_grid'])
+                    # 6.62607015e-34 Plank constant [m^2 kg/s], 299792458 Speed of light [m/s], level energy is in cm-1
+                    #6.62607015e-34*299792458=1.9865e-25*(100 [m-1/cm-1])=1.9865e-23
                     plt.append(np.abs(self.data['atomic']['energy'][levels_to_keep[j]] - self.data['atomic']['energy'][i])*\
                                1.9865e-23*(self.data['cr_matrix']['A_ji'][levels_to_keep[j],i]*\
                                                         self.data['processed']['pops'][j]/ \
-                                                        self.data['user']['dens_grid']*1.e6)) 
+                                                        self.data['user']['dens_grid']/1.e6))
                     self.data['processed']['wave_vac'].append(1.e7/abs(self.data['atomic']['energy'][levels_to_keep[j]]\
                                                                         - self.data['atomic']['energy'][i]))
 
@@ -1484,11 +1486,12 @@ class colradpy():
                                                                  self.data['processed']['td']['td_pop'][levels_to_keep[j]]/\
                                                                  self.data['user']['dens_grid'])
 
-
+                    # 6.62607015e-34 Plank constant [m^2 kg/s], 299792458 Speed of light [m/s], level energy is in cm-1
+                    #6.62607015e-34*299792458=1.9865e-25*(100 [m-1/cm-1])=1.9865e-23
                     self.data['processed']['td']['pls'].append(np.abs(self.data['atomic']['energy'][levels_to_keep[j]] - \
                                                                       self.data['atomic']['energy'][i])*1.9865e-23*\
                                            (self.data['cr_matrix']['A_ji'][levels_to_keep[j],i]*self.data['processed']['td']['td_pop'][j]/ \
-                                                        self.data['user']['dens_grid']*1.e6))
+                                                        self.data['user']['dens_grid']/1.e6))
                     
 
         self.data['processed']['td']['pecs'] = np.asarray(self.data['processed']['td']['pecs'])
