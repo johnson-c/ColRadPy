@@ -86,6 +86,11 @@ def read_adf04(fil):
         while('-1' not in tmp_line or '-1\n' not in tmp_line):
             level_num = level_num + 1
             tmp_line = f.readline()
+            #remove the white space that occurs when L=10 in the adf04 file
+            tmp_line =     tmp_line[0:tmp_line.rfind('(')-3] + \
+               tmp_line[tmp_line.rfind('(')-3:tmp_line.rfind('(')].replace(' ','')+\
+               tmp_line[tmp_line.rfind('('):]
+
             tmp = np.asarray(re.split('[  ]',tmp_line))
 
             if('-1' in tmp or '-1\n' in tmp):
@@ -96,8 +101,22 @@ def read_adf04(fil):
                 config_stop = first_substring(tmp[tmp_inds],'(')
 
                 config.append(config_format(tmp[tmp_inds[1:config_stop]]))
+
+                #there is offset that can occur due to L >=10
+                if(len(tmp[tmp_inds[config_stop]])==3):
+                    offset_l = 1
+                    offset_w = 2
+                else:
+                    offset_l = 0
+                    offset_w = 0
+
                 S.append(int(re.split('[)]',re.split('[(]',tmp[tmp_inds[config_stop]])[1])[0]))
-                L.append(int(re.split('[)]',re.split('[(]',tmp[tmp_inds[config_stop]])[1])[1]))
+
+                L.append(int(re.split('[)]',re.split('[(]',tmp[tmp_inds[config_stop+offset_l]])[1-offset_l])[1-offset_l]))
+
+
+
+                
 
                 if( tmp[tmp_inds[config_stop]].count(')') > 1):
                     w.append(float(re.split('[(]',tmp[tmp_inds[config_stop]])[2][0:4]))
