@@ -40,6 +40,7 @@ from colradpy.split_multiplet import *
 from colradpy.nist_read_txt import *
 from colradpy.solve_matrix_exponential import *
 from colradpy.colradpy_utility import *
+from colradpy.write_adf15 import *
 import collections
 from matplotlib import rc,rcParams
 from fractions import Fraction
@@ -1501,8 +1502,8 @@ class colradpy():
 
         #just the time dependent version of the SCD coefficient,calculated the same as SS version
         #just remember not to include the population from the + stage
-        self.data['processed']['td']['scd'] =  np.einsum('ipk,itkl->ptkl',self.data['rates']['ioniz']['ionization'],
-                            self.data['processed']['td']['td_pop'][0:len(self.data['rates']['ioniz']['ionization']),:,:,:])
+        #self.data['processed']['td']['scd'] =  np.einsum('ipk,itkl->ptkl',self.data['rates']['ioniz']['ionization'],
+        #                    self.data['processed']['td']['td_pop'][0:len(self.data['rates']['ioniz']['ionization']),:,:,:])
 
 
     def split_pec_multiplet(self):
@@ -2294,3 +2295,61 @@ class colradpy():
                 if(scale=='log'):
                     plt.semilogx()
                 plt.legend(loc='best')
+
+
+
+
+
+    def write_pecs_adf15(self,fil_name='', pec_inds = 0, num = 8, pecs_split=False):
+
+        """ This function calls the write_adf15 function.
+
+        :param fil_name
+        :type str
+
+        :param pec_inds
+        :type int arr
+
+        :param num
+        :type int
+
+        :param pecs_split
+        :type bool
+
+        """
+
+        
+        if(fil_name==''):#defaul file name if the user did not choose one
+            fil_name = 'adf15_colradpy_' + re.split('/',self.data['user']['file_loc'])[-1]
+
+        if(pecs_split):#write split PECs if requested
+
+            if(pec_inds == 0):
+                #if no PEC indices specified by user just retun all
+                pec_inds = np.linspace(0,len(self.data['processed']['split']['wave_air'])-1,
+                                     len(self.data['processed']['split']['wave_air']),dtype='int')
+            
+            write_adf15(fil_name, pec_inds, self.data['processed']['split']['wave_air']*10,
+                    self.data['processed']['split']['pecs'], self.data['atomic']['element'],
+                    self.data['atomic']['charge_state'], self.data['user']['dens_grid'],
+                    self.data['user']['temp_grid'], self.data['atomic']['metas'],
+                        self.data['atomic']['ion_pot'],
+                        user = self.data['user'], atomic = self.data['atomic'], num = num)
+            
+        else:#write un-split PECs
+
+            if(pec_inds == 0):
+            
+                pec_inds = np.linspace(0,len(self.data['processed']['wave_air'])-1,
+                                     len(self.data['processed']['wave_air']),dtype='int')
+            
+            write_adf15(fil_name, pec_inds, self.data['processed']['wave_air']*10,
+                    self.data['processed']['pecs'], self.data['atomic']['element'],
+                    self.data['atomic']['charge_state'], self.data['user']['dens_grid'],
+                    self.data['user']['temp_grid'], self.data['atomic']['metas'],
+                        self.data['atomic']['ion_pot'],
+                        user = self.data['user'], atomic = self.data['atomic'], num = num)
+            
+        
+
+        
