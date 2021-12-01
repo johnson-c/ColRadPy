@@ -304,7 +304,7 @@ ColRadPy data
 +---------------------------------+-------------------------------------------------------------------+----------------+--------------------------------------------------------------------------------+
 |   ccd                           | charge exchange recombination coefficient     (cm3 s-1)           | float arr      | (len(metas_plus), len(metas_plus), user_temp, user_dens)                       |
 +---------------------------------+-------------------------------------------------------------------+----------------+--------------------------------------------------------------------------------+
-|   pop_lvl                       | how levels are populated from other levels                        | float arr      | (len(metas_plus), len(metas_plus), user_temp, user_dens)                       |
+|   pop_lvl                       | how levels are populated from other levels                        | float arr      | (len(metas_plus), len(metas_plus), len(metas), user_temp, user_dens)           |
 +---------------------------------+-------------------------------------------------------------------+----------------+--------------------------------------------------------------------------------+
 |   pops_no_norm                  | populations of excited states with no normalization applied       | float arr      |(len(energy)-len(metas), len(energy)-len(metas), len(metas),user_temp,user_dens)|
 +---------------------------------+-------------------------------------------------------------------+----------------+--------------------------------------------------------------------------------+
