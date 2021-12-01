@@ -16,7 +16,7 @@ plt.ion()
 fig, ax1 = plt.subplots(1,1,figsize=(16/3.,9/3.),dpi=300)
 fig.subplots_adjust(bottom=0.15,top=0.93,left=0.125,right=0.965)
 
-ax1.plot(be.data['processed']['pop_lvl'][0,:,0,0,0]/\
+ax1.plot(be.data['processed']['pop_lvl'][8,:,0,0,0]/\
                       np.sum(be.data['processed']['pop_lvl'][0,:,0,0,0]),
                       label='Te= '+str(be.data['user']['temp_grid'][0])+ ' eV')
 
@@ -38,7 +38,7 @@ ax1.set_ylabel('Populating fraction (-)')
 fig, ax1 = plt.subplots(1,1,figsize=(16/3.,9/3.),dpi=300)
 fig.subplots_adjust(bottom=0.15,top=0.93,left=0.125,right=0.965)
 ax1.plot(be.data['user']['temp_grid'],
-          be.data['processed']['pop_lvl'][10,0,0,:,0]/\
+          be.data['processed']['pop_lvl'][10,10,0,:,0]/\
           np.sum(be.data['processed']['pop_lvl'][10,:,0,:,0],axis=0))
 ax1.set_title('Populating fraction from ground to level 1')
 ax1.set_xlabel('Temperature (eV)')
