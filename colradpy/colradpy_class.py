@@ -44,7 +44,8 @@ from colradpy.write_adf15 import *
 import collections
 from matplotlib import rc,rcParams
 from fractions import Fraction
-
+import os
+import pathlib
 
 def convert_to_air(lam):
     """This function converts the vacuum wavelength of spectral lines to 
@@ -267,7 +268,19 @@ class colradpy():
                           (self.data['atomic']['L'] == self.data['atomic']['L'][[ij]]) &        
                           (self.data['atomic']['w'] == self.data['atomic']['w'][[ij]]) )[0])
     
-        
+
+
+        #get the path of the hash so people can track versions, done this way incase the user
+        #didn't pull with git but just zip tssssk tsssk tsssssk
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        base_path = base_path[0:len(base_path) - 9]
+        git_dir = pathlib.Path(base_path) / '.git'
+        with (git_dir / 'HEAD').open('r') as head:
+            ref = head.readline().split(' ')[-1].strip()
+        with (git_dir / ref).open('r') as git_hash:
+            self.data['user']['git_hash'] = git_hash.readline().strip()
+
+                
     def update_dict(self,d, u):
         """This function will update dictionary that is stores all parameter for the class
 
@@ -1502,8 +1515,8 @@ class colradpy():
 
         #just the time dependent version of the SCD coefficient,calculated the same as SS version
         #just remember not to include the population from the + stage
-        #self.data['processed']['td']['scd'] =  np.einsum('ipk,itkl->ptkl',self.data['rates']['ioniz']['ionization'],
-        #                    self.data['processed']['td']['td_pop'][0:len(self.data['rates']['ioniz']['ionization']),:,:,:])
+        self.data['processed']['td']['scd'] =  np.einsum('ipk,itkl->ptkl',self.data['rates']['ioniz']['ionization'],
+                            self.data['processed']['td']['td_pop'][0:len(self.data['rates']['ioniz']['ionization']),:,:,:])
 
 
     def split_pec_multiplet(self):
@@ -2350,6 +2363,60 @@ class colradpy():
                         self.data['atomic']['ion_pot'],
                         user = self.data['user'], atomic = self.data['atomic'], num = num)
             
-        
 
+
+    def dump_hdf5(self,fil_name='colradpy_hdf5_dump.hkl', cut_limit=1e-3, pecs=True, gcrs=False, additional=False):
+        """ This function dumps data to a hdf5 file for other codes
+
+        :param fil_name: The file path and name that will be saved
+        :type str
+
+        :param cut_limit: limits the PEC dumped relative to the largest line in the spectrum
+        :type float 
+
+        :param pecs: Save the PECs and associated information
+        :type bool
+
+        :param gcrs: Save the GCR coefficients
+        :type bool
+
+        :param additional: Save data not always used by other codes
+        :type bool
+
+        """
+        import hickle as hkl
+
+        #If all the PECs are included this can create hdf5 files that are very large (with many Te, ne)
+        #in reality comparison to experiment will only be the strong lines so make a cut
+
+        #find all the pecs above the cut limit, careful the largest pec can change with Te
+        inds_above = np.unique(np.where(self.data['processed']['pecs']/\
+                               np.max(self.data['processed']['pecs'],axis=0) >cut_limit)[0])
         
+        processed = {}#modified processed dictionary to be sent to hdf5
+
+        if(pecs):# dumps the PECs to the hdf file
+            processed['pops']                     = self.data['processed']['pops']
+            processed['driving_populations_norm'] = self.data['processed']['driving_populations_norm']
+            processed['pecs']                     = self.data['processed']['pecs'][inds_above,:,:,:]
+            processed['pec_levels']               = self.data['processed']['pec_levels'][inds_above,:]
+            processed['wave_air']                 = self.data['processed']['wave_air'][inds_above]
+            
+        if(gcrs): #dumps the gcrs to the hdf5 file
+            processed['scd']          = self.data['processed']['scd']
+            processed['acd']          = self.data['processed']['acd']
+            processed['qcd']          = self.data['processed']['qcd']
+            processed['xcd']          = self.data['processed']['xcd']
+
+        if(additional):# dumps additional data to hdf5 that other codes generally dont care about
+            processed['pop_lvl']      = self.data['processed']['pop_lvl']
+            processed['pops_no_norm'] = self.data['processed']['pops_no_norm']
+            #processed['plt']          = self.data['processed']['plt'] #not ready yet
+            #processed['pls']          = self.data['processed']['pls'] #not ready yet
+            processed['wave_vac']     = self.data['processed']['wave_vac'][inds_above]            
+            
+        hkl.dump({'user'       : self.data['user'], #uses hickle to dump to hdf5
+                  'atomic'     : self.data['atomic'],
+                  'input_file' : self.data['input_file'],
+                  'processed'  : processed},
+                 fil_name)
