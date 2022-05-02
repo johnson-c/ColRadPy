@@ -1,3 +1,6 @@
+Running ColRadPy
+================
+
 Go to desired directory and in the terminal, run
 
 ``git clone https://github.com/johnson-c/ColRadPy.git``
