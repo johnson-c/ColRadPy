@@ -1,5 +1,7 @@
 Go to desired directory and in the terminal, run
+
 ``git clone https://github.com/johnson-c/ColRadPy.git``
+
 and in ColRadPy directory,
 ``git init``
 to initialize git repo. Use ``git branch -a`` in ColRadPy to make sure you have the HEAD
