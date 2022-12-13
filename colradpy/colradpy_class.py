@@ -533,7 +533,7 @@ class colradpy():
                                            fill_value =  'extrapolate')
 
             self.data['rates']['recomb']['recomb_excit_interp_grid'] =\
-                                        recomb_excit_interp(np.log(self.data['user']['temp_grid']))
+                                        recomb_excit_interp(np.log(self.data['user']['temp_grid'])).clip(min=0)
         else:
             recomb_excit_interp = interp1d(self.data['input_file']['temp_grid']/11604.5,
                                            self.data['rates']['recomb']['recomb_excit'],
@@ -542,8 +542,8 @@ class colradpy():
                                            fill_value =  'extrapolate')
 
             self.data['rates']['recomb']['recomb_excit_interp_grid'] =\
-                                        recomb_excit_interp(self.data['user']['temp_grid'])
-            
+                                        recomb_excit_interp(self.data['user']['temp_grid']).clip(min=0)
+
 
         '''
         #replace values lower than 1e-30 with a linear interpolation
