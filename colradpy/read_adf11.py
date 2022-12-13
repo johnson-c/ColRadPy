@@ -68,6 +68,11 @@ def read_adf11(fil):
                                                      adf11['input_file']['metas'][i],
                                              len(adf11['input_file']['temp_grid']),
                                              len(adf11['input_file']['dens_grid'])))
+        if('prb' in fil):
+            adf11['input_file'][str(i)] = np.zeros((adf11['input_file']['metas'][i],
+                                                     adf11['input_file']['metas'][i],
+                                             len(adf11['input_file']['temp_grid']),
+                                             len(adf11['input_file']['dens_grid'])))
             
     #Reading the GCR value portion
     gcr_line = f.readline()
@@ -75,7 +80,7 @@ def read_adf11(fil):
     
     while len(gcr_line.strip()) != 0 and 'C-' not in gcr_line:
         #look for the stage identifying line
-        if('---' in gcr_line):
+        if('----------' in gcr_line):
             dens_count = 0
             temp_count = 0
             stage_id = np.array(list(map(int,re.findall('(\d+ )',gcr_line))))
