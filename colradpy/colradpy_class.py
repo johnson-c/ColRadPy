@@ -1164,7 +1164,7 @@ class colradpy():
                                8100*1.60218e-19*(self.data['cr_matrix']['A_ji'][levels_to_keep[j],i]*\
                                                         self.data['processed']['pops'][j]/ \
                                                         self.data['user']['dens_grid'])*1.e7)
-                    #1.9865e-23*
+   
                     self.data['processed']['wave_vac'].append(1.e7/abs(self.data['atomic']['energy'][levels_to_keep[j]]\
                                                                         - self.data['atomic']['energy'][i]))
 
@@ -1173,6 +1173,7 @@ class colradpy():
 
         self.data['processed']['pls'] = np.asarray(plt)
         self.data['processed']['plt'] = np.sum(np.asarray(plt)[:,0:len(self.data['atomic']['metas'])], axis=0)
+        self.data['processed']['prb'] = np.sum(np.asarray(plt)[:,len(self.data['atomic']['metas']):], axis=0)        
         #sum over all the deltaE *PEC values note that the units are W m3
 
         self.data['processed']['pecs'] = np.asarray(self.data['processed']['pecs'])
