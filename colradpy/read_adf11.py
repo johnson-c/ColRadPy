@@ -63,6 +63,12 @@ def read_adf11(fil):
                                                      adf11['input_file']['metas'][i+1],
                                              len(adf11['input_file']['temp_grid']),
                                              len(adf11['input_file']['dens_grid'])))
+        if('plt' in fil):
+            adf11['input_file'][str(i)] = np.zeros((adf11['input_file']['metas'][i],
+                                                     adf11['input_file']['metas'][i],
+                                             len(adf11['input_file']['temp_grid']),
+                                             len(adf11['input_file']['dens_grid'])))
+            
     #Reading the GCR value portion
     gcr_line = f.readline()
     ii = 0
