@@ -63,6 +63,16 @@ def convert_to_air(lam):
     
     s = 10**3/lam
     return 1 + 0.0000834254 + 0.02406147 / (130 - s**2) + 0.00015998 / (38.9 - s**2)
+def myprint(d):
+    for k, v in d.items():
+        if isinstance(v, dict):
+            myprint(v)
+        else:
+            if(type(v) == np.ndarray):
+                if(v.dtype.kind=='U'):
+                    print(k)
+                    d[k] = np.array([s.encode() for s in np.copy(d[k])])
+    return d
 
 
 class colradpy():
@@ -313,7 +323,7 @@ class colradpy():
         if(type(fil) == str or type(fil) == np.str_):
 
             self.data = self.update_dict(self.data,read_adf04(fil))
-            self.data['user']['file_loc'] = fil
+            self.data['user']['file_loc'] = str(fil)#make this a string changed for hdfdict
         else:
             if(self.data):
                 self.data = self.update_dict(self.data,fil)
@@ -523,29 +533,29 @@ class colradpy():
            adf04 file.
         """
 
+        if(np.size(self.data['rates']['recomb']['recomb_excit'] > 0)):
+
+            if(self.data['user']['log_rate_recomb']):
+                recomb_excit_interp = interp1d(np.log(self.data['input_file']['temp_grid']/11604.5),
+                                               self.data['rates']['recomb']['recomb_excit'],
+                                               axis=1,
+                                               kind = self.data['user']['interp_kind_recomb'],
+                                               fill_value =  'extrapolate')
+
+                self.data['rates']['recomb']['recomb_excit_interp_grid'] =\
+                                            recomb_excit_interp(np.log(self.data['user']['temp_grid'])).clip(min=0)
+            else:
+                recomb_excit_interp = interp1d(self.data['input_file']['temp_grid']/11604.5,
+                                               self.data['rates']['recomb']['recomb_excit'],
+                                               axis=1,
+                                               kind = self.data['user']['interp_kind_recomb'],
+                                               fill_value =  'extrapolate')
+
+                self.data['rates']['recomb']['recomb_excit_interp_grid'] =\
+                                            recomb_excit_interp(self.data['user']['temp_grid']).clip(min=0)
 
 
-        if(self.data['user']['log_rate_recomb']):
-            recomb_excit_interp = interp1d(np.log(self.data['input_file']['temp_grid']/11604.5),
-                                           self.data['rates']['recomb']['recomb_excit'],
-                                           axis=1,
-                                           kind = self.data['user']['interp_kind_recomb'],
-                                           fill_value =  'extrapolate')
-
-            self.data['rates']['recomb']['recomb_excit_interp_grid'] =\
-                                        recomb_excit_interp(np.log(self.data['user']['temp_grid'])).clip(min=0)
-        else:
-            recomb_excit_interp = interp1d(self.data['input_file']['temp_grid']/11604.5,
-                                           self.data['rates']['recomb']['recomb_excit'],
-                                           axis=1,
-                                           kind = self.data['user']['interp_kind_recomb'],
-                                           fill_value =  'extrapolate')
-
-            self.data['rates']['recomb']['recomb_excit_interp_grid'] =\
-                                        recomb_excit_interp(self.data['user']['temp_grid']).clip(min=0)
-
-
-        '''
+            '''
         #replace values lower than 1e-30 with a linear interpolation
         #because slinear gives the the wrong answer for some reason
         #maybe dont need this part now, 1dinterp was using kind='slinear'
@@ -564,17 +574,17 @@ class colradpy():
 
                     self.data['rates']['recomb']['recomb_excit_interp_grid'][a[v],0:c[v]+1] =\
                                                     w(self.data['user']['temp_grid'][0:tmp+1])
-        '''
-        self.data['rates']['recomb']['recombination'] = \
-            np.zeros((len(self.data['atomic']['energy']),
-                      len(self.data['atomic']['ion_pot']),
-                      len(self.data['user']['temp_grid'])))
-        
-        for q in range(0,len(self.data['rates']['recomb']['recomb_transitions'])):
-            self.data['rates']['recomb']['recombination']\
-                [self.data['rates']['recomb']['recomb_transitions'][q,1]-1,
-                 self.data['rates']['recomb']['recomb_transitions'][q,0]-1,:] = \
-                                    self.data['rates']['recomb']['recomb_excit_interp_grid'][q]
+            '''
+            self.data['rates']['recomb']['recombination'] = \
+                np.zeros((len(self.data['atomic']['energy']),
+                          len(self.data['atomic']['ion_pot']),
+                          len(self.data['user']['temp_grid'])))
+
+            for q in range(0,len(self.data['rates']['recomb']['recomb_transitions'])):
+                self.data['rates']['recomb']['recombination']\
+                    [self.data['rates']['recomb']['recomb_transitions'][q,1]-1,
+                     self.data['rates']['recomb']['recomb_transitions'][q,0]-1,:] = \
+                                        self.data['rates']['recomb']['recomb_excit_interp_grid'][q]
 
             
     def make_three_body_recombination(self):
@@ -2387,8 +2397,8 @@ class colradpy():
         :type bool
 
         """
-        import hickle as hkl
-
+        import hdfdict
+        import h5py
         #If all the PECs are included this can create hdf5 files that are very large (with many Te, ne)
         #in reality comparison to experiment will only be the strong lines so make a cut
 
@@ -2410,16 +2420,30 @@ class colradpy():
             processed['acd']          = self.data['processed']['acd']
             processed['qcd']          = self.data['processed']['qcd']
             processed['xcd']          = self.data['processed']['xcd']
+            processed['plt']          = self.data['processed']['plt']
+            processed['prb']          = self.data['processed']['prb']            
 
         if(additional):# dumps additional data to hdf5 that other codes generally dont care about
             processed['pop_lvl']      = self.data['processed']['pop_lvl']
             processed['pops_no_norm'] = self.data['processed']['pops_no_norm']
-            #processed['plt']          = self.data['processed']['plt'] #not ready yet
-            #processed['pls']          = self.data['processed']['pls'] #not ready yet
-            processed['wave_vac']     = self.data['processed']['wave_vac'][inds_above]            
+            processed['wave_vac']     = self.data['processed']['wave_vac'][inds_above]
             
-        hkl.dump({'user'       : self.data['user'], #uses hickle to dump to hdf5
-                  'atomic'     : self.data['atomic'],
-                  'input_file' : self.data['input_file'],
-                  'processed'  : processed},
-                 fil_name)
+        fil_tmp = open(fil_name,'w')
+
+        sav_dict = {}
+        sav_dict['user']       = self.data['user']
+        sav_dict['atomic']     = self.data['atomic']
+        sav_dict['input_file'] =  self.data['input_file']
+        sav_dict['processed']  =  processed
+
+
+        sav_dict = myprint(sav_dict)
+        hdfdict.dump(sav_dict, h5py.File(fil_name,'a'))
+
+
+
+
+        
+        fil_tmp.close()
+
+
