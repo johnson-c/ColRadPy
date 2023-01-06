@@ -1,11 +1,41 @@
 import numpy as np 
 import matplotlib.pyplot as plt
+from os.path import exists
+from os import mkdir
+from pathlib import Path
 import sys
+from urllib import request
+# Import ColRadPy
 sys.path.append('../')
 from colradpy import colradpy
 
 
-fil = 'mom97_ls#he0.dat' #adf04 file location
+# Variables
+# Set up output folders
+EXAMPLES_PATH: Path = Path(__file__).parent
+EXAMPLES_INPUT_PATH: Path = EXAMPLES_PATH / "input"
+EXAMPLES_OUTPUT_PATH: Path = EXAMPLES_PATH / "output"
+OUTPUT_PATH: Path = EXAMPLES_OUTPUT_PATH / Path(__file__).name.split('.')[0]
+ADAS_PATH: Path = EXAMPLES_INPUT_PATH / "Open-ADAS"
+INPUT_PATH: Path = ADAS_PATH / "adas#2"
+# Making output directories
+paths = [EXAMPLES_OUTPUT_PATH, OUTPUT_PATH, ADAS_PATH, INPUT_PATH]
+for p in paths:
+    if not exists(p):
+        mkdir(p)
+
+
+# Download ADF04 from Open-ADAS
+url: str = f"https://open.adas.ac.uk/download/adf04/adas][2/mom97_ls][he0.dat"
+adf04_file: str = 'mom97_ls#he0.dat'
+adf04_path: Path = INPUT_PATH / adf04_file
+if not exists(adf04_path):
+    with request.urlopen(url) as f:
+        adf04: str = f.read().decode('utf-8')
+        with open(adf04_path, "x") as f_adf04:
+            f_adf04.write(adf04)
+
+fil = str(adf04_path)  #adf04 file location
 
 temp_grid = np.array([500]) #temperature grid in (eV) for steady state ionization balance
 dens_grid = np.array([1.e13]) # density grid in (cm-3) for steady state ionization balance
