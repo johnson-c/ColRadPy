@@ -12,6 +12,19 @@ import matplotlib.pyplot as plt
 
 
 # Variables
+# Set up output folders
+from os.path import exists
+from os import mkdir
+from pathlib import Path
+EXAMPLES_PATH: Path = Path(__file__).parent
+EXAMPLES_INPUT_PATH: Path = EXAMPLES_PATH / "input"
+EXAMPLES_OUTPUT_PATH: Path = EXAMPLES_PATH / "output"
+OUTPUT_PATH: Path = EXAMPLES_OUTPUT_PATH / Path(__file__).name.split('.')[0]
+# Making output directories
+paths = [EXAMPLES_OUTPUT_PATH, OUTPUT_PATH]
+for p in paths:
+    if not exists(p):
+        mkdir(p)
 # Plotting variables
 SUBPLOT_KWARGS: dict = dict(
     nrows=1,
@@ -22,12 +35,12 @@ SUBPLOT_KWARGS: dict = dict(
 SUBPLOT_ADJUST_KWARGS: dict = dict(
     bottom=0.15,
     top=0.92,
-    left=0.15,
+    left=0.125,
     right=0.965
 )
 
 # ColRadPy variables
-fil = 'cpb03_ls#be1.dat' #adf04 file
+fil = str(EXAMPLES_INPUT_PATH / 'cpb03_ls#be1.dat') #adf04 file
 temperature_arr = np.linspace(1,100,20) #eV
 metastable_levels = np.array([0,1])   #ground and level 1 chosen to be metastable
 density_arr =     np.array([1.e13,8.e13,4.e14]) # cm-3
@@ -39,19 +52,6 @@ beii.solve_cr()
 
 
 # Plotting
-# Set up output folders
-from os.path import exists
-from os import mkdir
-from pathlib import Path
-EXAMPLES_PATH: Path = Path(__file__).parent
-EXAMPLES_OUTPUT_PATH: Path = EXAMPLES_PATH / "output"
-OUTPUT_PATH: Path = EXAMPLES_OUTPUT_PATH / Path(__file__).name.split('.')[0]
-# Making output directories
-paths = [EXAMPLES_OUTPUT_PATH, OUTPUT_PATH]
-for p in paths:
-    if not exists(p):
-        mkdir(p)
-
 # plotting the QCD
 fig, ax1 = plt.subplots(**SUBPLOT_KWARGS)
 fig.subplots_adjust(**SUBPLOT_ADJUST_KWARGS)
