@@ -90,7 +90,7 @@ ax1.vlines(he.data['processed']['split']['wave_air'],
 ax1.set_xlabel('Wavelength (nm)',weight='semibold')
 ax1.set_ylabel('Intensity (AU)',weight='semibold')
 ax1.set_xlim(587.5,587.7)
-plt.ylim(0,2e-10)
+plt.ylim(0,1e-10)
 plt.legend()
 plt.tight_layout()
 fig.savefig(OUTPUT_PATH / "split_multiplet_example_mom97_ls#he0.pdf", format='pdf')
