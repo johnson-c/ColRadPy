@@ -1,6 +1,7 @@
 # Custom/manually added
 .idea
 examples/output
+examples/input/Open-ADAS
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
