@@ -66,7 +66,6 @@ he.split_pec_multiplet()
 
 
 #Set up pretty plot settings
-plt.ion()
 plt.rc('font',size=8)
 plt.rcParams['font.weight'] = 'semibold'
 params = {'mathtext.default': 'regular' }
@@ -94,3 +93,4 @@ ax1.set_xlim(587.5,587.7)
 plt.ylim(0,2e-10)
 plt.legend()
 plt.tight_layout()
+fig.savefig(OUTPUT_PATH / "split_multiplet_example_mom97_ls#he0.pdf", format='pdf')
