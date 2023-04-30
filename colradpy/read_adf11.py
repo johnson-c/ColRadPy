@@ -95,7 +95,7 @@ def read_adf11(fil):
 
             ii = ii+1
         else:
-            gcr_vals = np.array(list(map(float,re.findall('(-\d+.\d+)',gcr_line))))
+            gcr_vals = np.array(list(map(float,re.findall(r'((?:-\d+|\d).\d+)',gcr_line))))#Si gcr has positive vals maybe other do to?
             adf11['input_file'][str(stage_id[2]-1)][stage_id[0]-1,stage_id[1]-1,
                                            temp_count,dens_count:dens_count+len(gcr_vals)] = gcr_vals
             dens_count = dens_count + len(gcr_vals)

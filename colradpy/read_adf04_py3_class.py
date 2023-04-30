@@ -43,7 +43,7 @@ def read_adf04(fil):
     #
     ############################################################################
     try:
-        first_line = f.readline()
+        first_line = f.readline().rstrip()#needed for some adf04 that don't follow the correct format
         adf04['atomic']['element'] = re.split('[+]',first_line)[0]
         first_linep = np.asarray(re.split('[ ]',re.split('[+]',first_line)[1]))
         first_linep_inds = np.where(first_linep !='')[0]
@@ -85,7 +85,7 @@ def read_adf04(fil):
         zz_check = np.array([-1])
         while('-1' not in tmp_line or '-1\n' not in tmp_line):
             level_num = level_num + 1
-            tmp_line = f.readline()
+            tmp_line = f.readline().rstrip()#remove trailing
             #remove the white space that occurs when L=10 in the adf04 file
             tmp_line =     tmp_line[0:tmp_line.rfind('(')-3] + \
                tmp_line[tmp_line.rfind('(')-3:tmp_line.rfind('(')].replace(' ','')+\
@@ -164,7 +164,7 @@ def read_adf04(fil):
     #
     ############################################################################
     try:
-        temp_line = f.readline()
+        temp_line = f.readline().rstrip()#remove trailing because people cant follow directions
         temp_line_arr = np.asarray(re.split('[ ]',temp_line))
         temp_line_inds = np.where( temp_line_arr!='')[0]
         adf04_temp_grid = []
@@ -201,7 +201,7 @@ def read_adf04(fil):
     inf_engy= []
     while('-1' not in tmp or '-1\n' not in tmp):
         level_num = level_num + 1
-        tmp_line = f.readline()
+        tmp_line = f.readline().rstrip()#remove trailing whitespace from some adf04 files :'(
         tmp = np.asarray(re.split('[  ]',tmp_line))
         if('-1' in tmp or '-1\n' in tmp):
             break

@@ -1,4 +1,4 @@
-from setuptools import setup
+from distutils.core import setup
 setup(
     # Needed to silence warnings (and to be a worthwhile package)
     name='colradpy',
@@ -6,7 +6,7 @@ setup(
     author='Curt Johnson',
     author_email='caj0026@auburn.edu',
     # Needed to actually package something
-    packages=['colradpy'],
+    packages=['colradpy',],
     # Needed for dependencies
     install_requires=['numpy','scipy','matplotlib'],
     # *strongly* suggested for sharing

@@ -538,8 +538,13 @@ def burgess_tully_rates(user_temp_grid, calc_temp_grid, col_transitions,col_exci
             burgtully_dict['burg_tully']['excit_extrap_lin'].append(type2_yconvert( burgtully_dict['burg_tully']['yval_extrap_lin'][1],direct='B'))
 
         else:
-            burgtully_dict['burg_tully']['yval_extrap_lin'].append(np.array([-1]))
-            burgtully_dict['burg_tully']['excit_extrap_lin'].append(np.array([-1]))                
+            #added for B files where this case first crept in
+            if('yval_extrap_lin' not in burgtully_dict['burg_tully']):
+                burgtully_dict['burg_tully']['yval_extrap_lin'] = []
+                burgtully_dict['burg_tully']['excit_extrap_lin'] = []
+
+            burgtully_dict['burg_tully']['yval_extrap_lin'].append(np.array([]))#np.append(np.array([-1]))
+            burgtully_dict['burg_tully']['excit_extrap_lin'].append(np.array([]))#np.append(np.array([-1]))
 
 
 ####################################################################################################

@@ -109,7 +109,8 @@ class ionization_balance():
                  suppliment_with_ecip=True, use_recombination_three_body=True,use_recombination=True,
                  use_cx=False,
                  keep_charge_state_data=False,init_abund = np.array([]), source= np.array([]),
-                 temp_dens_pair=False,scale_file_ioniz=False, ne_tau=np.array([-1]),adf11_files=False):
+                 temp_dens_pair=False,scale_file_ioniz=False, ne_tau=np.array([-1]),adf11_files=False,
+                 hdf5_files=False):
 
 
         #this is basic input data that is the same whether adf04 or adf11 inputs are used
@@ -197,7 +198,27 @@ class ionization_balance():
                                                                                  len(dens_grid)) )
 
 
+        elif(hdf5_files):
 
+            import h5py
+            import hdfdict
+
+            if(type(use_cx) == bool):
+                self.data['user']['use_cx'] = np.ones_like(fils,dtype=bool)
+                self.data['user']['use_cx'][:] = use_cx
+
+            
+            self.data['user']['temp_dens_pair'] = False#probably should remove at some point
+            self.data['cr_data']['stage_data'] = {}
+            for i,j in enumerate(fils):
+                c_hdf5 = hdfdict.load(j,lazy=False)
+                self.data['cr_data']['gcrs'][str(i)] = {}
+                self.data['cr_data']['gcrs'][str(i)]['scd'] = np.copy(c_hdf5['processed']['scd'])
+                self.data['cr_data']['gcrs'][str(i)]['acd'] = np.copy(c_hdf5['processed']['acd'])
+                self.data['cr_data']['gcrs'][str(i)]['qcd'] = np.copy(c_hdf5['processed']['qcd'])
+                self.data['cr_data']['gcrs'][str(i)]['xcd'] = np.copy(c_hdf5['processed']['xcd'])
+                self.data['cr_data']['stage_data'][str(i)] = c_hdf5
+                
         else:#adf04 specific formating this is the default
             
             # give the option to the user to choose different
@@ -293,6 +314,7 @@ class ionization_balance():
                         m = np.shape(self.data['gcrs'][str(i -1)]['scd'])[1]
                         meta = np.linspace(0,m-1,m,dtype=int)
                 #setup the CR
+                print(i)
                 tmp = colradpy(fil=str(fils[i]),metas=meta,temp_grid=temp_grid,electron_den=dens_grid,
                                htemp_grid = htemp_grid, hdens_grid = hdens_grid,
                                use_ionization = self.data['user']['use_ionization'][i],
