@@ -41,7 +41,11 @@ from colradpy.nist_read_txt import *
 from colradpy.solve_matrix_exponential import *
 from colradpy.colradpy_utility import *
 from colradpy.write_adf15 import *
-import collections
+if( (sys.version_info[0] ==3) & (sys.version_info[1] >=10)):
+    from collections.abc import Mapping
+else:
+    from collections import Mapping
+    
 from matplotlib import rc,rcParams
 from fractions import Fraction
 import os
@@ -302,7 +306,7 @@ class colradpy():
         """
 
         for k, v in u.items():
-            if isinstance(v, collections.Mapping):
+            if isinstance(v, Mapping):
                 d[k] = self.update_dict(d.get(k, {}), v)
             else:
                 d[k] = v
@@ -417,7 +421,7 @@ class colradpy():
                                         kind = self.data['user']['interp_kind_ion'],
                                         fill_value =  'extrapolate')
 
-            ion_excit_interp_grid = ion_excit_interp(np.log(self.data['user']['temp_grid']))
+            ion_excit_interp_grid = ion_excit_interp(np.log(self.data['user']['temp_grid'])).clip(min=0)
             
         else:
             ion_excit_interp = interp1d(self.data['input_file']['temp_grid']/11604.5,
@@ -425,7 +429,7 @@ class colradpy():
                                         kind = self.data['user']['interp_kind_ion'],
                                         fill_value =  'extrapolate')
 
-            ion_excit_interp_grid = ion_excit_interp(self.data['user']['temp_grid'])
+            ion_excit_interp_grid = ion_excit_interp(self.data['user']['temp_grid']).clip(min=0)
             
             if(self.data['user']['scale_file_ioniz']):
                 for ii in range(0,len(self.data['rates']['ioniz']['ion_transitions'])):
@@ -2416,12 +2420,12 @@ class colradpy():
             processed['wave_air']                 = self.data['processed']['wave_air'][inds_above]
             
         if(gcrs): #dumps the gcrs to the hdf5 file
-            processed['scd']          = self.data['processed']['scd']
-            processed['acd']          = self.data['processed']['acd']
-            processed['qcd']          = self.data['processed']['qcd']
-            processed['xcd']          = self.data['processed']['xcd']
-            processed['plt']          = self.data['processed']['plt']
-            processed['prb']          = self.data['processed']['prb']            
+            processed['scd']          = np.copy(self.data['processed']['scd'])
+            processed['acd']          = np.copy(self.data['processed']['acd'])
+            processed['qcd']          = np.copy(self.data['processed']['qcd'])
+            processed['xcd']          = np.copy(self.data['processed']['xcd'])
+            processed['plt']          = np.copy(self.data['processed']['plt'])
+            processed['prb']          = np.copy(self.data['processed']['prb'])
 
         if(additional):# dumps additional data to hdf5 that other codes generally dont care about
             processed['pop_lvl']      = self.data['processed']['pop_lvl']
