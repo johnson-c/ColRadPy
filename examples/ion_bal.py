@@ -1,36 +1,14 @@
-#######################################################################
-#
-# Note that this script requires the C adf04 datafiles from openADAS
-#
-#######################################################################
-#
-# Imports
 import numpy as np
 import matplotlib.pyplot as plt
-from os.path import exists
-from os import mkdir
-from pathlib import Path
 import sys
-from urllib import request
-# Import ColRadPy
 sys.path.append('/home/curtis/git/tmp_tmp/')
 from colradpy import ionization_balance
+#######################################################################
+#
+#Note that this script requires the C adf04 datafiles from openADAS
+#
+#######################################################################
 
-
-# Variables
-# Set up output folders
-EXAMPLES_PATH: Path = Path(__file__).parent
-EXAMPLES_INPUT_PATH: Path = EXAMPLES_PATH / "input"
-EXAMPLES_OUTPUT_PATH: Path = EXAMPLES_PATH / "output"
-OUTPUT_PATH: Path = EXAMPLES_OUTPUT_PATH / Path(__file__).name.split('.')[0]
-ADAS_PATH: Path = EXAMPLES_INPUT_PATH / "Open-ADAS"
-INPUT_PATH: Path = ADAS_PATH / "adas#6"
-# Making output directories
-paths = [EXAMPLES_OUTPUT_PATH, OUTPUT_PATH, ADAS_PATH, INPUT_PATH]
-for p in paths:
-    if not exists(p):
-        mkdir(p)
-# Plotting
 plt.ion()
 plt.rc('font',size=8)
 plt.rcParams['font.weight'] = 'semibold'
@@ -38,21 +16,9 @@ params = {'mathtext.default': 'regular' }
 plt.rcParams.update(params)
 
 
-# Download ADF04 from Open-ADAS
-adf04_files = []
-charges = range(6)
-for charge in charges:
-    url: str = f"https://open.adas.ac.uk/download/adf04/adas][6/mom97_ls][c{charge}.dat"
-    adf04_file: str = f"mom97_ls#c{charge}.dat"
-    adf04_files.append(adf04_file)
-    adf04_path: Path = INPUT_PATH / adf04_file
-    if not exists(adf04_path):
-        with request.urlopen(url) as f:
-            adf04: str = f.read().decode('utf-8')
-            with open(adf04_path, "x") as f_adf04:
-                f_adf04.write(adf04)
-
-fils = np.array([INPUT_PATH / f for f in adf04_files], dtype=str)
+path = './adas#6/'
+fils = np.array([path+'mom97_ls#c0.dat',path+'mom97_ls#c1.dat',path+'mom97_ls#c2.dat',
+                 path+'mom97_ls#c3.dat',path+'mom97_ls#c4.dat',path+'mom97_ls#c5.dat'],dtype=str)
 
 
 temp = np.array([100])
@@ -162,7 +128,7 @@ plt.title('T$_e$ = 100 eV  n$_e$ = 10$^{13}$ cm$^{-1}$',weight='semibold')
 plt.legend()
 plt.xscale('log')
 
-fig.savefig(OUTPUT_PATH / "carbon_ion_bal.pdf", format='pdf')
+
     
 
 

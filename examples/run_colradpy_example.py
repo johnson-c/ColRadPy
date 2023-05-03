@@ -2,24 +2,8 @@ import sys
 sys.path.append('../') #starting in 'examples' so need to go up one
 from colradpy import colradpy
 import numpy as np
-from os.path import exists
-from os import mkdir
-from pathlib import Path
 
-
-# Variables
-# Set up output folders
-EXAMPLES_PATH: Path = Path(__file__).parent
-EXAMPLES_INPUT_PATH: Path = EXAMPLES_PATH / "input"
-EXAMPLES_OUTPUT_PATH: Path = EXAMPLES_PATH / "output"
-OUTPUT_PATH: Path = EXAMPLES_OUTPUT_PATH / Path(__file__).name.split('.')[0]
-# Making output directories
-paths = [EXAMPLES_OUTPUT_PATH, OUTPUT_PATH]
-for p in paths:
-    if not exists(p):
-        mkdir(p)
-
-fil = str(EXAMPLES_INPUT_PATH / 'cpb03_ls#be0.dat') #adf04 file
+fil = 'cpb03_ls#be0.dat' #adf04 file
 temperature_arr = np.linspace(1,100,100) #eV
 metastable_levels = np.array([0])   #metastable level, just ground chosen here
 density_arr =     np.array([1.e13,4.e14]) # cm-3
