@@ -134,6 +134,11 @@ def read_FAC(
             FAC=FAC,
             fil=fil
             )
+    # If empty
+    else:
+        FAC['rates']['recomb'] = {}
+        FAC['rates']['recomb']['recomb_transitions'] = np.asarray([])
+        FAC['rates']['recomb']['recomb_excit'] = np.asarray([])
 
     # Autoionization/dielectronic recombination
     if 'ai' in physics:
@@ -149,7 +154,7 @@ def read_FAC(
             )
 
     # Collisional ionization
-    if 'a.ci' in physics:
+    if 'ci' in physics:
         FAC = _ai(
             FAC=FAC,
             fil=fil,
@@ -160,6 +165,20 @@ def read_FAC(
             FAC=FAC,
             fil=fil
             )
+    # If empty
+    else:
+        FAC['rates']['ioniz'] = {}
+        FAC['rates']['ioniz']['ion_transitions'] = np.asarray([])
+        FAC['rates']['ioniz']['ion_excit'] = np.asarray([])
+
+    # Charge exchange
+    if 'cx' in physics:
+        print('CHARGE EXCHANGE IS NOT IMPLEMENTED YET!!!')
+    # If empty
+    else:
+        FAC['rates']['cx'] = {}
+        FAC['rates']['cx']['cx_transitions'] = np.asarray([])
+        FAC['rates']['cx']['cx_excit'] = np.asarray([])
 
     ######## -------- Formats Output -------- ########
 
@@ -389,7 +408,54 @@ def _rr_mr(
     # Ouput
     return FAC
         
+# Reads Maxwell-averaged collisional ionization data
+def _ci_mr(
+    FAC=None,
+    fil=None,
+    ):
 
+    # Reads data file
+    mr = _read_mr(
+        fil=fil,
+        data='ci'
+        )
+
+    # Init output
+    state = []
+    ion = []
+    data = []
+
+    # Loop over states with charge Z
+    for st in mr.keys():
+        # Skips temp grid
+        if st == 'Te_eV':
+            continue
+
+        state.append(
+            st+1
+            )
+
+        # Loop over states with charge Z+1
+        for ii in mr[st]['coll_ion'].keys():
+            ion.append(
+                ii+1
+                )
+
+            data.append(
+                mr[st]['coll_ion'][ii]
+                ) # [cm3/s]
+
+    # Formats output
+    FAC['rates']['ioniz'] = {}
+    FAC['rates']['ioniz']['ion_transitions'] = np.vstack(
+        (np.asarray(st), np.asarray(ion))
+        ).T # dim(ntrans,2), Z state -> Z+1 state
+    FAC['rates']['ioniz']['ion_excit'] = np.asarray(
+        data
+        ) # dim(ntrans, nt), [cm3/s] 
+
+    # Ouput
+    return FAC
 
 ############################################################
 #
