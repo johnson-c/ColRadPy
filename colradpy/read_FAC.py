@@ -310,7 +310,7 @@ def _ce_mr(
     ):
 
     # Reads data file
-    mr = _rad_mr(
+    mr = _read_mr(
         fil=fil,
         data='ce'
         )
@@ -325,7 +325,7 @@ def _ce_mr(
     for tt in np.arange(trans.shape[0]):
         # Upper and lower level indices
         upr = int(trans[tt,0] -1)
-        lwr = int(trans[tt,1] - 1)
+        lwr = int(trans[tt,1] -1)
 
         # Saves transition rate coefficients, [cm3/s]
         data[tt,:] = np.asarray(
@@ -340,6 +340,55 @@ def _ce_mr(
     # Output
     return FAC
 
+# Reads Maxwell-averaged Radiative recombination data
+def _rr_mr(
+    FAC=None,
+    fil=None,
+    ):
+
+    # Reads data file
+    mr = _read_mr(
+        fil=fil,
+        data='rr'
+        )
+
+    # Init output
+    state = []
+    ion = []
+    data = []
+
+    # Loop over states with charge Z
+    for st in mr.keys():
+        # Skips temp grid
+        if st == 'Te_eV':
+            continue
+
+        state.append(
+            st+1
+            )
+
+        # Loop over states with charge Z+1
+        for ii in mr[st]['rad_recomb'].keys():
+            ion.append(
+                ii+1
+                )
+
+            data.append(
+                mr[st]['rad_recomb'][ii]
+                ) # [cm3/s]
+
+    # Formats output
+    FAC['rates']['recomb'] = {}
+    FAC['rates']['recomb']['recomb_transitions'] = np.vstack(
+        (np.asarray(ion), np.asarray(st))
+        ).T # dim(ntrans,2), Z+1 state -> Z state
+    FAC['rates']['recomb']['recomb_excit'] = np.asarray(
+        data
+        ) # dim(ntrans, nt), [cm3/s] 
+
+    # Ouput
+    return FAC
+        
 
 
 ############################################################
