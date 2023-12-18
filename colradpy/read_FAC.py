@@ -11,6 +11,7 @@ Dec 18, 2023
 
 TO DO:
     1) Add non-Maxwellian convolution
+    2) Missing energy level data
 
 '''
 
@@ -27,6 +28,10 @@ import numpy as np
 ############################################################
 
 def read_FAC(
+    # Ion species of interest because not stored in FAC data files....
+    ele = None,         # Species name
+    nele = None,        # Number of electrons
+    Zele = None,        # Nuclear charge
     # File Management
     fil = None,         # Common path to FAC files, excluding physics extentions
     # Physics controls
@@ -77,6 +82,9 @@ def read_FAC(
         FAC = _en(
             FAC=FAC,
             fil=fil,
+            ele=ele,
+            nele=nele,
+            Zele=Zele,
             )
     # Error check
     else:
@@ -157,7 +165,7 @@ def read_FAC(
 
 ############################################################
 #
-#                       Utilities
+#                      File Reading
 #
 ############################################################
 
@@ -165,7 +173,13 @@ def read_FAC(
 def _en(
     FAC=None,
     fil=None,
+    ele=None,
+    nele=None,
+    Zele=None,
     ):
+
+    # Useful constants
+    ev2invcm = 8065.73 # [/1cm/eV]
 
     # Initializes output
     FAC['atomic'] = {}
@@ -174,3 +188,77 @@ def _en(
     en = rfac.read_en(
         fil+'a.en'
         )
+
+    # Charge states
+    FAC['atomic']['element'] = ele          # Species name
+    FAC['atomic']['charge_state'] = nele    # Electronic charge
+    FAC['atomic']['iz0'] = Zele             # Nuclear charge
+    FAC['atomic']['iz1'] = nele +1          # Spectroscopic charge
+
+    # Initializes data arrays
+    ion_pot = []                # [1/cm], dim(nion,), ionization potentials
+    ion_term = []               # dim(nion,), ionization states
+    ion_pot_lvl = []            # dim(nion,), ionization state index
+
+    config = []                 # dim(ntran,), state configuration
+    L = []                      # dim(ntran,), state L quantum number
+    S = []                      # dim(ntran,), state S quantum number, !!!!!!!!!!!!!!!!
+    w = []                      # dim(ntran,), state J quantum number
+    energy = []                 # dim(ntran,), state energy level wrt ground
+    zpla = []                   # dim(ntran,nion), !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    zpla1 = []                  # dim(ntran,nion), !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # Loop over blocks
+    for blk in en[1].keys():
+        # If block of excited states
+        if en[1][blk]['NELE'] == nele:
+            # Loop over states
+            for st in np.arange(len(en[1][blk]['ILEV'])):
+                config.append(
+                    en[1][blk]['sname'][st].decode("utf-8")
+                    )
+
+                L.append(
+                    en[1][blk]['VNL'][st][-1]
+                    )
+
+                w.append(
+                    en[1][blk]['2J'][st]/2
+                    )
+
+                energy.append(
+                    en[1][blk]['ENERGY'][st] * eV2invcm
+                    )
+
+
+        # If block of ionized states
+        else:
+            # Loop over states
+            for st in np.arange(len(en[1][blk]['ILEV'])):
+                ion_term.append(
+                    en[1][blk]['sname'][st].decode("utf-8")
+                    )
+
+                ion_pot.append(
+                    en[1][blk]['ENERGY'][st] * eV2invcm
+                    )
+
+                ion_pot_lvl.append(
+                    en[1][blk]['ILEV'][st]
+                    )
+
+    # Stores data
+    FAC['atomic']['ion_pot'] = np.asarray(ion_pot)
+    FAC['atomic']['ion_term'] = np.asarray(ion_term)
+    FAC['atomic']['config'] = np.asarray(config)
+    FAC['atomic']['L'] = np.asarray(L)
+    FAC['atomic']['S'] = np.asarray(S)
+    FAC['atomic']['w'] = np.asarray(w)
+    FAC['atomic']['energy'] = np.asarray(energy)
+    FAC['atomic']['zpla'] = np.asarray(zpla)
+    FAC['atomic']['zpla1'] = np.asarray(zpla1)
+    FAC['atomic']['ion_pot_lvl'] = np.asarray(ion_pot_lvl)
+
+    # Output
+    return FAC
+
