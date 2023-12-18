@@ -76,6 +76,7 @@ def read_FAC(
 
     # Initialize output
     FAC = {}
+    FAC['rates'] = {}
 
     # Energy levels
     if 'a.en' in physics:
@@ -244,7 +245,7 @@ def _en(
                     )
 
                 ion_pot_lvl.append(
-                    en[1][blk]['ILEV'][st]
+                    en[1][blk]['ILEV'][st] +1
                     )
 
     # Stores data
@@ -262,3 +263,39 @@ def _en(
     # Output
     return FAC
 
+# Reads Einstein coefficients
+def _tr(
+    FAC=None,
+    fil=None,
+    ):
+
+    # Init output dictionary
+    upr = []    # dim(ntrans,)
+    lwr = []    # dim(ntrans,)
+    a_val = []  # [1/s], dim(ntrans,)
+
+    # Reads transition rate data file
+    tr = rfac.read_tr(fil+'a.tr')
+
+    # Loop over blocks
+    for blk in np.arange(len(tr[1])):
+        # Loop over transitions
+        for tran in np.arange(len(tr[1][blk]['lower_index'])):
+            upr.append(
+                tr[1][blk]['upper_index'][tran] +1
+                )
+
+            lwr.append(
+                tr[1][blk]['lower_index'][tran] +1
+                )
+
+            a_val.append(
+                tr[1][blk]['rate'][tran]
+                )
+
+    # Formats output
+    FAC['rates']['a_val'] = np.asarray(a_val)   # [1/s], dim(ntrans,)
+    trans = np.vstack((upr,lwr)).T # dim(ntrans,2) -> form for coll. excit transitions
+
+    # Output
+    return FAC, trans
