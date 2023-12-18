@@ -34,6 +34,7 @@ import sys
 sys.path.append('./')
 from colradpy.r8necip import *
 from colradpy.read_adf04_py3_class import *
+from colradpy.read_FAC import *
 from colradpy.ecip_rates import *
 from colradpy.burgess_tully_rates import *
 from colradpy.split_multiplet import *
@@ -160,7 +161,10 @@ class colradpy():
                   default_pop_norm=True,temp_dens_pair=False,rate_interp_ion = 'slinear',
                  rate_interp_recomb='log_slinear',rate_interp_col='log_slinear',
                  rate_interp_cx='log_quadratic',use_cx=False,scale_file_ioniz=False,
-                 ne_tau = -1):
+                 ne_tau = -1,
+                 atomic_data_type='adf04', ele='H', nele=0, Zele=1, 
+                 EEDF='Maxwellian', atomic_physics='incl_all',
+                 ):
         
         """The initializing method. Sets up the nested list for data storage and starts to populate with user data
            as well as reading in the adf04 file
@@ -238,6 +242,14 @@ class colradpy():
                 print('Exit here fix to run')
                 sys.exit()
                 
+        # Atomic data file management
+        self.data['user']['atomic_data_type'] = atomic_data_type
+        self.data['user']['ele'] = ele
+        self.data['user']['nele'] = nele
+        self.data['user']['Zele'] = Zele
+        self.data['user']['EEDF'] = EEDF
+        self.data['user']['atomic_physics'] = atomic_physics
+
         self.populate_data(fil)
         self.data['atomic']['metas'] = np.asarray(metas)
 
@@ -325,8 +337,21 @@ class colradpy():
 
         """
         if(type(fil) == str or type(fil) == np.str_):
-
-            self.data = self.update_dict(self.data,read_adf04(fil))
+            # If atomic data is in adf04-format
+            if self.data['user']['atomic_data_type'] == 'adf04':
+                self.data = self.update_dict(self.data,read_adf04(fil))
+            # If atomic data is in FAC-format
+            elif self.data['user']['atomic_data_type'] == 'FAC':
+                self.data = self.updata_dict(
+                    self.data, read_FAC(
+                        ele=self.data['user']['ele'],
+                        nele=self.data['user']['nele'],
+                        Zele=self.data['user']['Zele'],
+                        fil=fil,
+                        EEDF=self.data['user']['EEDF'],
+                        physics=self.data['user']['atomic_physics'],
+                        )
+                    )
             self.data['user']['file_loc'] = str(fil)#make this a string changed for hdfdict
         else:
             if(self.data):

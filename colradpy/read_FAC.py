@@ -43,7 +43,7 @@ def read_FAC(
     ######## -------- Determines which files to search for -------- ########
 
     # Electron energy distribution settings
-    if EEDF is None:
+    if EEDF == 'Maxwellian':
         # Use Maxwell-averaged rates from pfac.fac.MaxwellRate
         use_mr = True
     else:
@@ -51,12 +51,12 @@ def read_FAC(
         sys.exit(1)
 
     # FAC data file suffixes to search for
-    if physics is None:
+    if physics == 'incl_all':
         # If already Maxwell-averaged rate coefficients
         if use_mr:
             physics = [
-                'en',     # ASCII-format Energy levels
-                'tr',     # ASCII-format Einstein coefficients
+                'en',       # ASCII-format Energy levels
+                'tr',       # ASCII-format Einstein coefficients
                 'ce.mr',    # Collisional excitation
                 'rr.mr',    # Radiative recombination
                 #'ai.mr'    # Autoionization/dielectronic recombination
