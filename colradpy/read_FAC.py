@@ -20,11 +20,11 @@ import os
 import numpy as np
 
 
-#########################################
+############################################################
 #
-#           Main
+#                       Main
 #
-#########################################
+############################################################
 
 def read_FAC(
     # File Management
@@ -34,7 +34,7 @@ def read_FAC(
     physics = None,     # if None -> looks for all file suffixes
     ):
 
-    #### ---- Determines which files to search for ---- ####
+    ######## -------- Determines which files to search for -------- ########
 
     # Electron energy distribution settings
     if EEDF is None:
@@ -66,3 +66,111 @@ def read_FAC(
                 #'a.ai'      # ASCII-format Autoionization/dielectronic recombination
                 'a.ci',      # ASCII-format Collision ionization
                 ]
+
+    ######## -------- Reads data -------- ########
+
+    # Initialize output
+    FAC = {}
+
+    # Energy levels
+    if 'a.en' in physics:
+        FAC = _en(
+            FAC=FAC,
+            fil=fil,
+            )
+    # Error check
+    else:
+        print('NEED TO INCLUDE ENERGY LEVEL DATA IN MODELING!!!')
+        sys.exit(1)
+
+    # Einstein coefficients
+    if 'a.tr' in physics:
+        FAC = _tr(
+            FAC=FAC,
+            fil=fil,
+            )
+    # Error check
+    else:
+        print('NEED TO INCLUDE EINSTEIN COEFFICIENT DATA IN MODELING!!!')
+        sys.exit(1)
+
+    # Collisional excitation
+    if 'a.ce' in physics:
+        FAC = _ce(
+            FAC=FAC,
+            fil=fil,
+            EEDF=EEDF,
+            )
+    elif 'ce.mr' in physics:
+        FAC = _ce_mr(
+            FAC=FAC,
+            fil=fil
+            )
+    # Error check
+    else:
+        print('NEED TO INCLUDE COLLISIONAL EXCITATION DATA IN MODELING!!!')
+        sys.exit(1)
+
+    # Radiative recombination
+    if 'a.rr' in physics:
+        FAC = _rr(
+            FAC=FAC,
+            fil=fil,
+            EEDF=EEDF,
+            )
+    elif 'rr.mr' in physics:
+        FAC = _rr_mr(
+            FAC=FAC,
+            fil=fil
+            )
+
+    # Autoionization/dielectronic recombination
+    if 'a.ai' in physics:
+        FAC = _ai(
+            FAC=FAC,
+            fil=fil,
+            EEDF=EEDF,
+            )
+    elif 'ai.mr' in physics:
+        FAC = _ai_mr(
+            FAC=FAC,
+            fil=fil
+            )
+
+    # Collisional ionization
+    if 'a.ci' in physics:
+        FAC = _ai(
+            FAC=FAC,
+            fil=fil,
+            EEDF=EEDF,
+            )
+    elif 'ci.mr' in physics:
+        FAC = _ci_mr(
+            FAC=FAC,
+            fil=fil
+            )
+
+    ######## -------- Formats Output -------- ########
+
+    # Output
+    return FAC
+
+############################################################
+#
+#                       Utilities
+#
+############################################################
+
+# Reads energy level file
+def _en(
+    FAC=None,
+    fil=None,
+    ):
+
+    # Initializes output
+    FAC['atomic'] = {}
+
+    # Reads FAC energy levelfile
+    en = rfac.read_en(
+        fil+'a.en'
+        )
