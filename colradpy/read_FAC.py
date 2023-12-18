@@ -54,8 +54,8 @@ def read_FAC(
         # If already Maxwell-averaged rate coefficients
         if use_mr:
             physics = [
-                'a.en',     # ASCII-format Energy levels
-                'a.tr',     # ASCII-format Einstein coefficients
+                'en',     # ASCII-format Energy levels
+                'tr',     # ASCII-format Einstein coefficients
                 'ce.mr',    # Collisional excitation
                 'rr.mr',    # Radiative recombination
                 #'ai.mr'    # Autoionization/dielectronic recombination
@@ -64,12 +64,12 @@ def read_FAC(
         # If using cross-section files
         else:
             physics = [
-                'a.en',      # ASCII-format Energy levels
-                'a.tr',      # ASCII-format Einstein coefficients
-                'a.ce',      # ASCII-format Collisional excitation
-                'a.rr',      # ASCII-format Radiative recombination
-                #'a.ai'      # ASCII-format Autoionization/dielectronic recombination
-                'a.ci',      # ASCII-format Collision ionization
+                'en',      # ASCII-format Energy levels
+                'tr',      # ASCII-format Einstein coefficients
+                'ce',      # ASCII-format Collisional excitation
+                'rr',      # ASCII-format Radiative recombination
+                #'ai'      # ASCII-format Autoionization/dielectronic recombination
+                'ci',      # ASCII-format Collision ionization
                 ]
 
     ######## -------- Reads data -------- ########
@@ -79,7 +79,7 @@ def read_FAC(
     FAC['rates'] = {}
 
     # Energy levels
-    if 'a.en' in physics:
+    if 'en' in physics:
         FAC = _en(
             FAC=FAC,
             fil=fil,
@@ -93,8 +93,8 @@ def read_FAC(
         sys.exit(1)
 
     # Einstein coefficients
-    if 'a.tr' in physics:
-        FAC = _tr(
+    if 'tr' in physics:
+        FAC, trans = _tr(
             FAC=FAC,
             fil=fil,
             )
@@ -104,16 +104,18 @@ def read_FAC(
         sys.exit(1)
 
     # Collisional excitation
-    if 'a.ce' in physics:
+    if 'ce' in physics:
         FAC = _ce(
             FAC=FAC,
             fil=fil,
+            trans=trans,
             EEDF=EEDF,
             )
     elif 'ce.mr' in physics:
         FAC = _ce_mr(
             FAC=FAC,
-            fil=fil
+            fil=fil,
+            trans=trans,
             )
     # Error check
     else:
@@ -121,7 +123,7 @@ def read_FAC(
         sys.exit(1)
 
     # Radiative recombination
-    if 'a.rr' in physics:
+    if 'rr' in physics:
         FAC = _rr(
             FAC=FAC,
             fil=fil,
@@ -134,7 +136,7 @@ def read_FAC(
             )
 
     # Autoionization/dielectronic recombination
-    if 'a.ai' in physics:
+    if 'ai' in physics:
         FAC = _ai(
             FAC=FAC,
             fil=fil,
@@ -299,3 +301,121 @@ def _tr(
 
     # Output
     return FAC, trans
+
+# Reads Maxwell-averaged collisional excitation data files
+def _ce_mr(
+    FAC=None,
+    fil=None,
+    trans=None,
+    ):
+
+    # Reads data file
+    mr = _rad_mr(
+        fil=fil,
+        data='ce'
+        )
+
+    # Saves temperature grid data
+    FAC['temp_grid'] = np.asarray(mr['Te_eV']) # [eV], dim(nt,)
+
+    # Initializes rate data
+    data = np.zeros((trans.shape[0], len(mr['Te_eV']))) # dim(ntrans,nt)
+
+    # Loop over transitions
+    for tt in np.arange(trans.shape[0]):
+        # Upper and lower level indices
+        upr = int(trans[tt,0] -1)
+        lwr = int(trans[tt,1] - 1)
+
+        # Saves transition rate coefficients, [cm3/s]
+        data[tt,:] = np.asarray(
+            data[lwr]['coll_excit'][upr]
+            )
+
+    # Formats output
+    FAC['rates']['excit'] = {}
+    FAC['rates']['excit']['col_transitions'] = trans    # dim(ntrans,2), (upr,lwr) states
+    FAC['rates']['excit']['col_excit'] = data           # dim(ntrans,nt), [cm3/s]
+
+    # Output
+    return FAC
+
+
+
+############################################################
+#
+#                      Utilities
+#
+############################################################
+
+
+# Read Maxwellian-averaged data files
+def _read_mr(
+    fil = None,
+    data = None,
+    ):
+
+    # Reads data file
+    f = open(
+        fil+data+'.mr',
+        'r'
+        )
+
+    # Initializes output dictionary
+    out = {}
+
+    # Data orginaization labels
+    if data == 'ce':
+        label = 'coll_excit'
+    elif data == 'rr':
+        label = 'rad_recomb'
+    elif data == 'ci':
+        label = 'coll_ion'
+
+    # Loop over lines
+    for line in f:
+        # Skip line breaks
+        if line == '\n':
+            continue
+
+        # If reading a header
+        if line.split(' ')[0] == '#':
+            # Lower level
+            lwr = int(line.split('\t')[0][1:])
+            # Upper level
+            upr = int(line.split('\t')[2])
+
+            # Number of temperature points
+            ntemp = int(line.split('\t')[5])
+            indt = 0
+
+            # If temperature mesh not yet included
+            if 'Te_eV' not in out.keys():
+                out['Te_eV'] = []
+
+            # If new lower state
+            if lwr not in out.keys():
+                out[lwr] = {}
+                out[lwr][label] = {}
+
+            out[lwr][label][upr] = []
+
+        # If reading data
+        else:
+            line = line.replace('\t', ' ')
+            # If need to add temperature mesh
+            if len(out['Te_eV']) < ntemp:
+                out['Te_eV'].append(
+                    float(line.split('  ')[0])
+                    )
+
+            # Adds rate coefficient data, [cm3/s]
+            out[lwr][label][upr].append(
+                float(line.split('  ')[-1])*1e-10
+                )
+
+            # Increases index to next temp point
+            indt += 1
+
+    # Output
+    return out
