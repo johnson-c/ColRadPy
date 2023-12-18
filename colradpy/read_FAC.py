@@ -1,7 +1,7 @@
 '''
 
 read_FAC.py is a subfunction that reads atomic data created by
-the Flexibly Atomic Code (FAC) to be used in collisional-
+the Flexible Atomic Code (FAC) to be used in collisional-
 radiative modeling in ColRadPy
 
 NOTE: Assumes you have a local version of FAC
@@ -12,6 +12,7 @@ Dec 18, 2023
 TO DO:
     1) Add non-Maxwellian convolution
     2) Missing energy level data
+    3) Dielectronic recombination data
 
 '''
 
@@ -19,7 +20,7 @@ TO DO:
 from pfac import rfac
 import os
 import numpy as np
-
+import copy
 
 ############################################################
 #
@@ -182,8 +183,13 @@ def read_FAC(
 
     ######## -------- Formats Output -------- ########
 
+    out = {}
+    out['atomic'] = copy.deepcop(FAC['atomic'])
+    out['input_file'] = copy.deepcopy(FAC)
+    out['rates'] = copy.deepcopy(FAC['rates'])
+
     # Output
-    return FAC
+    return out
 
 ############################################################
 #
@@ -462,7 +468,6 @@ def _ci_mr(
 #                      Utilities
 #
 ############################################################
-
 
 # Read Maxwellian-averaged data files
 def _read_mr(
