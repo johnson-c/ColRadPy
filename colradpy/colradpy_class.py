@@ -2162,6 +2162,200 @@ class colradpy():
 
 
 
+
+
+
+    def make_nat_broad(self,calc_lorentz = True, dw=0,n=50,gs=5,split_wave=np.array([])):
+        """ Calculates the width of natural broadening from the addition of the upper and lower spontaneous emission.
+            Also creates wavelength and spectral intensity arrays for each spectral line.
+            The default grid shape is (#PECs,1000). Uses equation 1.27 from Stuart Loch's thesis
+        Args:
+          :param dw: +- from the central wavelength
+          :type dw: float
+
+          :param n: number of points in the wavelength array
+          :type n: int
+
+          :param calc_lorentz: calculated a number of Lorentzians=['processed']['pecs'] or len(split_wave)
+          :type calc_lorentz: bool
+
+          :param dw:  wavelength grid spacing if default not chosen
+          :type dw:  float
+
+          :param n:  length of wavelength grids
+          :type n:  int
+
+          :param split_wave:  PEC/wavelength array to be broadened
+          :type split_wave:  int
+
+        """
+        
+        #check if other broadening processes have already be calculated
+        if( 'broadening' not in self.data['processed']):
+            self.data['processed']['broadening'] = {}
+        self.data['processed']['broadening']['nat'] = {}
+
+        if(split_wave.any()):
+            wave = split_wave
+            # delta nu_L = A_{n'->n}/2/pi add up both the upper and lower loss rates of the levels
+            self.data['processed']['broadening']['nat']['dnu_l'] = \
+                                  self.data['cr_matrix']['A_ji_loss'][self.data['processed']['pec_levels'][self.data['processed']['split']['unres_pec_map'],0]]/2/np.pi+\
+                                  self.data['cr_matrix']['A_ji_loss'][self.data['processed']['pec_levels'][self.data['processed']['split']['unres_pec_map'],1]]/2/np.pi
+            
+        else:
+            wave = self.data['processed']['wave_air']
+        
+            # delta nu_L = A_{n'->n}/2/pi add up both the upper and lower loss rates of the levels
+            self.data['processed']['broadening']['nat']['dnu_l'] = \
+                                  self.data['cr_matrix']['A_ji_loss'][self.data['processed']['pec_levels'][:,0]]/2/np.pi+\
+                                  self.data['cr_matrix']['A_ji_loss'][self.data['processed']['pec_levels'][:,1]]/2/np.pi
+
+        if(calc_lorentz):
+            if(dw==0):
+                #set the grid to allow for varrying natural line widths
+                dww = (wave*1.e-9)**2/constants.c*self.data['processed']['broadening']['nat']['dnu_l']*1.e9*gs
+            else:
+                dww = dw
+
+            self.data['processed']['broadening']['nat']['wave_arr'] =np.linspace(wave-dww,
+                                                                      wave + dww,n,axis=1)#create 2d wave array
+
+            lor_tmp = self.lorentz(self.data['processed']['broadening']['nat']['dnu_l']/2/np.pi,
+                                          constants.c/((self.data['processed']['broadening']['nat']['wave_arr']/1.e9)),
+                                                                 constants.c/(wave/1.e9))
+            
+            #normalize so area under the curve is 1
+            self.data['processed']['broadening']['nat']['theta'] =np.einsum('ij,i->ij',
+                                                                            lor_tmp,
+                            1/np.trapz(lor_tmp,x=self.data['processed']['broadening']['nat']['wave_arr'],axis=1))
+
+
+            
+    def make_dopp_broad(self, T, m, calc_gauss=True, dw=0., n=50,gs=5,split_wave=np.array([])):
+        """ Make the doppler shift for spectral lines ues equation 1.25 and 1.26 from Stuart Lochs thesis
+        Args:
+          :param nu0: frequency of spectral line
+          :type nu0: float
+        
+          :param T:  Temperature (eV)
+          :type T: float
+
+          :param m:  Mass of ion (kg)
+          :type m: float
+
+          :param calc_gauss: calculated a number of gaussians=['processed']['pecs'] or len(split_wave)
+          :type calc_gauss: bool
+
+          :param dw:  wavelength grid spacing if default not chosen
+          :type dw:  float
+
+          :param n:  length of wavelength grids
+          :type n:  int
+
+          :param split_wave:  PEC/wavelength array to be broadened
+          :type split_wave:  int
+
+        """
+
+
+        if(split_wave.any()):
+            wave = split_wave
+        else:
+            wave = self.data['processed']['wave_air']
+        
+        #check if other broadening processes have already be calculated
+        if( 'broadening' not in self.data['processed']):
+            self.data['processed']['broadening'] = {}
+        self.data['processed']['broadening']['dopp'] = {}
+
+        #see Loch's thesis equation 1.26
+        self.data['processed']['broadening']['dopp']['dnu_g'] = np.sqrt(2*(T*constants.e)/m)*(constants.c/(wave/1.e9))/constants.c
+
+        if(calc_gauss):
+            if(dw==0):
+                #set a variable delta lambda based on the width of the broadening
+                dww = (wave*1.e-9)**2/constants.c* self.data['processed']['broadening']['dopp']['dnu_g']*1.e9*gs
+
+            else:
+                dww = dw
+
+            self.data['processed']['broadening']['dopp']['wave_arr'] =np.linspace(wave-dww, wave + dww,n,axis=1)#wavelength array
+
+
+            self.data['processed']['broadening']['dopp']['theta'] = self.gauss_dopp(self.data['processed']['broadening']['dopp']['wave_arr'],
+                                                                                    wave,
+                                                                                    self.data['processed']['broadening']['dopp']['dnu_g'])
+            
+            '''
+            #see Loch's thesis equation 1.25
+            gau_tmp = np.exp(-1*( (constants.c/(self.data['processed']['broadening']['dopp']['wave_arr']/1.e9) - constants.c/(wave[:,None]/1.e9))/\
+                                                             self.data['processed']['broadening']['dopp']['dnu_g'][:,None])**2)/\
+                                                   (np.sqrt(np.pi)*self.data['processed']['broadening']['dopp']['dnu_g'][:,None])
+            
+            #normalize so the area under the curve is 1
+            self.data['processed']['broadening']['dopp']['theta'] = np.einsum('ij,i->ij',
+                                                                              gau_tmp,
+                                1/np.trapz(gau_tmp,x=self.data['processed']['broadening']['dopp']['wave_arr'],axis=1))
+
+            '''
+
+
+
+
+
+
+    def gauss_dopp(self, wave_arr, wave, dnu_g):
+        ''' Gives a doppler broadened Gaussian profile
+        Args:
+          :param wave_arr: wavelength array for the gaussians
+          :param dnu_g: dnu_g parameter for doppler broadening
+
+
+        '''
+
+            gau_tmp = np.exp(-1*((constants.c/(wave_arr/1.e9)-constants.c/(wave[:,None]/1.e9))/dnu_g[:,None])**2)/\
+                                                                                     (np.sqrt(np.pi)*dnu_g[:,None])
+
+            #normalize so the area under the curve is 1
+            return np.einsum('ij,i->ij', gau_tmp,1/np.trapz(gau_tmp,x=wave_arr,axis=1))
+
+
+
+
+
+
+        
+
+    def lorentz(self,vl,v,v0):
+        '''Lorentzian function used for natural line broadening vl/((v-v0)**2 + vl**2)
+
+        Args:
+          :param vl: width param
+          :type vl: float
+
+          :param v: x array
+          :type v: float
+
+          :param v0: center
+          :type v0: float
+
+        '''
+        return vl[:,None]/((v-v0[:,None])**2 + vl[:,None]**2)
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+
         
     def plot_pec_sticks(self,temp=[0],dens=[0],meta=[0]):
         """plot_pec_sticks will plot the the PEC values versus wavelength.
