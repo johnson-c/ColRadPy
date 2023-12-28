@@ -1638,6 +1638,25 @@ class colradpy():
 
 
 
+    def auto_check_eissner_config(self):
+
+        if(len(self.data['atomic']['config'][0]) < 3 and  (not any(c.isalpha() for c in self.data['atomic']['config'][0]) )):
+            self.convert_eissner_to_ls()
+        elif(len(self.data['atomic']['config'][0]) > 3 and (' ' not in self.data['atomic']['config'][0] and '.' not in self.data['atomic']['config'][0])):
+            self.convert_eissner_to_ls()
+        
+
+
+
+
+        
+    def convert_eissner_to_ls(self):
+
+        config_tmp = []
+        for i in range(0,len(self.data['atomic']['config'])):
+            config_tmp.append(convert_eissner(self.data['atomic']['config'][i]))
+
+        self.data['atomic']['config'] = np.asarray(config_tmp)
 
 
 
