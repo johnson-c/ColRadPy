@@ -2313,11 +2313,11 @@ class colradpy():
 
         '''
 
-            gau_tmp = np.exp(-1*((constants.c/(wave_arr/1.e9)-constants.c/(wave[:,None]/1.e9))/dnu_g[:,None])**2)/\
+        gau_tmp = np.exp(-1*((constants.c/(wave_arr/1.e9)-constants.c/(wave[:,None]/1.e9))/dnu_g[:,None])**2)/\
                                                                                      (np.sqrt(np.pi)*dnu_g[:,None])
 
-            #normalize so the area under the curve is 1
-            return np.einsum('ij,i->ij', gau_tmp,1/np.trapz(gau_tmp,x=wave_arr,axis=1))
+        #normalize so the area under the curve is 1
+        return np.einsum('ij,i->ij', gau_tmp,1/np.trapz(gau_tmp,x=wave_arr,axis=1))
 
 
 
