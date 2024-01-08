@@ -342,7 +342,7 @@ class colradpy():
                 self.data = self.update_dict(self.data,read_adf04(fil))
             # If atomic data is in FAC-format
             elif self.data['user']['atomic_data_type'] == 'FAC':
-                self.data = self.updata_dict(
+                self.data = self.update_dict(
                     self.data, read_FAC(
                         ele=self.data['user']['ele'],
                         nele=self.data['user']['nele'],
@@ -2399,7 +2399,8 @@ class colradpy():
                                      len(self.data['processed']['wave_air']),dtype='int')
             
             write_adf15(fil_name, pec_inds, self.data['processed']['wave_air']*10,
-                    self.data['processed']['pecs'], self.data['atomic']['element'],
+                    self.data['processed']['pecs'], self.data['processed']['pec_levels'],
+                    self.data['atomic']['element'],
                     self.data['atomic']['charge_state'], self.data['user']['dens_grid'],
                     self.data['user']['temp_grid'], self.data['atomic']['metas'],
                         self.data['atomic']['ion_pot'],

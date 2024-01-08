@@ -11,8 +11,10 @@ Dec 18, 2023
 
 TO DO:
     1) Add non-Maxwellian convolution
-    2) Missing energy level data
-    3) Dielectronic recombination data
+    2) Missing energy level data (zpla, zpla1)
+    3) Dielectronic recombination/autoionization data
+    4) Charge exchange data
+    5) 2-photon emission data
 
 '''
 
@@ -184,7 +186,7 @@ def read_FAC(
     ######## -------- Formats Output -------- ########
 
     out = {}
-    out['atomic'] = copy.deepcop(FAC['atomic'])
+    out['atomic'] = copy.deepcopy(FAC['atomic'])
     out['input_file'] = copy.deepcopy(FAC)
     out['rates'] = copy.deepcopy(FAC['rates'])
 
@@ -207,7 +209,7 @@ def _en(
     ):
 
     # Useful constants
-    ev2invcm = 8065.73 # [/1cm/eV]
+    eV2invcm = 8065.73 # [/1cm/eV]
 
     # Initializes output
     FAC['atomic'] = {}
@@ -218,10 +220,10 @@ def _en(
         )
 
     # Charge states
-    FAC['atomic']['element'] = ele          # Species name
-    FAC['atomic']['charge_state'] = nele    # Electronic charge
-    FAC['atomic']['iz0'] = Zele             # Nuclear charge
-    FAC['atomic']['iz1'] = nele +1          # Spectroscopic charge
+    FAC['atomic']['element'] = ele              # Species name
+    FAC['atomic']['charge_state'] = Zele-nele   # Electronic charge
+    FAC['atomic']['iz0'] = Zele                 # Nuclear charge
+    FAC['atomic']['iz1'] = Zele-nele +1         # Spectroscopic charge
 
     # Initializes data arrays
     ion_pot = []                # [1/cm], dim(nion,), ionization potentials
@@ -230,14 +232,14 @@ def _en(
 
     config = []                 # dim(ntran,), state configuration
     L = []                      # dim(ntran,), state L quantum number
-    S = []                      # dim(ntran,), state S quantum number, !!!!!!!!!!!!!!!!
+    S = []                      # dim(ntran,), state S quantum number
     w = []                      # dim(ntran,), state J quantum number
     energy = []                 # dim(ntran,), state energy level wrt ground
-    zpla = []                   # dim(ntran,nion), !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    zpla1 = []                  # dim(ntran,nion), !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #zpla = []                   # dim(ntran,nion), !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #zpla1 = []                  # dim(ntran,nion), !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Loop over blocks
-    for blk in en[1].keys():
+    for blk in np.arange(len(en[1])):
         # If block of excited states
         if en[1][blk]['NELE'] == nele:
             # Loop over states
@@ -247,11 +249,15 @@ def _en(
                     )
 
                 L.append(
-                    en[1][blk]['VNL'][st][-1]
+                    en[1][blk]['VNL'][st]%100
                     )
 
                 w.append(
                     en[1][blk]['2J'][st]/2
+                    )
+
+                S.append(
+                    2*abs(w[-1]-L[-1]) +1
                     )
 
                 energy.append(
@@ -283,8 +289,10 @@ def _en(
     FAC['atomic']['S'] = np.asarray(S)
     FAC['atomic']['w'] = np.asarray(w)
     FAC['atomic']['energy'] = np.asarray(energy)
-    FAC['atomic']['zpla'] = np.asarray(zpla)
-    FAC['atomic']['zpla1'] = np.asarray(zpla1)
+    #FAC['atomic']['zpla'] = np.asarray(zpla)
+    #FAC['atomic']['zpla1'] = np.asarray(zpla1)
+    FAC['atomic']['zpla'] = -1*np.ones((len(config), len(ion_pot)))
+    FAC['atomic']['zpla1'] = -1*np.ones((len(config), len(ion_pot)))
     FAC['atomic']['ion_pot_lvl'] = np.asarray(ion_pot_lvl)
 
     # Output
@@ -353,9 +361,13 @@ def _ce_mr(
         lwr = int(trans[tt,1] -1)
 
         # Saves transition rate coefficients, [cm3/s]
-        data[tt,:] = np.asarray(
-            data[lwr]['coll_excit'][upr]
-            )
+        try:
+            data[tt,:] = np.asarray(
+                mr[lwr]['coll_excit'][upr]
+                )
+        # Not all possible transitions included in file
+        except:
+            blah = 0
 
     # Formats output
     FAC['rates']['excit'] = {}
@@ -405,7 +417,7 @@ def _rr_mr(
     # Formats output
     FAC['rates']['recomb'] = {}
     FAC['rates']['recomb']['recomb_transitions'] = np.vstack(
-        (np.asarray(ion), np.asarray(st))
+        (np.asarray(ion), np.asarray(state))
         ).T # dim(ntrans,2), Z+1 state -> Z state
     FAC['rates']['recomb']['recomb_excit'] = np.asarray(
         data
@@ -454,7 +466,7 @@ def _ci_mr(
     # Formats output
     FAC['rates']['ioniz'] = {}
     FAC['rates']['ioniz']['ion_transitions'] = np.vstack(
-        (np.asarray(st), np.asarray(ion))
+        (np.asarray(state), np.asarray(ion))
         ).T # dim(ntrans,2), Z state -> Z+1 state
     FAC['rates']['ioniz']['ion_excit'] = np.asarray(
         data
@@ -531,7 +543,7 @@ def _read_mr(
 
             # Adds rate coefficient data, [cm3/s]
             out[lwr][label][upr].append(
-                float(line.split('  ')[-1])*1e-10
+                float(line.replace('  ', ' ').split(' ')[-1])*1e-10
                 )
 
             # Increases index to next temp point
