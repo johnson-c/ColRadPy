@@ -213,7 +213,7 @@ def _en(
     ):
 
     # Useful constants
-    eV2invcm = 8065.73 # [/1cm/eV]
+    eV2invcm = 8065.73 # [1/cm/eV]
 
     # Initializes output
     FAC['atomic'] = {}
@@ -383,7 +383,9 @@ def _ce_mr(
         )
 
     # Saves temperature grid data
-    FAC['temp_grid'] = np.asarray(mr['Te_eV']) # [eV], dim(nt,)
+    # NOTE: ColRadPy assumes Te is in Kelvin within the data file (per ADF04 standard)
+    eV2K = 11604.5
+    FAC['temp_grid'] = np.asarray(mr['Te_eV'])*eV2K # [K], dim(nt,)
 
     # Initializes rate data
     data = np.zeros((trans_FAC.shape[0], len(mr['Te_eV']))) # dim(ntrans,nt)
