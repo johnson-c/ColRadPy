@@ -97,7 +97,7 @@ def read_FAC(
 
     # Einstein coefficients
     if 'tr' in physics:
-        FAC, trans = _tr(
+        FAC, trans_FAC = _tr(
             FAC=FAC,
             fil=fil,
             )
@@ -111,14 +111,14 @@ def read_FAC(
         FAC = _ce(
             FAC=FAC,
             fil=fil,
-            trans=trans,
+            trans_FAC=trans_FAC,
             EEDF=EEDF,
             )
     elif 'ce.mr' in physics:
         FAC = _ce_mr(
             FAC=FAC,
             fil=fil,
-            trans=trans,
+            trans_FAC=trans_FAC,
             )
     # Error check
     else:
@@ -135,7 +135,7 @@ def read_FAC(
     elif 'rr.mr' in physics:
         FAC = _rr_mr(
             FAC=FAC,
-            fil=fil
+            fil=fil,
             )
     # If empty
     else:
@@ -153,7 +153,7 @@ def read_FAC(
     elif 'ai.mr' in physics:
         FAC = _ai_mr(
             FAC=FAC,
-            fil=fil
+            fil=fil,
             )
 
     # Collisional ionization
@@ -166,7 +166,7 @@ def read_FAC(
     elif 'ci.mr' in physics:
         FAC = _ci_mr(
             FAC=FAC,
-            fil=fil
+            fil=fil,
             )
     # If empty
     else:
@@ -182,6 +182,10 @@ def read_FAC(
         FAC['rates']['cx'] = {}
         FAC['rates']['cx']['cx_transitions'] = np.asarray([])
         FAC['rates']['cx']['cx_excit'] = np.asarray([])
+
+    # Infinite energy points
+    # I assume you made your FAC data setting the appropriate energies
+    FAC['rates']['inf_engy'] = np.array([], dtype='float64')
 
     ######## -------- Formats Output -------- ########
 
@@ -238,6 +242,13 @@ def _en(
     #zpla = []                   # dim(ntran,nion), !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     #zpla1 = []                  # dim(ntran,nion), !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+    # Convert FAC indices to form assumed by ColRadPy
+    FAC['lvl_indices'] = {}
+    FAC['lvl_indices']['FAC'] = np.array([], dtype='int')
+    FAC['lvl_indices']['ColRadPy'] = np.array([], dtype='int')
+    ind_e = 0
+    ind_i = 0
+
     # Loop over blocks
     for blk in np.arange(len(en[1])):
         # If block of excited states
@@ -264,6 +275,17 @@ def _en(
                     en[1][blk]['ENERGY'][st] * eV2invcm
                     )
 
+                # Index conversion
+                FAC['lvl_indices']['FAC'] = np.append(
+                    FAC['lvl_indices']['FAC'],
+                     en[1][blk]['ILEV'][st]
+                     )
+                ind_e += 1
+                FAC['lvl_indices']['ColRadPy'] = np.append(
+                    FAC['lvl_indices']['ColRadPy'], 
+                    ind_e
+                    )
+
 
         # If block of ionized states
         else:
@@ -277,9 +299,21 @@ def _en(
                     en[1][blk]['ENERGY'][st] * eV2invcm
                     )
 
-                ion_pot_lvl.append(
-                    en[1][blk]['ILEV'][st] +1
+                # Index conversion
+                FAC['lvl_indices']['FAC'] = np.append(
+                    FAC['lvl_indices']['FAC'], 
+                    en[1][blk]['ILEV'][st]
                     )
+                ind_i += 1
+                FAC['lvl_indices']['ColRadPy'] = np.append(
+                    FAC['lvl_indices']['ColRadPy'], 
+                    ind_i
+                    )
+
+                ion_pot_lvl.append(
+                    ind_i
+                    )
+
 
     # Stores data
     FAC['atomic']['ion_pot'] = np.asarray(ion_pot)
@@ -317,11 +351,11 @@ def _tr(
         # Loop over transitions
         for tran in np.arange(len(tr[1][blk]['lower_index'])):
             upr.append(
-                tr[1][blk]['upper_index'][tran] +1
+                tr[1][blk]['upper_index'][tran]
                 )
 
             lwr.append(
-                tr[1][blk]['lower_index'][tran] +1
+                tr[1][blk]['lower_index'][tran]
                 )
 
             a_val.append(
@@ -330,16 +364,16 @@ def _tr(
 
     # Formats output
     FAC['rates']['a_val'] = np.asarray(a_val)   # [1/s], dim(ntrans,)
-    trans = np.vstack((upr,lwr)).T # dim(ntrans,2) -> form for coll. excit transitions
+    trans_FAC = np.vstack((upr,lwr)).T # dim(ntrans,2) -> form for coll. excit transitions in FAC indices
 
     # Output
-    return FAC, trans
+    return FAC, trans_FAC
 
 # Reads Maxwell-averaged collisional excitation data files
 def _ce_mr(
     FAC=None,
     fil=None,
-    trans=None,
+    trans_FAC=None,
     ):
 
     # Reads data file
@@ -352,13 +386,20 @@ def _ce_mr(
     FAC['temp_grid'] = np.asarray(mr['Te_eV']) # [eV], dim(nt,)
 
     # Initializes rate data
-    data = np.zeros((trans.shape[0], len(mr['Te_eV']))) # dim(ntrans,nt)
+    data = np.zeros((trans_FAC.shape[0], len(mr['Te_eV']))) # dim(ntrans,nt)
+    trans_ColRadPy = np.zeros(trans_FAC.shape, dtype='int')
 
     # Loop over transitions
-    for tt in np.arange(trans.shape[0]):
+    for tt in np.arange(trans_FAC.shape[0]):
         # Upper and lower level indices
-        upr = int(trans[tt,0] -1)
-        lwr = int(trans[tt,1] -1)
+        upr = int(trans_FAC[tt,0])
+        lwr = int(trans_FAC[tt,1])
+
+        # Converts indices
+        ind_upr = np.where(FAC['lvl_indices']['FAC'] == upr)
+        ind_lwr = np.where(FAC['lvl_indices']['FAC'] == lwr)
+        trans_ColRadPy[tt,0] = FAC['lvl_indices']['ColRadPy'][ind_upr]
+        trans_ColRadPy[tt,1] = FAC['lvl_indices']['ColRadPy'][ind_lwr]
 
         # Saves transition rate coefficients, [cm3/s]
         try:
@@ -371,7 +412,7 @@ def _ce_mr(
 
     # Formats output
     FAC['rates']['excit'] = {}
-    FAC['rates']['excit']['col_transitions'] = trans    # dim(ntrans,2), (upr,lwr) states
+    FAC['rates']['excit']['col_transitions'] = trans_ColRadPy    # dim(ntrans,2), (upr,lwr) states in ColRadPy indices
     FAC['rates']['excit']['col_excit'] = data           # dim(ntrans,nt), [cm3/s]
 
     # Output
@@ -400,14 +441,18 @@ def _rr_mr(
         if st == 'Te_eV':
             continue
 
+        # Converts indices
+        ind_st = np.where(FAC['lvl_indices']['FAC'] == st)[0][0]
         state.append(
-            st+1
+            FAC['lvl_indices']['ColRadPy'][ind_st]
             )
 
         # Loop over states with charge Z+1
         for ii in mr[st]['rad_recomb'].keys():
+            # Converts indices
+            ind_ion = np.where(FAC['lvl_indices']['FAC'] == ii)[0][0]
             ion.append(
-                ii+1
+                FAC['lvl_indices']['ColRadPy'][ind_ion]
                 )
 
             data.append(
@@ -449,14 +494,18 @@ def _ci_mr(
         if st == 'Te_eV':
             continue
 
+        # Converts indices
+        ind_st = np.where(FAC['lvl_indices']['FAC'] == st)[0][0]
         state.append(
-            st+1
+            FAC['lvl_indices']['ColRadPy'][ind_st]
             )
 
         # Loop over states with charge Z+1
         for ii in mr[st]['coll_ion'].keys():
+            # Converts indices
+            ind_ion = np.where(FAC['lvl_indices']['FAC'] == ii)[0][0]
             ion.append(
-                ii+1
+                FAC['lvl_indices']['ColRadPy'][ind_ion]
                 )
 
             data.append(
