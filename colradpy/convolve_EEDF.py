@@ -27,6 +27,7 @@ def convolve_EEDF(
     engyXS = None,  # [eV], dim (nE,ntrans)
     m = 0,          # 0 or 1
     dE = 0,         # [eV]
+    DC_flag = False,
     ):
     '''
     INPUTS:
@@ -57,13 +58,13 @@ def convolve_EEDF(
         dE -- (optional), [eV], dim(ntrans,),
             if m=1 need the bound-bound transition energy difference
 
+        DC_flag -- (optional), if XS is dielectronic capture strength
+            Assumes cross-section is a delta function in energy
+
     '''
 
-    # Useful constants
-    eV2electron = cnt.e /(cnt.m_e*cnt.c**2) # [1/eV]
-
     # Check
-    if ndim(XS) == 1:
+    if ndim(XS) == 1 and not DC_flag:
         XS = XS[:,None]
         engyXS = engyXS[:,None]
 
@@ -76,11 +77,94 @@ def convolve_EEDF(
         print('NON-MAXWELLIAN ELECTRONS NOT IMPLEMENTED YET')
         sys.exit(1)
 
+    # If XS is dielectronic capture strength
+    if DC_flag:
+        return _calc_DC(
+            EEDF=EEDF,
+            engyEEDF=engyEEDF,
+            XS=XS,
+            engyXS=engyXS
+            ) # [cm3/s], dim(ntemp,ntrans)
+
+    # Performs numerical integration
+    else:
+        return _calc_ratec(
+            EEDF=EEDF,
+            engyEEDF=engyEEDF,
+            XS=XS,
+            engyXS=engyXS
+            ) # [cm3/s], dim(ntemp,ntrans)
+
+
+############################################################
+#
+#                       Utilities
+#
+############################################################
+
+# Calculaes dielectronic capture rate coefficient
+def _calc_DC(
+    EEDF = None,        # [1/eV], dim(ngrid,ntemp)
+    engyEEDF = None,    # [eV], dim(ngrid, ntemp)
+    XS = None,          # [cm2], dim(ntrans,)
+    engyXS = None,      # [eV], dim(ntrans,)
+    m = None,
+    dE = None,          # [eV], dim(ntrans,)
+    ):
+
+    # Useful constants
+    eV2electron = cnt.e /(cnt.m_e*cnt.c**2) # [1/eV]
+
     # Init output
-    ratec = np.zeros((len(Te))) # [cm3/s], dim(ntemp,ntrans)
+    ratec = np.zeros((EEDF.shape[1], len(XS))) # [cm3/s], dim(ntemp,ntrans)
+
+    # Loop over transitions
+    for nn in np.arange(len(XS)):
+        if m == 0:
+            engy_tmp = engyXS[nn]
+        elif m == 1:
+            engy_tmp = engyXS[nn] + dE[nn]
+
+        # Incident electron velocity, relativistic form
+        vel =  cnt.c *100 *np.sqrt(
+            1 -
+            1/(engy_tmp *eV2electron +1)**2
+            ) # [cm/s]
+
+        # Loop over temperatures
+        for tt in np.arange(EEDF.shape[1]):
+            # Interpolates EEDF
+            EEDF_tmp = 10**interp1d(
+                np.log10(engyEEDF[:,tt]),
+                np.log10(EEDF[:,tt]),
+                bounds_error = False,
+                fill_value = (0,0)
+                )(np.log10(engy_tmp)) # [1/eV]
+
+            # Calculates rate coefficient, [cm3/s]
+            ratec[tt,nn] = XS[nn] *vel *EEDF_tmp
+
+    # Output, [cm3/s], dim(ntemp,ntrans)
+    return ratec
+
+# Calculate rate coefficient integral
+def _calc_ratec(
+    EEDF = None,        # [1/eV], dim(ngrid,ntemp)
+    engyEEDF = None,    # [eV], dim(ngrid, ntemp)
+    XS = None,          # [cm2], dim(nE, ntrans)
+    engyXS = None,      # [eV], dim(nE, ntrans)
+    m = None,
+    dE = None,          # [eV], dim(ntrans,)
+    ):
+
+    # Useful constants
+    eV2electron = cnt.e /(cnt.m_e*cnt.c**2) # [1/eV]
+
+    # Init output
+    ratec = np.zeros((EEDF.shape[1], XS.shape[1])) # [cm3/s], dim(ntemp,ntrans)
 
     # Loop over temperatures
-    for tt in np.arange(len(Te)):
+    for tt in np.arange(EEDF.shape[1]):
         # Incident electron velocity, relativistic form
         vel =  cnt.c *100 *np.sqrt(
             1 -
@@ -110,13 +194,6 @@ def convolve_EEDF(
 
     # Output, [cm3/s], dim(ntemp,ntrans)
     return ratec
-
-
-############################################################
-#
-#                       Utilities
-#
-############################################################
 
 # Calculate Maxwellian energy distribution function
 def _get_Max(
