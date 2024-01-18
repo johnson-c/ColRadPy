@@ -19,7 +19,7 @@ TO DO:
 '''
 
 # Module
-from pfac import rfac
+from pfac import rfac, crm
 import os
 import numpy as np
 import copy
@@ -100,6 +100,8 @@ def read_FAC(
         FAC, trans_FAC = _tr(
             FAC=FAC,
             fil=fil,
+            nele=nele,
+            Zele=Zele,
             )
     # Error check
     else:
@@ -336,6 +338,8 @@ def _en(
 def _tr(
     FAC=None,
     fil=None,
+    nele=None,
+    Zele=None,
     ):
 
     # Init output dictionary
@@ -365,6 +369,23 @@ def _tr(
     # Formats output
     FAC['rates']['a_val'] = np.asarray(a_val)   # [1/s], dim(ntrans,)
     trans_FAC = np.vstack((upr,lwr)).T # dim(ntrans,2) -> form for coll. excit transitions in FAC indices
+
+    # Includes two-photon emission
+    #  Only works for H-like and He-like
+    if nele <= 2:
+        a_2photon = crm.TwoPhoton(Zele, nele-1) # [1/s]
+
+        # 2s(0.5) for H-like
+        if nele == 1:
+            ind = np.where(FAC['atomic']['config'] == '2s1')[0][0]
+        # 1s 2s (J=0) for He-like
+        elif nele == 2:
+            ind = np.where(
+                (FAC['atomic']['config'] == '1s1.2s1')
+                & (FAC['atomic']['w'] == 0)
+                )[0][0]
+
+        FAC['rates']['a_val'][ind] += a_2photon
 
     # Output
     return FAC, trans_FAC
