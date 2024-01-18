@@ -47,6 +47,7 @@ def convolve_EEDF(
             ntrnas -- number of transitions considered
 
         engyXS -- [eV], dim(nE,ntrans), cross-section energy axis
+            NOTE: Assumed to be not extremely fine
 
         m -- flag on definition of cross-section energy axis
             options: 
@@ -61,22 +62,54 @@ def convolve_EEDF(
     # Useful constants
     eV2electron = cnt.e /(cnt.m_e*cnt.c**2) # [1/eV]
 
+    # Check
+    if ndim(XS) == 1:
+        XS = XS[:,None]
+        engyXS = engyXS[:,None]
+
     # Prepares EEDF
     if EEDF == 'Maxwellian':
         EEDF, engyEEDF = _get_Max(
             Te=Te,
-            ) # dim(ngrid, ntemp)
+            ) # dim(ngrid, ntemp), ([1/eV], [eV])
     else:
         print('NON-MAXWELLIAN ELECTRONS NOT IMPLEMENTED YET')
         sys.exit(1)
 
+    # Init output
+    ratec = np.zeros((len(Te))) # [cm3/s], dim(ntemp,ntrans)
+
     # Loop over temperatures
     for tt in np.arange(len(Te)):
         # Incident electron velocity, relativistic form
-        vel =  cnt.c * np.sqrt(
+        vel =  cnt.c *100 *np.sqrt(
             1 -
             1/(engyEEDF[:,tt] *eV2electron +1)**2
-            ) # [m/s], dim(ngrid,)
+            ) # [cm/s], dim(ngrid,)
+
+        # Loop over transitions
+        for nn in np.arange(XS.shape[1]):
+            # Interpolates cross-section onto finer grid of EEDF
+            if m == 0:
+                engy_tmp = engyXS[:,nn]
+            elif m == 1:
+                engy_tmp = engyXS[:,nn] + dE[nn]
+
+            XS_tmp = 10**interp1d(
+                np.log10(engy_tmp),
+                np.log10(XS[:,nn]),
+                bounds_error=False,
+                fill_value = (0,0)
+                )(np.log10(engyEEDF[:,tt])) # dim(ngrid,), [cm2]
+
+            # Preforms integration
+            ratec[tt,nn] = np.trapz(
+                XS_tmp *vel * EEDF[:,tt],
+                engyEEDF[:,tt]
+                )
+
+    # Output, [cm3/s], dim(ntemp,ntrans)
+    return ratec
 
 
 ############################################################
@@ -91,7 +124,7 @@ def _get_Max(
     # Energy grid settings
     ngrid = int(1e4),    # energy grid resolution
     lwr = 1e-3,          # energy grid limits wrt multiple of Te
-    upr = 5e1,           # !!!!!! Make sure these make sense for lines of interest
+    upr = 5e1,           # !!!!!! Make sure these make sense for cross-sections
     ):
     '''
     NOTE: EEDF energy axis defined as incident electron energy
