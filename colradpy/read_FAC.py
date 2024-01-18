@@ -376,6 +376,9 @@ def _ce_mr(
     trans_FAC=None,
     ):
 
+    # Useful constants
+    eV2K = 11604.5
+
     # Reads data file
     mr = _read_mr(
         fil=fil,
@@ -384,7 +387,6 @@ def _ce_mr(
 
     # Saves temperature grid data
     # NOTE: ColRadPy assumes Te is in Kelvin within the data file (per ADF04 standard)
-    eV2K = 11604.5
     FAC['temp_grid'] = np.asarray(mr['Te_eV'])*eV2K # [K], dim(nt,)
 
     # Initializes rate data
@@ -412,6 +414,15 @@ def _ce_mr(
         except:
             blah = 0
 
+        # Converts data to expected reduced form (Upsilons per ADF04 standard)
+        data[tt,:] = _conv_rate2upsilon(
+            data = data[tt,:],
+            Te_eV = mr['Te_eV'],
+            ind_upr = trans_ColRadPy[tt,0] -1,
+            ind_lwr = trans_ColRadPy[tt,1] -1,
+            FAC = FAC,
+            )
+            
     # Formats output
     FAC['rates']['excit'] = {}
     FAC['rates']['excit']['col_transitions'] = trans_ColRadPy    # dim(ntrans,2), (upr,lwr) states in ColRadPy indices
@@ -532,6 +543,31 @@ def _ci_mr(
 #
 ############################################################
 
+# Converts rate coefficient to adf04 Upsilon form
+def _conv_rate2upsilon(
+    data = None,    # [cm3/s], dim(ntemp,)
+    Te_eV = None,   # [eV], dim(ntemp,)
+    ind_upr = None,
+    ind_lwr = None,
+    FAC = None,
+    ):
+
+    # Useful constants
+    eV2invcm = 8065.73 # [1/cm/eV]
+
+    return data * (
+            np.sqrt(np.asarray(Te_eV)/13.6058)
+            /2.1716e-8
+            *(1 + 2*FAC['atomic']['w'][ind_upr])
+            * np.exp(
+                abs(
+                    FAC['atomic']['energy'][ind_upr]
+                    -FAC['atomic']['energy'][ind_lwr]
+                    )
+                /(np.asarray(Te_eV)*eV2invcm)
+                )
+            )
+
 # Read Maxwellian-averaged data files
 def _read_mr(
     fil = None,
@@ -589,7 +625,7 @@ def _read_mr(
             # If need to add temperature mesh
             if len(out['Te_eV']) < ntemp:
                 out['Te_eV'].append(
-                    float(line.split('  ')[0])
+                    float(line.split(' ')[1])
                     )
 
             # Adds rate coefficient data, [cm3/s]
