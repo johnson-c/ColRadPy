@@ -8,3 +8,4 @@ from .burgess_tully_rates import *
 from .split_multiplet import *
 from .nist_read_txt import *
 from .read_FAC import *
+from .convolve_EEDF import *

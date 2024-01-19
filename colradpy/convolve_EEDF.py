@@ -45,10 +45,14 @@ def convolve_EEDF(
 
         XS -- [cm2], dim(nE,ntrans), cross-section data
             nE -- number of energy grid points
-            ntrnas -- number of transitions considered
+            ntrans -- number of transitions considered
+            NOTE: Assumed to be given on a sufficient grid so
+                that setting any extrapolated values to zero
+                causes negligible error
 
         engyXS -- [eV], dim(nE,ntrans), cross-section energy axis
-            NOTE: Assumed to be not extremely fine
+            NOTE: Assumed to be not extremely fine, but fine enough
+                so that a log-log interpolation causes negligible error
 
         m -- flag on definition of cross-section energy axis
             options: 
@@ -60,11 +64,12 @@ def convolve_EEDF(
 
         DC_flag -- (optional), if XS is dielectronic capture strength
             Assumes cross-section is a delta function in energy
+            NOTE: units of XS are then [eV *cm2]
 
     '''
 
     # Check
-    if ndim(XS) == 1 and not DC_flag:
+    if np.ndim(XS) == 1 and not DC_flag:
         XS = XS[:,None]
         engyXS = engyXS[:,None]
 
@@ -83,7 +88,9 @@ def convolve_EEDF(
             EEDF=EEDF,
             engyEEDF=engyEEDF,
             XS=XS,
-            engyXS=engyXS
+            engyXS=engyXS,
+            m=m,
+            dE=dE,
             ) # [cm3/s], dim(ntemp,ntrans)
 
     # Performs numerical integration
@@ -92,7 +99,9 @@ def convolve_EEDF(
             EEDF=EEDF,
             engyEEDF=engyEEDF,
             XS=XS,
-            engyXS=engyXS
+            engyXS=engyXS,
+            m=m,
+            dE=dE,
             ) # [cm3/s], dim(ntemp,ntrans)
 
 
@@ -106,7 +115,7 @@ def convolve_EEDF(
 def _calc_DC(
     EEDF = None,        # [1/eV], dim(ngrid,ntemp)
     engyEEDF = None,    # [eV], dim(ngrid, ntemp)
-    XS = None,          # [cm2], dim(ntrans,)
+    XS = None,          # [eV*cm2], dim(ntrans,)
     engyXS = None,      # [eV], dim(ntrans,)
     m = None,
     dE = None,          # [eV], dim(ntrans,)
@@ -138,7 +147,7 @@ def _calc_DC(
                 np.log10(engyEEDF[:,tt]),
                 np.log10(EEDF[:,tt]),
                 bounds_error = False,
-                fill_value = (0,0)
+                fill_value = (-1e5,-1e5)
                 )(np.log10(engy_tmp)) # [1/eV]
 
             # Calculates rate coefficient, [cm3/s]
@@ -183,7 +192,7 @@ def _calc_ratec(
                 np.log10(engy_tmp),
                 np.log10(XS[:,nn]),
                 bounds_error=False,
-                fill_value = (0,0)
+                fill_value = (-1e5,-1e5)
                 )(np.log10(engyEEDF[:,tt])) # dim(ngrid,), [cm2]
 
             # Preforms integration
@@ -199,7 +208,7 @@ def _calc_ratec(
 def _get_Max(
     Te=None, # [eV], dim(ntemp,)
     # Energy grid settings
-    ngrid = int(1e4),    # energy grid resolution
+    ngrid = int(5e2),    # energy grid resolution
     lwr = 1e-3,          # energy grid limits wrt multiple of Te
     upr = 5e1,           # !!!!!! Make sure these make sense for cross-sections
     ):
@@ -225,9 +234,9 @@ def _get_Max(
         # low-energy form
         if Te[tt] <= 10e3:
             EEDF[:,tt] = (
-                2*np.sqrt(Einc/np.pi)
-                * temps[tt]**(-3/2)
-                * np.exp(-Einc/temps[tt])
+                2*np.sqrt(engy[:,tt]/np.pi)
+                * Te[tt]**(-3/2)
+                * np.exp(-engy[:,tt]/Te[tt])
                 ) # dim(ngrid, ntemp); [1/eV] 
 
         # relativistic form
