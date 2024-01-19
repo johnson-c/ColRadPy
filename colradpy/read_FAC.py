@@ -447,7 +447,7 @@ def _ce_mr(
     # Formats output
     FAC['rates']['excit'] = {}
     FAC['rates']['excit']['col_transitions'] = trans_ColRadPy    # dim(ntrans,2), (upr,lwr) states in ColRadPy indices
-    FAC['rates']['excit']['col_excit'] = data           # dim(ntrans,nt), [cm3/s]
+    FAC['rates']['excit']['col_excit'] = data           # dim(ntrans,nt), [upsilon]
 
     # Output
     return FAC
@@ -546,6 +546,15 @@ def _ci_mr(
                 mr[st]['coll_ion'][ii]
                 ) # [cm3/s]
 
+            # Converts ionization data to adf04 reduced form
+            data[-1] = _conv_rate2reduct(
+                data = data[-1],
+                Te_eV = mr['Te_eV'],
+                ind_st = state[-1] -1,
+                ind_ion = ion[-1] -1,
+                FAC = FAC,
+                )
+
     # Formats output
     FAC['rates']['ioniz'] = {}
     FAC['rates']['ioniz']['ion_transitions'] = np.vstack(
@@ -553,7 +562,7 @@ def _ci_mr(
         ).T # dim(ntrans,2), Z state -> Z+1 state
     FAC['rates']['ioniz']['ion_excit'] = np.asarray(
         data
-        ) # dim(ntrans, nt), [cm3/s] 
+        ) # dim(ntrans, nt), [reduced rate] 
 
     # Ouput
     return FAC
@@ -564,9 +573,37 @@ def _ci_mr(
 #
 ############################################################
 
+# Converts rate coefficeint to adf04 reduced form
+def _conv_rate2reduct(
+    data = None,    # [cm3/s], dim(ntemp,), list
+    Te_eV = None,   # [eV], dim(ntemp,)
+    ind_st = None,
+    ind_ion = None,
+    FAC = None,
+    ):
+
+    # Useful constants
+    eV2invcm = 8065.73 # [1/cm/eV]
+
+    # Init output
+    out = []
+
+    for tt in np.arange(len(Te_eV)):
+        # Calculates reducted rate
+        out.append(
+            data[tt] * np.exp(
+                (FAC['atomic']['ion_pot'][ind_ion] - FAC['atomic']['energy'][ind_st])
+                / eV2invcm
+                / Te_eV[tt]
+                )
+            )
+    
+    # Output
+    return out
+
 # Converts rate coefficient to adf04 Upsilon form
 def _conv_rate2upsilon(
-    data = None,    # [cm3/s], dim(ntemp,)
+    data = None,    # [cm3/s], dim(ntemp,), array
     Te_eV = None,   # [eV], dim(ntemp,)
     ind_upr = None,
     ind_lwr = None,
