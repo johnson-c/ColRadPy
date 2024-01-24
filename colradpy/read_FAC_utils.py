@@ -22,9 +22,108 @@ from colradpy.convolve_EEDF import convolve_EEDF
 #
 ############################################################
 
+# Converts data read from _read_ascii to form wanted by ColRadPy
+# NOTE: Performs EEDF convolution from cross-section to rate coeffs
+def _conv_ascii2colradpy(
+    FAC = None,
+    XSdata = None,
+    EEDF = None,
+    Te = None,
+    react = None,
+    verbose = None,
+    ):
+
+    # Init output
+    st_lwr = []
+    st_upr = []
+    data = []
+    ratec = []
+    XS = []
+    engy = []
+
+    # Loop over lower states
+    for lwr in XSdata.keys():
+        # Converts indices
+        ind_lwr = np.where(FAC['lvl_indices']['FAC'] == lwr)[0][0]
+        
+        # Loop over upper states
+        for upr in XSdata[lwr].keys():
+            # Converts indices
+            ind_upr = np.where(FAC['lvl_indices']['FAC'] == upr)[0][0]
+            st_lwr.append(
+                FAC['lvl_indices']['ColRadPy'][ind_lwr]
+                )
+            st_upr.append(
+                FAC['lvl_indices']['ColRadPy'][ind_upr]
+                )
+
+            # Calculates Rate coefficient data, [cm3/s], dim(ntrans, ntemp)
+            if verbose == 1:
+                (
+                    tmp_data, 
+                    tmp_XS,
+                    tmp_engy
+                    )= convolve_EEDF(
+                    EEDF = EEDF,
+                    Te=Te,
+                    XS = XSdata[lwr][upr]['XS'],
+                    engyXS = XSdata[lwr][upr]['engy'],
+                    m = 0,
+                    dE = np.asarray([XSdata[lwr][upr]['dE']]),
+                    Bethe = XSdata[lwr][upr]['limit'][None,:],
+                    w_upr = np.asarray([XSdata[lwr][upr]['w_upr']]),
+                    verbose=verbose,
+                    use_rel = True,
+                    )
+                data.append(tmp_data[:,0])
+                XS.append(tmp_XS[:,0])
+                engy.append(tmp_engy[:,0])
+
+            else:
+                data.append(
+                    convolve_EEDF(
+                        EEDF = EEDF,
+                        Te=Te,
+                        XS = XSdata[lwr][upr]['XS'],
+                        engyXS = XSdata[lwr][upr]['engy'],
+                        m = 0,
+                        dE = np.asarray([XSdata[lwr][upr]['dE']]),
+                        Bethe = XSdata[lwr][upr]['limit'][None,:],
+                        w_upr = np.asarray([XSdata[lwr][upr]['w_upr']]),
+                        verbose=verbose,
+                        use_rel = True,
+                        )[:,0]
+                    )
+
+            if verbose == 1:
+                ratec.append(data[-1].copy())
+
+            if react == 'ce':
+                # Convert to Upsilon form
+                data[-1] = _conv_rate2upsilon(
+                    data = data[-1],
+                    Te_eV = Te,
+                    ind_lwr = st_lwr[-1] -1,
+                    ind_upr = st_upr[-1] -1,
+                    FAC = FAC,
+                    )
+
+            elif react == 'ci':
+                # Converts ionization data to adf04 reduced form
+                data[-1] = _conv_rate2reduct(
+                    data = data[-1],
+                    Te_eV = Te,
+                    ind_st  = st_lwr[-1] -1,
+                    ind_ion = st_upr[-1] -1,
+                    FAC = FAC,
+                    )
+
+    # Output
+    return data, st_upr, st_lwr, ratec, XS, engy
+
 # Converts data read from _read_mr to form wanted by ColRadPy
 def _conv_mr2colradpy(
-    FAC =   None,
+    FAC = None,
     mr = None,
     react = None,
     verbose = None,
@@ -162,21 +261,21 @@ def _conv_rate2upsilon(
 # Reads cross-section data files
 def _read_ascii(
     fil = None,
-    data = None,
+    react = None,
     ):
 
     # Reads data file
-    if data == 'ce':
+    if react == 'ce':
         data_fil = rfac.read_ce(fil+'a.ce')
         lwr_lbl = 'lower_index'
         upr_lbl = 'upper_index'
         data_lbl = 'crosssection'
-    elif data == 'rr':
+    elif react == 'rr':
         data_fil = rfac.read_rr(fil+'a.ce')
         lwr_lbl = 'bound_index'
         upr_lbl = 'free_index'
         data_lbl = 'RR crosssection'
-    elif data == 'ci':
+    elif react == 'ci':
         data_fil = rfac.read_rr(fil+'a.ce')
         lwr_lbl = 'bound_index'
         upr_lbl = 'free_index'
@@ -214,7 +313,7 @@ def _read_ascii(
             out[lwr][upr]['w_upr'] = data_fil[1][blk]['upper_2J'][trn]/2
 
             # Stores parameters for high-energy behavior
-            if data == 'ce':
+            if react == 'ce':
                 out[lwr][upr]['limit'] = np.asarray([
                     data_fil[1][blk]['bethe'][trn],
                     data_fil[1][blk]['born'][trn,0]
@@ -226,7 +325,7 @@ def _read_ascii(
 # Read Maxwellian-averaged data files
 def _read_mr(
     fil = None,
-    data = None,
+    react = None,
     ):
 
     # Reads data file
@@ -239,11 +338,11 @@ def _read_mr(
     out = {}
 
     # Data orginaization labels
-    if data == 'ce':
+    if react == 'ce':
         label = 'coll_excit'
-    elif data == 'rr':
+    elif react == 'rr':
         label = 'rad_recomb'
-    elif data == 'ci':
+    elif react == 'ci':
         label = 'coll_ion'
 
     # Loop over lines

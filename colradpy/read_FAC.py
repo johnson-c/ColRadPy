@@ -22,7 +22,6 @@ from pfac import rfac, crm
 import os
 import numpy as np
 import copy
-from colradpy.convolve_EEDF import convolve_EEDF
 import colradpy.read_FAC_utils as utils
 
 ############################################################
@@ -487,82 +486,23 @@ def _ce(
     FAC['temp_grid'] = Te*eV2K # [K], dim(nt,)
 
     # Loads date from ascii file
-    ce = utils._read_ascii(
+    XSdata = utils._read_ascii(
         fil = fil,
-        data = 'ce',
+        react = 'ce',
         )
 
-    # Init output
-    st_lwr = []
-    st_upr = []
-    ratec = []
-    if verbose == 1:
-        XS = []
-        engy = []
-
-    # Loop over lower states
-    for lwr in ce.keys():
-        # Converts indices
-        ind_lwr = np.where(FAC['lvl_indices']['FAC'] == lwr)[0][0]
-        
-        # Loop over upper states
-        for upr in ce[lwr].keys():
-            # Converts indices
-            ind_upr = np.where(FAC['lvl_indices']['FAC'] == upr)[0][0]
-            st_lwr.append(
-                FAC['lvl_indices']['ColRadPy'][ind_lwr]
-                )
-            st_upr.append(
-                FAC['lvl_indices']['ColRadPy'][ind_upr]
-                )
-
-            # Calculates Rate coefficient data, [cm3/s], dim(ntrans, ntemp)
-            if verbose == 1:
-                (
-                    tmp_ratec, 
-                    tmp_XS,
-                    tmp_engy
-                    )= convolve_EEDF(
-                    EEDF = EEDF,
-                    Te=Te,
-                    XS = ce[lwr][upr]['XS'],
-                    engyXS = ce[lwr][upr]['engy'],
-                    m = 0,
-                    dE = np.asarray([ce[lwr][upr]['dE']]),
-                    Bethe = ce[lwr][upr]['limit'][None,:],
-                    w_upr = np.asarray([ce[lwr][upr]['w_upr']]),
-                    verbose=verbose,
-                    use_rel = True,
-                    )
-                ratec.append(tmp_ratec[:,0])
-                XS.append(tmp_XS[:,0])
-                engy.append(tmp_engy[:,0])
-
-            else:
-                ratec.append(
-                    convolve_EEDF(
-                        EEDF = EEDF,
-                        Te=Te,
-                        XS = ce[lwr][upr]['XS'],
-                        engyXS = ce[lwr][upr]['engy'],
-                        m = 0,
-                        dE = np.asarray([ce[lwr][upr]['dE']]),
-                        Bethe = ce[lwr][upr]['limit'][None,:],
-                        w_upr = np.asarray([ce[lwr][upr]['w_upr']]),
-                        verbose=verbose,
-                        use_rel = True,
-                        )[:,0]
-                    )
-
-    # Convert to Upsilon form
-    data = np.zeros((len(ratec), len(Te))) # dim(ntrans, ntemp)
-    for tt in np.arange(len(ratec)):
-        data[tt,:] = utils._conv_rate2upsilon(
-            data = ratec[tt],
-            Te_eV = Te,
-            ind_upr = st_upr[tt] -1,
-            ind_lwr = st_lwr[tt] -1,
+    # Performs EEDF convolution to cross-sections
+    (
+        data,
+        st_upr, st_lwr,
+        ratec, XS, engy
+        ) = utils._conv_ascii2colradpy(
             FAC = FAC,
+            XSdata = XSdata,
+            EEDF = EEDF,
+            Te = Te,
+            react = 'ce',
+            verbose = verbose,
             )
 
     # Formats output
@@ -570,7 +510,7 @@ def _ce(
     FAC['rates']['excit']['col_transitions'] = np.vstack(
         (np.asarray(st_upr), np.asarray(st_lwr))
         ).T # dim(ntrans,2), (upr,lwr) states in ColRadPy indices
-    FAC['rates']['excit']['col_excit'] = data # dim(ntrans, ntemp), [upsilon] 
+    FAC['rates']['excit']['col_excit'] = np.asarray(data) # dim(ntrans, ntemp), [upsilon] 
     if verbose == 1:
         FAC['rates']['excit']['col_trans_unfill'] = FAC['rates']['excit']['col_transitions'].copy()
         FAC['rates']['excit']['ratec_cm3/s'] = np.asarray(ratec) # dim(ntrans, ntemp), [cm3/s]
@@ -599,7 +539,7 @@ def _ce_mr(
     # Reads data file
     mr = utils._read_mr(
         fil=fil,
-        data='ce'
+        react='ce'
         )
 
     # Saves temperature grid data
@@ -636,7 +576,7 @@ def _rr_mr(
     # Reads data file
     mr = utils._read_mr(
         fil=fil,
-        data='rr'
+        react='rr'
         )
 
     # Converts data file to ColRadPy form
@@ -666,7 +606,7 @@ def _ci_mr(
     # Reads data file
     mr = utils._read_mr(
         fil=fil,
-        data='ci'
+        react='ci'
         )
 
     # Converts data file to ColRadPy form
