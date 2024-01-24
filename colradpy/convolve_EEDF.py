@@ -28,8 +28,9 @@ def convolve_EEDF(
     m = 0,          # 0 or 1
     dE = 0,         # [eV]
     DC_flag = False,
-    Bethe = None,   # (optional), Bethe asymptotic behavior
-    w_upr = None,   # (optional) Upper level statistical weight
+    limit = None,   # (optional), high-energy asymptotic behavior
+    w_upr = None,   # (optional) Upper level total angular momentum
+    w_lwr = None,   # (optional) Upper level total angular momentum
     verbose = 1,
     use_rel = True, # flag to use relativistic corrections
     react = None,   # reaction type in ['ce', 'rr', 'ci']
@@ -109,8 +110,9 @@ def convolve_EEDF(
             engyXS=engyXS,
             m=m,
             dE=dE,
-            Bethe = Bethe,
+            limit = limit,
             w_upr = w_upr,
+            w_lwr = w_lwr,
             verbose = verbose,
             use_rel=use_rel,
             react=react,
@@ -179,11 +181,12 @@ def _calc_ratec(
     EEDF = None,        # [1/eV], dim(ngrid,ntemp)
     engyEEDF = None,    # [eV], dim(ngrid, ntemp)
     XS = None,          # [cm2], dim(nE, ntrans)
-    engyXS = None,      # [eV], dim(nE, ntrans)
+    engyXS = None,      # [eV], dim(nE, ntrans), incident electron energy
     m = None,
     dE = None,          # [eV], dim(ntrans,)
-    Bethe = None,       # dim(ntrans,2)
+    limit = None,       # dim(ntrans,2) if ce or dim(ntrans,4) if rr, ci
     w_upr = None,      
+    w_lwr = None,
     verbose = None,
     use_rel = None,
     react = None,
@@ -230,35 +233,17 @@ def _calc_ratec(
                 fill_value = (-1e5,-1e5)
                 )(np.log10(engyEEDF[:,tt])) # dim(ngrid,), [cm2]
 
-            # Fill values with Bethe asymptotic behavior if available
-            if Bethe is not None:
-                # FAC cross-section data isn't really trustworthy about 10x transition energy
-                tol = 10
-                if engy_tmp[-1] >= tol*dE[nn]:
-                    indE = np.where(engyEEDF[:,tt] > tol*dE[nn])[0]
-                else:
-                    indE = np.where(engyEEDF[:,tt] > engy_tmp[-1])[0]
-                if len(indE) == 0:
-                    continue
-                # Asymptotic form of collision strength for (first term) optically
-                # allowed and (second term) forbidden transitions
-                if react in ['ce', 'ci']:
-                    omega = (
-                        Bethe[nn,0]
-                        * np.log(engyEEDF[indE,tt]/dE[nn])
-                        + Bethe[nn,1]
-                        )
-
-                    XS_tmp[indE] = (
-                        omega
-                        *np.pi *cnt.physical_constants['Bohr radius'][0]**2
-                        * 13.6 /engyEEDF[indE,tt]
-                        /(1 +2*w_upr[nn])
-                    ) *1e4
-
-                    # Account for the different normalization of bound & free states
-                    if react == 'ci':
-                        XS_tmp[indE] /= np.pi
+            # Fill values with high-energy asymptotic behavior if available
+            if limit is not None:
+                XS_tmp = _get_limit(
+                    XS_tmp = XS_tmp,
+                    engy_tmp = engy_tmp,
+                    engyEEDF = engyEEDF[:,tt],
+                    dE = dE[nn],
+                    limit = limit[nn,:],
+                    w_upr = w_upr[nn],
+                    w_lwr = w_lwr[nn],
+                    )
 
             # Preforms integration
             ratec[tt,nn] = np.trapz(
@@ -275,6 +260,59 @@ def _calc_ratec(
         return ratec, XS_out, engy_out
     else:
         return ratec
+
+############################################################
+#
+#                       Calculation
+#
+############################################################
+
+# Calculate high-energy asymptotic behavior of cross-section
+def _get_limit(
+    XS_tmp = None,
+    engy_tmp = None,
+    engyEEDF = None,
+    dE = None,
+    limit = None,
+    w_upr = None,
+    w_lwr = None,
+    ):
+
+    # FAC cross-section data isn't really trustworthy about 10x transition energy
+    tol = 10
+    if engy_tmp[-1] >= tol*dE:
+        indE = np.where(engyEEDF > tol*dE)[0]
+    else:
+        indE = np.where(engyEEDF> engy_tmp[-1])[0]
+
+    # If unnecessary
+    if len(indE) == 0:
+        return XS_tmp
+    
+    if react == 'ce':
+        # Bethe asymptotic form of collision strength for (first term) optically
+        # allowed and (second term) forbidden transitions
+        omega = (
+            limit[0]
+            * np.log(engyEEDF[indE]/dE)
+            + limit[1]
+            )
+
+        XS_tmp[indE] = (
+            omega
+            *np.pi *cnt.physical_constants['Bohr radius'][0]**2
+            * 13.6 /engyEEDF[indE]
+            /(1 +2*w_upr)
+            ) *1e4
+
+    elif react == 'rr':
+        blah = 0
+
+    elif react == 'ci':
+        blah = 0
+
+    # Output
+    return XS_tmp
 
 # Calculate Maxwellian energy distribution function
 def _get_Max(

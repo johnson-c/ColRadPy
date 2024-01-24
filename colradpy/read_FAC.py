@@ -74,9 +74,9 @@ def read_FAC(
                 'en',      # ASCII-format Energy levels
                 'tr',      # ASCII-format Einstein coefficients
                 'ce',      # ASCII-format Collisional excitation
-                #'rr',      # ASCII-format Radiative recombination
+                'rr',      # ASCII-format Radiative recombination
                 #'ai',     # ASCII-format Autoionization/dielectronic recombination
-                #'ci',      # ASCII-format Collision ionization
+                'ci',      # ASCII-format Collision ionization
                 ]
 
     ######## -------- Reads data -------- ########

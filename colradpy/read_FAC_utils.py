@@ -70,8 +70,9 @@ def _conv_ascii2colradpy(
                     engyXS = XSdata[lwr][upr]['engy'],
                     m = 0,
                     dE = np.asarray([XSdata[lwr][upr]['dE']]),
-                    Bethe = XSdata[lwr][upr]['limit'][None,:],
+                    limit = XSdata[lwr][upr]['limit'][None,:],
                     w_upr = np.asarray([XSdata[lwr][upr]['w_upr']]),
+                    w_lwr = np.asarray([XSdata[lwr][upr]['w_lwr']]),
                     verbose=verbose,
                     use_rel = True,
                     react = react,
@@ -91,6 +92,7 @@ def _conv_ascii2colradpy(
                         dE = np.asarray([XSdata[lwr][upr]['dE']]),
                         Bethe = XSdata[lwr][upr]['limit'][None,:],
                         w_upr = np.asarray([XSdata[lwr][upr]['w_upr']]),
+                        w_lwr = np.asarray([XSdata[lwr][upr]['w_lwr']]),
                         verbose=verbose,
                         use_rel = True,
                         react = react,
@@ -302,24 +304,53 @@ def _read_ascii(
             # Stores cross-section data, [cm2]
             out[lwr][upr]['XS'] = data_fil[1][blk][data_lbl][trn,:]*1e-20
 
-            # Stores energy grid in terms of incident electron energy, [eV]
-            if data_fil[1][blk]['ETYPE'] == 0:
-                out[lwr][upr]['engy'] = data_fil[1][blk]['EGRID']
-            elif data_fil[1][blk]['ETYPE'] == 1:
-                out[lwr][upr]['engy'] = data_fil[1][blk]['EGRID'] + data_fil[1][blk]['TE0']
-
             # Stores transition energy, [eV]
             out[lwr][upr]['dE'] = data_fil[1][blk]['Delta E'][trn]
 
-            # Stores total angular momentum
-            out[lwr][upr]['w_upr'] = data_fil[1][blk]['upper_2J'][trn]/2
-
-            # Stores parameters for high-energy behavior
             if react == 'ce':
+                # Stores energy grid in terms of incident electron energy, [eV]
+                if data_fil[1][blk]['ETYPE'] == 0:
+                    out[lwr][upr]['engy'] = data_fil[1][blk]['EGRID']
+                elif data_fil[1][blk]['ETYPE'] == 1:
+                    out[lwr][upr]['engy'] = data_fil[1][blk]['EGRID'] + data_fil[1][blk]['TE0']
+
+                # Stores total angular momentum
+                out[lwr][upr]['w_upr'] = data_fil[1][blk]['upper_2J'][trn]/2
+                out[lwr][upr]['w_lwr'] = data_fil[1][blk]['lower_2J'][trn]/2
+
+                # Stores parameters for high-energy behavior
                 out[lwr][upr]['limit'] = np.asarray([
                     data_fil[1][blk]['bethe'][trn],
                     data_fil[1][blk]['born'][trn,0]
                     ])
+
+            elif react == 'rr':
+                # Stores energy grid in terms of photo-electron energy, [eV]
+                if data_fil[1][blk]['ETYPE'] == 0:
+                    out[lwr][upr]['engy'] = data_fil[1][blk]['EGRID'] - data_fil[1][blk]['Delta E'][trn]
+                elif data_fil[1][blk]['ETYPE'] == 1:
+                    out[lwr][upr]['engy'] = data_fil[1][blk]['EGRID'] 
+
+                # Stores total angular momentum
+                out[lwr][upr]['w_upr'] = data_fil[1][blk]['free_2J'][trn]/2
+                out[lwr][upr]['w_lwr'] = data_fil[1][blk]['bound_2J'][trn]/2
+
+                # Stores parameters for high-energy behavior, dim(4,)
+                out[lwr][upr]['limit'] = data_fil[1][blk]['parameters'][trn,:]
+
+            elif react == 'ci':
+                # Stores energy grid in terms of incident electron energy, [eV]
+                if data_fil[1][blk]['ETYPE'] == 0:
+                    out[lwr][upr]['engy'] = data_fil[1][blk]['EGRID']
+                elif data_fil[1][blk]['ETYPE'] == 1:
+                    out[lwr][upr]['engy'] = data_fil[1][blk]['EGRID'] + data_fil[1][blk]['Delta E'][trn]
+
+                # Stores total angular momentum
+                out[lwr][upr]['w_upr'] = data_fil[1][blk]['free_2J'][trn]/2
+                out[lwr][upr]['w_lwr'] = data_fil[1][blk]['bound_2J'][trn]/2
+
+                # Stores parameters for high-energy behavior, dim(4,)
+                out[lwr][upr]['limit'] = data_fil[1][blk]['parameters'][trn,:]
 
     # Output
     return out
