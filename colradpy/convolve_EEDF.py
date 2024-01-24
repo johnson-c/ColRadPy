@@ -28,6 +28,11 @@ def convolve_EEDF(
     m = 0,          # 0 or 1
     dE = 0,         # [eV]
     DC_flag = False,
+    Bethe = None,   # (optional), Bethe asymptotic behavior
+    w_upr = None,   # (optional) Upper level statistical weight
+    verbose = 1,
+    use_rel = True, # flag to use relativistic corrections
+    react = None,   # reaction type in ['ce', 'rr', 'ci']
     ):
     '''
     INPUTS:
@@ -77,6 +82,7 @@ def convolve_EEDF(
     if EEDF == 'Maxwellian':
         EEDF, engyEEDF = _get_Max(
             Te=Te,
+            use_rel=use_rel,
             ) # dim(ngrid, ntemp), ([1/eV], [eV])
     else:
         print('NON-MAXWELLIAN ELECTRONS NOT IMPLEMENTED YET')
@@ -91,6 +97,7 @@ def convolve_EEDF(
             engyXS=engyXS,
             m=m,
             dE=dE,
+            use_rel=use_rel,
             ) # [cm3/s], dim(ntemp,ntrans)
 
     # Performs numerical integration
@@ -102,6 +109,11 @@ def convolve_EEDF(
             engyXS=engyXS,
             m=m,
             dE=dE,
+            Bethe = Bethe,
+            w_upr = w_upr,
+            verbose = verbose,
+            use_rel=use_rel,
+            react=react,
             ) # [cm3/s], dim(ntemp,ntrans)
 
 
@@ -119,6 +131,7 @@ def _calc_DC(
     engyXS = None,      # [eV], dim(ntrans,)
     m = None,
     dE = None,          # [eV], dim(ntrans,)
+    use_rel=None,
     ):
 
     # Useful constants
@@ -134,11 +147,16 @@ def _calc_DC(
         elif m == 1:
             engy_tmp = engyXS[nn] + dE[nn]
 
-        # Incident electron velocity, relativistic form
-        vel =  cnt.c *100 *np.sqrt(
-            1 -
-            1/(engy_tmp *eV2electron +1)**2
-            ) # [cm/s]
+        # Incident electron velocity
+        if use_rel:     # relativistic form
+            vel =  cnt.c *100 *np.sqrt(
+                1 -
+                1/(engyEEDF[:,tt] *eV2electron +1)**2
+                ) # [cm/s], dim(ngrid,)
+        else:           # classical form
+            vel = cnt.c *100 *np.sqrt(
+                2*engyEEDF[:,tt] *eV2electron
+                ) # [cm/s], dim(ngrid,)
 
         # Loop over temperatures
         for tt in np.arange(EEDF.shape[1]):
@@ -164,6 +182,11 @@ def _calc_ratec(
     engyXS = None,      # [eV], dim(nE, ntrans)
     m = None,
     dE = None,          # [eV], dim(ntrans,)
+    Bethe = None,       # dim(ntrans,2)
+    w_upr = None,      
+    verbose = None,
+    use_rel = None,
+    react = None,
     ):
 
     # Useful constants
@@ -171,14 +194,26 @@ def _calc_ratec(
 
     # Init output
     ratec = np.zeros((EEDF.shape[1], XS.shape[1])) # [cm3/s], dim(ntemp,ntrans)
+    if verbose == 1:
+        XS_out = np.zeros(
+            (EEDF.shape[0], EEDF.shape[1], XS.shape[1])
+            ) # dim(ngrid, ntemp, ntrans)
+        engy_out = np.zeros(
+            (EEDF.shape[0], EEDF.shape[1])
+            ) # dim(ngrid, ntemp)
 
     # Loop over temperatures
     for tt in np.arange(EEDF.shape[1]):
-        # Incident electron velocity, relativistic form
-        vel =  cnt.c *100 *np.sqrt(
-            1 -
-            1/(engyEEDF[:,tt] *eV2electron +1)**2
-            ) # [cm/s], dim(ngrid,)
+        # Incident electron velocity
+        if use_rel:     # relativistic form
+            vel =  cnt.c *100 *np.sqrt(
+                1 -
+                1/(engyEEDF[:,tt] *eV2electron +1)**2
+                ) # [cm/s], dim(ngrid,)
+        else:           # classical form
+            vel = cnt.c *100 *np.sqrt(
+                2*engyEEDF[:,tt] *eV2electron
+                ) # [cm/s], dim(ngrid,)
 
         # Loop over transitions
         for nn in np.arange(XS.shape[1]):
@@ -195,22 +230,60 @@ def _calc_ratec(
                 fill_value = (-1e5,-1e5)
                 )(np.log10(engyEEDF[:,tt])) # dim(ngrid,), [cm2]
 
+            # Fill values with Bethe asymptotic behavior if available
+            if Bethe is not None:
+                # FAC cross-section data isn't really trustworthy about 10x transition energy
+                tol = 10
+                if engy_tmp[-1] >= tol*dE[nn]:
+                    indE = np.where(engyEEDF[:,tt] > tol*dE[nn])[0]
+                else:
+                    indE = np.where(engyEEDF[:,tt] > engy_tmp[-1])[0]
+                if len(indE) == 0:
+                    continue
+                # Asymptotic form of collision strength for (first term) optically
+                # allowed and (second term) forbidden transitions
+                if react in ['ce', 'ci']:
+                    omega = (
+                        Bethe[nn,0]
+                        * np.log(engyEEDF[indE,tt]/dE[nn])
+                        + Bethe[nn,1]
+                        )
+
+                    XS_tmp[indE] = (
+                        omega
+                        *np.pi *cnt.physical_constants['Bohr radius'][0]**2
+                        * 13.6 /engyEEDF[indE,tt]
+                        /(1 +2*w_upr[nn])
+                    ) *1e4
+
+                    # Account for the different normalization of bound & free states
+                    if react == 'ci':
+                        XS_tmp[indE] /= np.pi
+
             # Preforms integration
             ratec[tt,nn] = np.trapz(
                 XS_tmp *vel * EEDF[:,tt],
                 engyEEDF[:,tt]
                 )
 
+            if verbose == 1:
+                XS_out[:,tt,nn] = XS_tmp
+                engy_out[:,tt] = engyEEDF[:,tt] 
+
     # Output, [cm3/s], dim(ntemp,ntrans)
-    return ratec
+    if verbose == 1:
+        return ratec, XS_out, engy_out
+    else:
+        return ratec
 
 # Calculate Maxwellian energy distribution function
 def _get_Max(
     Te=None, # [eV], dim(ntemp,)
     # Energy grid settings
-    ngrid = int(5e2),    # energy grid resolution
+    ngrid = int(1e3),    # energy grid resolution
     lwr = 1e-3,          # energy grid limits wrt multiple of Te
     upr = 5e1,           # !!!!!! Make sure these make sense for cross-sections
+    use_rel = None,    # Use relativistic corrections
     ):
     '''
     NOTE: EEDF energy axis defined as incident electron energy
@@ -231,16 +304,8 @@ def _get_Max(
             ngrid
             ) # [eV]
 
-        # low-energy form
-        if Te[tt] <= 10e3:
-            EEDF[:,tt] = (
-                2*np.sqrt(engy[:,tt]/np.pi)
-                * Te[tt]**(-3/2)
-                * np.exp(-engy[:,tt]/Te[tt])
-                ) # dim(ngrid, ntemp); [1/eV] 
-
         # relativistic form
-        else:
+        if Te[tt] >= 10e3 and use_rel:
             # Factors
             theta = Te[tt] * eV2electron
             gamma = 1 + engy[:,tt] * eV2electron
@@ -253,6 +318,14 @@ def _get_Max(
                 /kn(2, 1/theta)
                 *np.exp(-gamma/theta)
                 ) * eV2electron # dim(ngrid, ntemp); [1/eV]
+
+        # low-energy form
+        else:
+            EEDF[:,tt] = (
+                2*np.sqrt(engy[:,tt]/np.pi)
+                * Te[tt]**(-3/2)
+                * np.exp(-engy[:,tt]/Te[tt])
+                ) # dim(ngrid, ntemp); [1/eV] 
 
     # Output
     return EEDF, engy

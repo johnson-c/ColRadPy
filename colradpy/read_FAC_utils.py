@@ -74,6 +74,7 @@ def _conv_ascii2colradpy(
                     w_upr = np.asarray([XSdata[lwr][upr]['w_upr']]),
                     verbose=verbose,
                     use_rel = True,
+                    react = react,
                     )
                 data.append(tmp_data[:,0])
                 XS.append(tmp_XS[:,0])
@@ -92,6 +93,7 @@ def _conv_ascii2colradpy(
                         w_upr = np.asarray([XSdata[lwr][upr]['w_upr']]),
                         verbose=verbose,
                         use_rel = True,
+                        react = react,
                         )[:,0]
                     )
 
