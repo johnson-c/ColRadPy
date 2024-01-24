@@ -23,6 +23,7 @@ from pfac import rfac, crm
 import os
 import numpy as np
 import copy
+from colradpy.convolve_EEDF import convolve_EEDF as cE
 
 ############################################################
 #
@@ -40,14 +41,17 @@ def read_FAC(
     # Physics controls
     EEDF = None,        # if None -> assumes Maxwell-averages rates from pfac.fac.MaxwellRate
     physics = None,     # if None -> looks for all file suffixes
+    Te = None,          # if not using MaxwellRate files
     ):
 
     ######## -------- Determines which files to search for -------- ########
 
     # Electron energy distribution settings
-    if EEDF == 'Maxwellian':
+    if EEDF == 'Maxwellian_mr':
         # Use Maxwell-averaged rates from pfac.fac.MaxwellRate
         use_mr = True
+    elif EEDF == 'Maxwellian':
+        use_mr = False
     else:
         print('NON-MAXWELLIAN ELECTRONS NOT IMPLEMENTED YET')
         sys.exit(1)
@@ -61,7 +65,7 @@ def read_FAC(
                 'tr',       # ASCII-format Einstein coefficients
                 'ce.mr',    # Collisional excitation
                 'rr.mr',    # Radiative recombination
-                #'ai.mr'    # Autoionization/dielectronic recombination
+                #'ai',    # Autoionization/dielectronic recombination
                 'ci.mr',    # Collision ionization
                 ]
         # If using cross-section files
@@ -70,9 +74,9 @@ def read_FAC(
                 'en',      # ASCII-format Energy levels
                 'tr',      # ASCII-format Einstein coefficients
                 'ce',      # ASCII-format Collisional excitation
-                'rr',      # ASCII-format Radiative recombination
-                #'ai'      # ASCII-format Autoionization/dielectronic recombination
-                'ci',      # ASCII-format Collision ionization
+                #'rr',      # ASCII-format Radiative recombination
+                #'ai',     # ASCII-format Autoionization/dielectronic recombination
+                #'ci',      # ASCII-format Collision ionization
                 ]
 
     ######## -------- Reads data -------- ########
@@ -95,9 +99,27 @@ def read_FAC(
         print('NEED TO INCLUDE ENERGY LEVEL DATA IN MODELING!!!')
         sys.exit(1)
 
+    # Collisional excitation
+    if 'ce' in physics:
+        FAC = _ce(
+            FAC=FAC,
+            fil=fil,
+            EEDF=EEDF,
+            Te=Te,
+            )
+    elif 'ce.mr' in physics:
+        FAC = _ce_mr(
+            FAC=FAC,
+            fil=fil,
+            )
+    # Error check
+    else:
+        print('NEED TO INCLUDE COLLISIONAL EXCITATION DATA IN MODELING!!!')
+        sys.exit(1)
+
     # Einstein coefficients
     if 'tr' in physics:
-        FAC, trans_FAC = _tr(
+        FAC = _tr(
             FAC=FAC,
             fil=fil,
             nele=nele,
@@ -106,25 +128,6 @@ def read_FAC(
     # Error check
     else:
         print('NEED TO INCLUDE EINSTEIN COEFFICIENT DATA IN MODELING!!!')
-        sys.exit(1)
-
-    # Collisional excitation
-    if 'ce' in physics:
-        FAC = _ce(
-            FAC=FAC,
-            fil=fil,
-            trans_FAC=trans_FAC,
-            EEDF=EEDF,
-            )
-    elif 'ce.mr' in physics:
-        FAC = _ce_mr(
-            FAC=FAC,
-            fil=fil,
-            trans_FAC=trans_FAC,
-            )
-    # Error check
-    else:
-        print('NEED TO INCLUDE COLLISIONAL EXCITATION DATA IN MODELING!!!')
         sys.exit(1)
 
     # Radiative recombination
@@ -346,6 +349,8 @@ def _tr(
     upr = []    # dim(ntrans,)
     lwr = []    # dim(ntrans,)
     a_val = []  # [1/s], dim(ntrans,)
+    upr_ColRadPy = []
+    lwr_ColRadPy = []
 
     # Reads transition rate data file
     tr = rfac.read_tr(fil+'a.tr')
@@ -366,9 +371,18 @@ def _tr(
                 tr[1][blk]['rate'][tran]
                 )
 
-    # Formats output
-    FAC['rates']['a_val'] = np.asarray(a_val)   # [1/s], dim(ntrans,)
-    trans_FAC = np.vstack((upr,lwr)).T # dim(ntrans,2) -> form for coll. excit transitions in FAC indices
+            # Converts FAC indices to ColRadPy notation
+            ind_upr = np.where(FAC['lvl_indices']['FAC'] == upr[-1])[0][0]
+            ind_lwr = np.where(FAC['lvl_indices']['FAC'] == lwr[-1])[0][0]
+            upr_ColRadPy.append(
+                FAC['lvl_indices']['ColRadPy'][ind_upr]
+                )
+            lwr_ColRadPy.append(
+                FAC['lvl_indices']['ColRadPy'][ind_lwr]
+                )
+
+    # Transition array from TRTable()
+    trans_ColRadPy = np.vstack((upr_ColRadPy, lwr_ColRadPy)).T # dim(ntrans,2)
 
     # Includes two-photon emission
     #  Only works for H-like and He-like
@@ -385,16 +399,203 @@ def _tr(
                 & (FAC['atomic']['w'] == 0)
                 )[0][0]
 
-        FAC['rates']['a_val'][ind] += a_2photon
+        ind2 = np.where(
+            np.all(
+                trans_ColRadPy == np.asarray([
+                    FAC['lvl_indices']['ColRadPy'][ind], 1
+                    ]),
+                axis = 1
+                )
+            )[0][0]
+
+        a_val[ind2] += a_2photon
+
+    ## NOTE: ColRadPy assumes the index of 'a_val' corresponds to 'col_transitions'
+    # But, not all transitions have collisional exication or Einstein coefficients
+    # Therefore need to fill
+    col_trans = FAC['rates']['excit']['col_transitions'].copy()
+    col_excit = FAC['rates']['excit']['col_excit'].copy()
+    all_trans = np.unique(
+        np.concatenate((
+            trans_ColRadPy,
+            col_trans,
+            ), axis=0),
+        axis=0)
+    all_a_val = np.ones(all_trans.shape[0])*1e-30 # dim(ntrans,)
+    all_excit = np.ones((all_trans.shape[0], col_excit.shape[1]))*1e-30 # dim(ntrans, ntemp)
+
+    for tt in np.arange(all_trans.shape[0]):
+        # Finds the indices for this transition
+        inda = np.where(
+            np.all(
+                trans_ColRadPy == all_trans[tt,:],
+                axis = 1
+                )
+            )[0]
+        indc = np.where(
+            np.all(
+                col_trans == all_trans[tt,:],
+                axis = 1
+                )
+            )[0]
+
+        # Error check
+        if len(inda) != 1 and len(indc) != 1:
+            print(all_trans[tt,:])
+            print('xxxx')
+
+        # Fills arrays
+        if len(inda) == 1:
+            all_a_val[tt] = a_val[inda[0]]
+
+        if len(indc) == 1:
+            all_excit[tt,:] = col_excit[indc[0],:]
 
     # Output
-    return FAC, trans_FAC
+    FAC['rates']['a_val'] = all_a_val                       # [1/s], dim(ntrans,)
+    FAC['rates']['excit']['col_transitions'] = all_trans    # dim(ntrans,2)
+    FAC['rates']['excit']['col_excit'] = all_excit          # [upsilon], dim(ntrans, ntemp)
+
+    # Output
+    return FAC
+
+# Reads collisional excitation cross-section data files
+def _ce(
+    EEDF=None,
+    Te=None,       # [eV], dim(ntemp,)
+    FAC=None,
+    fil=None,
+    trans_FAC=None,
+    vebose = 1,
+    ):
+
+    # Useful constants
+    eV2K = 11604.5
+
+    # Saves temperature grid data
+    # NOTE: ColRadPy assumes Te is in Kelvin within the data file (per ADF04 standard)
+    FAC['temp_grid'] = Te*eV2K # [K], dim(nt,)
+
+    # Initializes rate data
+    data = np.zeros((trans_FAC.shape[0], len(Te))) # dim(ntrans,nt)
+    trans_ColRadPy = np.zeros(trans_FAC.shape, dtype='int')
+    XS = None
+
+    # Reads FAC data file
+    ce = rfac.read_ce(fil+'a.ce')
+
+    # Loop over blocks
+    for blk in np.arange(len(ce[1])):
+        # Loop over transitions in block
+        for trn in np.arange(len(ce[1][blk]['Delta E'])):
+            # Init data storage
+            if XS is None:
+                XS = np.zeros((len(ce[1][blk]['EGRID']),trans_FAC.shape[0])) # dim(nE, ntrans)
+                engyXS = np.zeros((len(ce[1][blk]['EGRID']),trans_FAC.shape[0])) # dim(nE, ntrans)
+                dE = np.zeros(trans_FAC.shape[0])
+                Bethe = np.zeros((trans_FAC.shape[0], 2))
+                w_upr = np.zeros(trans_FAC.shape[0])
+
+
+            # Upper and lower level indices
+            upr = ce[1][blk]['upper_index'][trn]
+            lwr = ce[1][blk]['lower_index'][trn]
+
+            # Converts indices
+            ind_upr = np.where(FAC['lvl_indices']['FAC'] == upr)
+            ind_lwr = np.where(FAC['lvl_indices']['FAC'] == lwr)
+
+            try:
+                ind_tt = np.where(
+                    (trans_FAC[:,0] == upr)
+                    & (trans_FAC[:,1] == lwr)
+                    )[0][0]
+            except:
+                print(upr)
+                print(lwr)
+                print('xxxxx')
+                continue
+
+            #import pdb
+            #pdb.set_trace()
+
+            trans_ColRadPy[ind_tt,0] = FAC['lvl_indices']['ColRadPy'][ind_upr]
+            trans_ColRadPy[ind_tt,1] = FAC['lvl_indices']['ColRadPy'][ind_lwr]
+
+            # Stores data
+            XS[:,ind_tt] = ce[1][blk]['crosssection'][trn,:]*1e-20
+            engyXS[:,ind_tt] = ce[1][blk]['EGRID']
+            dE[ind_tt] = ce[1][blk]['TE0']
+            Bethe[ind_tt,0] = ce[1][blk]['bethe'][trn]
+            Bethe[ind_tt,1] = ce[1][blk]['born'][trn,0]
+            w_upr[ind_tt] = FAC['atomic']['w'][ind_upr]
+
+    # Calculates Rate coefficient data, [cm3/s], dim(ntrans, ntemp)
+    if verbose == 1:
+        (
+            data, 
+            )= cE(
+            EEDF = EEDF,
+            Te=Te,
+            XS = XS,
+            engyXS = engyXS,
+            m = ce[1][blk]['ETYPE'],
+            dE = dE,
+            Bethe = Bethe,
+            #Bethe = None,
+            w_upr = w_upr,
+            verbose=verbose,
+            )
+        data = data.T
+
+    else:
+        data = cE(
+            EEDF = EEDF,
+            Te=Te,
+            XS = XS,
+            engyXS = engyXS,
+            m = ce[1][blk]['ETYPE'],
+            dE = dE,
+            Bethe = Bethe,
+            #Bethe = None,
+            w_upr = w_upr,
+            verbose=verbose,
+            ).T
+
+    #import pdb
+    #pdb.set_trace()
+    if verbose == 1:
+        ratec = data.copy()
+
+
+    # Converts data to expected reduced form (Upsilons per ADF04 standard)
+    for tt in np.arange(trans_FAC.shape[0]):
+        data[tt,:] = _conv_rate2upsilon(
+            data = data[tt,:],
+            Te_eV = Te,
+            ind_upr = trans_ColRadPy[tt,0] -1,
+            ind_lwr = trans_ColRadPy[tt,1] -1,
+            FAC = FAC,
+            )
+
+            
+    # Formats output
+    FAC['rates']['excit'] = {}
+    FAC['rates']['excit']['col_transitions'] = trans_ColRadPy    # dim(ntrans,2), (upr,lwr) states in ColRadPy indices
+    FAC['rates']['excit']['col_excit'] = data           # dim(ntrans,nt), [upsilon]
+    if verbose == 1:
+        FAC['rates']['excit']['col_trans_unfill'] = FAC['rates']['excit']['col_transitions'].copy()
+        FAC['rates']['excit']['ratec_cm3/s'] = ratec # dim(ntrans,nt), [cm3/s]
+        FAC['rates']['excit']['Bethe'] = Bethe # dim(ntrans, 2)
+
+    # Output 
+    return FAC
 
 # Reads Maxwell-averaged collisional excitation data files
 def _ce_mr(
     FAC=None,
     fil=None,
-    trans_FAC=None,
+    verbose = 1,
     ):
 
     # Useful constants
@@ -410,44 +611,55 @@ def _ce_mr(
     # NOTE: ColRadPy assumes Te is in Kelvin within the data file (per ADF04 standard)
     FAC['temp_grid'] = np.asarray(mr['Te_eV'])*eV2K # [K], dim(nt,)
 
-    # Initializes rate data
-    data = np.zeros((trans_FAC.shape[0], len(mr['Te_eV']))) # dim(ntrans,nt)
-    trans_ColRadPy = np.zeros(trans_FAC.shape, dtype='int')
+    # Init output
+    st_lwr = []
+    st_upr = []
+    ratec = []
 
-    # Loop over transitions
-    for tt in np.arange(trans_FAC.shape[0]):
-        # Upper and lower level indices
-        upr = int(trans_FAC[tt,0])
-        lwr = int(trans_FAC[tt,1])
+    # Loop over lower states
+    for lwr in mr.keys():
+        # Skips temp grid
+        if lwr == 'Te_eV':
+            continue
 
         # Converts indices
-        ind_upr = np.where(FAC['lvl_indices']['FAC'] == upr)
-        ind_lwr = np.where(FAC['lvl_indices']['FAC'] == lwr)
-        trans_ColRadPy[tt,0] = FAC['lvl_indices']['ColRadPy'][ind_upr]
-        trans_ColRadPy[tt,1] = FAC['lvl_indices']['ColRadPy'][ind_lwr]
-
-        # Saves transition rate coefficients, [cm3/s]
-        try:
-            data[tt,:] = np.asarray(
-                mr[lwr]['coll_excit'][upr]
+        ind_lwr = np.where(FAC['lvl_indices']['FAC'] == lwr)[0][0]
+        
+        # Loop over upper states
+        for upr in mr[lwr]['coll_excit'].keys():
+            # Converts indices
+            ind_upr = np.where(FAC['lvl_indices']['FAC'] == upr)[0][0]
+            st_lwr.append(
+                FAC['lvl_indices']['ColRadPy'][ind_lwr]
                 )
-        # Not all possible transitions included in file
-        except:
-            blah = 0
+            st_upr.append(
+                FAC['lvl_indices']['ColRadPy'][ind_upr]
+                )
 
-        # Converts data to expected reduced form (Upsilons per ADF04 standard)
+            ratec.append(
+                mr[lwr]['coll_excit'][upr]
+                ) # [cm3/s]
+
+    # Convert to Upsilon form
+    data = np.zeros((len(ratec), len(mr['Te_eV']))) # dim(ntrans, nt)
+    for tt in np.arange(len(ratec)):
         data[tt,:] = _conv_rate2upsilon(
-            data = data[tt,:],
+            data = ratec[tt],
             Te_eV = mr['Te_eV'],
-            ind_upr = trans_ColRadPy[tt,0] -1,
-            ind_lwr = trans_ColRadPy[tt,1] -1,
+            ind_upr = st_upr[tt] -1,
+            ind_lwr = st_lwr[tt] -1,
             FAC = FAC,
             )
-            
+
     # Formats output
     FAC['rates']['excit'] = {}
-    FAC['rates']['excit']['col_transitions'] = trans_ColRadPy    # dim(ntrans,2), (upr,lwr) states in ColRadPy indices
-    FAC['rates']['excit']['col_excit'] = data           # dim(ntrans,nt), [upsilon]
+    FAC['rates']['excit']['col_transitions'] = np.vstack(
+        (np.asarray(st_upr), np.asarray(st_lwr))
+        ).T # dim(ntrans,2), (upr,lwr) states in ColRadPy indices
+    FAC['rates']['excit']['col_excit'] = data # dim(ntrans, nt), [cm3/s] 
+    if verbose == 1:
+        FAC['rates']['excit']['col_trans_unfill'] = FAC['rates']['excit']['col_transitions'].copy()
+        FAC['rates']['excit']['ratec_cm3/s'] = np.asarray(ratec) # dim(ntrans, nt), [cm3/s]
 
     # Output
     return FAC
@@ -477,14 +689,14 @@ def _rr_mr(
 
         # Converts indices
         ind_st = np.where(FAC['lvl_indices']['FAC'] == st)[0][0]
-        state.append(
-            FAC['lvl_indices']['ColRadPy'][ind_st]
-            )
 
         # Loop over states with charge Z+1
         for ii in mr[st]['rad_recomb'].keys():
             # Converts indices
             ind_ion = np.where(FAC['lvl_indices']['FAC'] == ii)[0][0]
+            state.append(
+                FAC['lvl_indices']['ColRadPy'][ind_st]
+                )
             ion.append(
                 FAC['lvl_indices']['ColRadPy'][ind_ion]
                 )
@@ -530,14 +742,14 @@ def _ci_mr(
 
         # Converts indices
         ind_st = np.where(FAC['lvl_indices']['FAC'] == st)[0][0]
-        state.append(
-            FAC['lvl_indices']['ColRadPy'][ind_st]
-            )
 
         # Loop over states with charge Z+1
         for ii in mr[st]['coll_ion'].keys():
             # Converts indices
             ind_ion = np.where(FAC['lvl_indices']['FAC'] == ii)[0][0]
+            state.append(
+                FAC['lvl_indices']['ColRadPy'][ind_st]
+                )
             ion.append(
                 FAC['lvl_indices']['ColRadPy'][ind_ion]
                 )
@@ -625,6 +837,64 @@ def _conv_rate2upsilon(
                 /(np.asarray(Te_eV)*eV2invcm)
                 )
             )
+
+# Reads cross-section data files
+def _read_ascii(
+    fil = None,
+    data = None,
+    ):
+
+    # Reads data file
+    if data == 'ce':
+        data_fil = rfac.read_ce(fil+'a.ce')
+        lwr_lbl = 'lower_index'
+        upr_lbl = 'upper_index'
+        data_lbl = 'crosssection'
+    elif data == 'rr':
+        data_fil = rfac.read_rr(fil+'a.ce')
+        lwr_lbl = 'bound_index'
+        upr_lbl = 'free_index'
+        data_lbl = 'RR crosssection'
+    elif data == 'ci':
+        data_fil = rfac.read_rr(fil+'a.ce')
+        lwr_lbl = 'bound_index'
+        upr_lbl = 'free_index'
+        data_lbl = 'crosssection'
+
+    # Initializes output dictionary
+    out = {}
+
+    # Loop over blocks
+    for blk in np.arange(len(data_fil[1])):
+        # Loop over transitions
+        for trn in np.arange(len(data_fil[1][blk]['Delta E'])):
+            # Transition indices
+            lwr = data_fil[1][blk][lwr_lbl][trn]
+            upr = data_fil[1][blk][upr_lbl][trn]
+
+            # If new lower state
+            if lwr not in out.keys():
+                out[lwr] = {}
+            out[lwr][upr] = {}
+
+            # Stores cross-section data, [cm2]
+            out[lwr][upr]['XS'] = data_fil[1][blk][data_lbl][trn,:]*1e-20
+
+            # Stores energy grid in terms of incident electron energy, [eV]
+            if data_fil[1][blk]['ETYPE'] == 0:
+                out[lwr][upr]['engy'] = data_fil[1][blk]['EGRID']
+            elif data_fil[1][blk]['ETYPE'] == 1:
+                out[lwr][upr]['engy'] = data_fil[1][blk]['EGRID'] + data_fil[1][blk]['TE0']
+
+            # Stores parameters for high-energy behavior
+            if data == 'ce':
+                out[lwr][upr]['limit'] = np.asarray([
+                    data_fil[1][blk]['bethe'][trn],
+                    data_fil[1][blk]['born'][trn,0]
+                    ])
+
+    # Output
+    return out
 
 # Read Maxwellian-averaged data files
 def _read_mr(
