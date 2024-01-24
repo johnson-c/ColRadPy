@@ -138,6 +138,8 @@ def read_FAC(
             FAC=FAC,
             fil=fil,
             EEDF=EEDF,
+            Te=Te,
+            verbose=verbose,
             )
     elif 'rr.mr' in physics:
         FAC = _rr_mr(
@@ -156,6 +158,7 @@ def read_FAC(
             FAC=FAC,
             fil=fil,
             EEDF=EEDF,
+            Te=Te,
             )
     elif 'ai.mr' in physics:
         FAC = _ai_mr(
@@ -165,10 +168,12 @@ def read_FAC(
 
     # Collisional ionization
     if 'ci' in physics:
-        FAC = _ai(
+        FAC = _ci(
             FAC=FAC,
             fil=fil,
             EEDF=EEDF,
+            Te=Te,
+            verbose=verbose,
             )
     elif 'ci.mr' in physics:
         FAC = _ci_mr(
@@ -474,7 +479,6 @@ def _ce(
     Te=None,       # [eV], dim(ntemp,)
     FAC=None,
     fil=None,
-    trans_FAC=None,
     vebose = None,
     ):
 
@@ -516,6 +520,92 @@ def _ce(
         FAC['rates']['excit']['ratec_cm3/s'] = np.asarray(ratec) # dim(ntrans, ntemp), [cm3/s]
         FAC['rates']['excit']['XS_cm2'] = np.asarray(XS) # dim(ntrans, nE), [cm2]
         FAC['rates']['excit']['engy_eV'] = np.asarray(engy) # dim(ntrans, nE), [eV]
+
+    # Output
+    return FAC
+
+# Reads radiative recombination cross-section data files
+def _rr(
+    EEDF=None,
+    Te=None,       # [eV], dim(ntemp,)
+    FAC=None,
+    fil=None,
+    verbose=None,
+    ):
+
+    # Loads date from ascii file
+    XSdata = utils._read_ascii(
+        fil = fil,
+        react = 'rr',
+        )
+
+    # Performs EEDF convolution to cross-sections
+    (
+        data,
+        ion, state,
+        ratec, XS, engy
+        ) = utils._conv_ascii2colradpy(
+            FAC = FAC,
+            XSdata = XSdata,
+            EEDF = EEDF,
+            Te = Te,
+            react = 'rr',
+            verbose = verbose,
+            )
+
+    # Formats output
+    FAC['rates']['recomb'] = {}
+    FAC['rates']['recomb']['recomb_transitions'] = np.vstack(
+        (np.asarray(ion), np.asarray(state))
+        ).T # dim(ntrans,2), Z+1 state -> Z state
+    FAC['rates']['recomb']['recomb_excit'] = np.asarray(data) # dim(ntrans, nt), [cm3/s] 
+    if verbose == 1:
+        FAC['rates']['recomb']['XS_cm2'] = np.asarray(XS) # dim(ntrans, nE), [cm2]
+        FAC['rates']['recomb']['engy_eV'] = np.asarray(engy) # dim(ntrans, nE), [eV]
+
+    # Output
+    return FAC
+
+
+# Reads collisional ionization cross-section data files
+def _ci(
+    EEDF=None,
+    Te=None,       # [eV], dim(ntemp,)
+    FAC=None,
+    fil=None,
+    verbose=None,
+    ):
+
+    # Loads date from ascii file
+    XSdata = utils._read_ascii(
+        fil = fil,
+        react = 'ci',
+        )
+
+    # Performs EEDF convolution to cross-sections
+    (
+        data,
+        ion, state,
+        ratec, XS, engy
+        ) = utils._conv_ascii2colradpy(
+            FAC = FAC,
+            XSdata = XSdata,
+            EEDF = EEDF,
+            Te = Te,
+            react = 'ci',
+            verbose = verbose,
+            )
+
+    # Formats output
+    FAC['rates']['ioniz'] = {}
+    FAC['rates']['ioniz']['ion_transitions'] = np.vstack(
+        (np.asarray(state), np.asarray(ion))
+        ).T # dim(ntrans,2), Z state -> Z+1 state
+    FAC['rates']['ioniz']['ion_excit'] = np.asarray(data) # dim(ntrans, nt), [reduced rate] 
+    if verbose == 1:
+        FAC['rates']['ioniz']['ratec_cm3/s'] = np.asarray(ratec) # dim(ntrans, nt), [cm3/s]
+        FAC['rates']['ioniz']['XS_cm2'] = np.asarray(XS) # dim(ntrans, nE), [cm2]
+        FAC['rates']['ioniz']['engy_eV'] = np.asarray(engy) # dim(ntrans, nE), [eV]
 
     # Output
     return FAC
