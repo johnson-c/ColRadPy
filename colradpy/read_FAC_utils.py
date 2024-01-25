@@ -57,6 +57,12 @@ def _conv_ascii2colradpy(
                 FAC['lvl_indices']['ColRadPy'][ind_upr]
                 )
 
+            # Ionized state oribtal angular momentum for rr cross-section extrapolation
+            if react == 'rr':
+                ion_L = FAC['atomic']['ion_L'][st_upr[-1] -1]
+            else:
+                ion_L = 0
+
             # Calculates Rate coefficient data, [cm3/s], dim(ntrans, ntemp)
             if verbose == 1:
                 (
@@ -73,7 +79,7 @@ def _conv_ascii2colradpy(
                     limit = XSdata[lwr][upr]['limit'][None,:],
                     w_upr = np.asarray([XSdata[lwr][upr]['w_upr']]),
                     w_lwr = np.asarray([XSdata[lwr][upr]['w_lwr']]),
-                    ion_L = FAC['atomic']['ion_L']
+                    ion_L = ion_L,
                     verbose=verbose,
                     use_rel = True,
                     react = react,
@@ -94,7 +100,7 @@ def _conv_ascii2colradpy(
                         Bethe = XSdata[lwr][upr]['limit'][None,:],
                         w_upr = np.asarray([XSdata[lwr][upr]['w_upr']]),
                         w_lwr = np.asarray([XSdata[lwr][upr]['w_lwr']]),
-                        ion_L = FAC['atomic']['ion_L']
+                        ion_L = ion_L,
                         verbose=verbose,
                         use_rel = True,
                         react = react,

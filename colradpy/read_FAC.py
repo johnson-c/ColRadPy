@@ -12,8 +12,7 @@ Dec 18, 2023
 TO DO:
     1) Add non-Maxwellian convolution
     2) Missing energy level data (zpla, zpla1)
-    3) Dielectronic recombination/autoionization data
-    4) Charge exchange data
+    3) Charge exchange data
 
 '''
 

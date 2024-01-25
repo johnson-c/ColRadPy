@@ -5,10 +5,6 @@ given an electron energy distribution (EEDF)
 
 cjperks, Jan 18th, 2024
 
-TO DO:
-    1) high-energy asymptotic cross-section for radiative
-        recombination assumes you only have one ionized state
-
 '''
 
 # Modules
@@ -235,7 +231,7 @@ def _calc_ratec(
                     limit = limit[nn,:],
                     w_upr = w_upr[nn],
                     w_lwr = w_lwr[nn],
-                    ion_L = ion_L[0],
+                    ion_L = ion_L,
                     react = react,
                     )
 
