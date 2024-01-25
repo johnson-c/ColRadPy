@@ -39,7 +39,7 @@ def read_FAC(
     fil = None,         # Common path to FAC files, excluding physics extentions
     # Physics controls
     EEDF = None,        # if None -> assumes Maxwell-averages rates from pfac.fac.MaxwellRate
-    physics = None,     # if None -> looks for all file suffixes
+    reacts = None,     # if None -> looks for all file suffixes
     Te = None,          # if not using MaxwellRate files, [eV], dim(ntemp,)
     verbose = 1,
     ):
@@ -56,28 +56,16 @@ def read_FAC(
         print('NON-MAXWELLIAN ELECTRONS NOT IMPLEMENTED YET')
         sys.exit(1)
 
-    # FAC data file suffixes to search for
-    if physics == 'incl_all':
-        # If already Maxwell-averaged rate coefficients
-        if use_mr:
-            physics = [
-                'en',       # ASCII-format Energy levels
-                'tr',       # ASCII-format Einstein coefficients
-                'ce.mr',    # Collisional excitation
-                'rr.mr',    # Radiative recombination
-                #'ai',    # Autoionization/dielectronic recombination
-                'ci.mr',    # Collision ionization
-                ]
-        # If using cross-section files
-        else:
-            physics = [
-                'en',      # ASCII-format Energy levels
-                'tr',      # ASCII-format Einstein coefficients
-                'ce',      # ASCII-format Collisional excitation
-                'rr',      # ASCII-format Radiative recombination
-                #'ai',     # ASCII-format Autoionization/dielectronic recombination
-                'ci',      # ASCII-format Collision ionization
-                ]
+    # FAC data files to search for
+    if reacts == 'incl_all':
+        reacts = [
+            'en',      # Energy levels
+            'tr',      # Einstein coefficients
+            'ce',      # Collisional excitation
+            'rr',      # Radiative recombination
+            #'ai',      # Autoionization/dielectronic recombination
+            'ci',      # Collision ionization
+            ]
 
     ######## -------- Reads data -------- ########
 
@@ -86,7 +74,7 @@ def read_FAC(
     FAC['rates'] = {}
 
     # Energy levels
-    if 'en' in physics:
+    if 'en' in reacts:
         FAC = _en(
             FAC=FAC,
             fil=fil,
@@ -99,28 +87,29 @@ def read_FAC(
         print('NEED TO INCLUDE ENERGY LEVEL DATA IN MODELING!!!')
         sys.exit(1)
 
-    # Collisional excitation
-    if 'ce' in physics:
-        FAC = _ce(
+    # Gets rate coefficient data
+    # Includes: collisional excit, radiative recomb, collisional ioniz
+    if use_mr:
+        # Use Maxwell-averaged rates from pfac.fac.MaxwellRate
+        FAC = _get_mr(
+            FAC=FAC,
+            fil=fil,
+            verbose=verbose,
+            reacts=reacts,
+            )
+    else:
+        # Use cross-section data files
+        FAC = _get_xs(
             FAC=FAC,
             fil=fil,
             EEDF=EEDF,
             Te=Te,
             verbose=verbose,
+            reacts=reacts,
             )
-    elif 'ce.mr' in physics:
-        FAC = _ce_mr(
-            FAC=FAC,
-            fil=fil,
-            verbose=verbose,
-            )
-    # Error check
-    else:
-        print('NEED TO INCLUDE COLLISIONAL EXCITATION DATA IN MODELING!!!')
-        sys.exit(1)
 
     # Einstein coefficients
-    if 'tr' in physics:
+    if 'tr' in reacts:
         FAC = _tr(
             FAC=FAC,
             fil=fil,
@@ -132,63 +121,17 @@ def read_FAC(
         print('NEED TO INCLUDE EINSTEIN COEFFICIENT DATA IN MODELING!!!')
         sys.exit(1)
 
-    # Radiative recombination
-    if 'rr' in physics:
-        FAC = _rr(
-            FAC=FAC,
-            fil=fil,
-            EEDF=EEDF,
-            Te=Te,
-            verbose=verbose,
-            )
-    elif 'rr.mr' in physics:
-        FAC = _rr_mr(
-            FAC=FAC,
-            fil=fil,
-            )
-    # If empty
-    else:
-        FAC['rates']['recomb'] = {}
-        FAC['rates']['recomb']['recomb_transitions'] = np.asarray([])
-        FAC['rates']['recomb']['recomb_excit'] = np.asarray([])
-
     # Autoionization/dielectronic recombination
-    if 'ai' in physics:
+    if 'ai' in reacts:
         FAC = _ai(
             FAC=FAC,
             fil=fil,
             EEDF=EEDF,
             Te=Te,
             )
-    elif 'ai.mr' in physics:
-        FAC = _ai_mr(
-            FAC=FAC,
-            fil=fil,
-            )
-
-    # Collisional ionization
-    if 'ci' in physics:
-        FAC = _ci(
-            FAC=FAC,
-            fil=fil,
-            EEDF=EEDF,
-            Te=Te,
-            verbose=verbose,
-            )
-    elif 'ci.mr' in physics:
-        FAC = _ci_mr(
-            FAC=FAC,
-            fil=fil,
-            verbose=verbose,
-            )
-    # If empty
-    else:
-        FAC['rates']['ioniz'] = {}
-        FAC['rates']['ioniz']['ion_transitions'] = np.asarray([])
-        FAC['rates']['ioniz']['ion_excit'] = np.asarray([])
 
     # Charge exchange
-    if 'cx' in physics:
+    if 'cx' in reacts:
         print('CHARGE EXCHANGE IS NOT IMPLEMENTED YET!!!')
     # If empty
     else:
@@ -469,252 +412,208 @@ def _tr(
 
 ############################################################
 #
-#             Cross-section Data Files
+#               Data Loading & Prep
 #
 ############################################################
 
-# Reads collisional excitation cross-section data files
-def _ce(
+# Reads cross-section data files
+def _get_xs(
     EEDF=None,
     Te=None,       # [eV], dim(ntemp,)
     FAC=None,
     fil=None,
     vebose = None,
+    reacts = None,
     ):
+
+    # Error check
+    if 'ce' not in reacts:
+        print('NEED TO INCLUDE COLLISIONAL EXCITATION DATA IN MODELING!!!')
+        sys.exit(1)
+
+    # Fill blank
+    if 'rr' not in reacts:
+        FAC['rates']['recomb'] = {}
+        FAC['rates']['recomb']['recomb_transitions'] = np.asarray([])
+        FAC['rates']['recomb']['recomb_excit'] = np.asarray([])
+    if 'ci' not in reacts:
+        FAC['rates']['ioniz'] = {}
+        FAC['rates']['ioniz']['ion_transitions'] = np.asarray([])
+        FAC['rates']['ioniz']['ion_excit'] = np.asarray([])
 
     # Useful constants
     eV2K = 11604.5
 
-    # Saves temperature grid data
-    # NOTE: ColRadPy assumes Te is in Kelvin within the data file (per ADF04 standard)
-    FAC['temp_grid'] = Te*eV2K # [K], dim(nt,)
+    # Loop over reactions
+    for react in reacts:
+        # Skip
+        if react not in ['ce', 'rr', 'ci']:
+            continue
 
-    # Loads date from ascii file
-    XSdata = utils._read_ascii(
-        fil = fil,
-        react = 'ce',
-        )
-
-    # Performs EEDF convolution to cross-sections
-    (
-        data,
-        st_upr, st_lwr,
-        ratec, XS, engy
-        ) = utils._conv_ascii2colradpy(
-            FAC = FAC,
-            XSdata = XSdata,
-            EEDF = EEDF,
-            Te = Te,
-            react = 'ce',
-            verbose = verbose,
+        # Loads date from ascii file
+        XSdata = utils._read_ascii(
+            fil = fil,
+            react = react,
             )
 
-    # Formats output
-    FAC['rates']['excit'] = {}
-    FAC['rates']['excit']['col_transitions'] = np.vstack(
-        (np.asarray(st_upr), np.asarray(st_lwr))
-        ).T # dim(ntrans,2), (upr,lwr) states in ColRadPy indices
-    FAC['rates']['excit']['col_excit'] = np.asarray(data) # dim(ntrans, ntemp), [upsilon] 
-    if verbose == 1:
-        FAC['rates']['excit']['col_trans_unfill'] = FAC['rates']['excit']['col_transitions'].copy()
-        FAC['rates']['excit']['ratec_cm3/s'] = np.asarray(ratec) # dim(ntrans, ntemp), [cm3/s]
-        FAC['rates']['excit']['XS_cm2'] = np.asarray(XS) # dim(ntrans, nE), [cm2]
-        FAC['rates']['excit']['engy_eV'] = np.asarray(engy) # dim(ntrans, nE), [eV]
+        # Saves temperature grid data
+        if 'temp_grid' not in FAC.keys():
+            # NOTE: ColRadPy assumes Te is in Kelvin within the data file (per ADF04 standard)
+            FAC['temp_grid'] = Te*eV2K # [K], dim(nt,)
+
+        # Performs EEDF convolution to cross-sections
+        (
+            data,
+            st_upr, st_lwr,
+            ratec, XS, engy
+            ) = utils._conv_ascii2colradpy(
+                FAC = FAC,
+                XSdata = XSdata,
+                EEDF = EEDF,
+                Te = Te,
+                react = react,
+                verbose = verbose,
+                )
+
+        # Dictionary labeling
+        if react == 'ce':
+            lbl = 'excit'
+            lbl_trans = 'col_transitions'
+            lbl_excit = 'col_excit'
+        elif react == 'rr':
+            lbl = 'recomb'
+            lbl_trans = 'recomb_transitions'
+            lbl_excit = 'recomb_excit'
+        elif react == 'ci':
+            lbl = 'ioniz'
+            lbl_trans = 'ion_transitions'
+            lbl_excit = 'ion_excit'
+
+        # Formats output
+        FAC['rates'][lbl] = {}
+
+        # Stores transitions arrays
+        if react in ['ce', 'rr']:
+            # If excit -- (upr,lwr) states in ColRadPy indices
+            # If recomb -- Z+1 state -> Z state
+            FAC['rates'][lbl][lbl_trans] = np.vstack(
+                (np.asarray(st_upr), np.asarray(st_lwr))
+                ).T # dim(ntrans,2)
+        else:
+            # If ioniz -- Z state -> Z+1 state
+            FAC['rates'][lbl][lbl_trans] = np.vstack(
+                (np.asarray(st_lwr), np.asarray(st_upr))
+                ).T # dim(ntrans,2)
+
+        # Stores rate coefficient data
+        # If excit -- [upsilon], if recomb -- [cm3/s], if ioniz -- [reduced]
+        FAC['rates'][lbl][lbl_excit] = np.asarray(data) # dim(ntrans, nt)
+
+        if verbose == 1:
+            FAC['rates'][lbl]['XS_cm2'] = np.asarray(XS) # dim(ntrans, nE), [cm2]
+            FAC['rates'][lbl]['engy_eV'] = np.asarray(engy) # dim(ntrans, nE), [eV]
+            if react == 'ce':
+                # Stores transition array before padding to match Einstein coefficient
+                FAC['rates'][lbl]['col_trans_unfill'] = FAC['rates'][lbl][lbl_trans].copy()
+            if react != 'rr':
+                # Stores rate coefficients in SI units
+                FAC['rates'][lbl]['ratec_cm3/s'] = np.asarray(ratec) # dim(ntrans, nt), [cm3/s]
 
     # Output
     return FAC
 
-# Reads radiative recombination cross-section data files
-def _rr(
-    EEDF=None,
-    Te=None,       # [eV], dim(ntemp,)
-    FAC=None,
-    fil=None,
-    verbose=None,
-    ):
-
-    # Loads date from ascii file
-    XSdata = utils._read_ascii(
-        fil = fil,
-        react = 'rr',
-        )
-
-    # Performs EEDF convolution to cross-sections
-    (
-        data,
-        ion, state,
-        ratec, XS, engy
-        ) = utils._conv_ascii2colradpy(
-            FAC = FAC,
-            XSdata = XSdata,
-            EEDF = EEDF,
-            Te = Te,
-            react = 'rr',
-            verbose = verbose,
-            )
-
-    # Formats output
-    FAC['rates']['recomb'] = {}
-    FAC['rates']['recomb']['recomb_transitions'] = np.vstack(
-        (np.asarray(ion), np.asarray(state))
-        ).T # dim(ntrans,2), Z+1 state -> Z state
-    FAC['rates']['recomb']['recomb_excit'] = np.asarray(data) # dim(ntrans, nt), [cm3/s] 
-    if verbose == 1:
-        FAC['rates']['recomb']['XS_cm2'] = np.asarray(XS) # dim(ntrans, nE), [cm2]
-        FAC['rates']['recomb']['engy_eV'] = np.asarray(engy) # dim(ntrans, nE), [eV]
-
-    # Output
-    return FAC
-
-
-# Reads collisional ionization cross-section data files
-def _ci(
-    EEDF=None,
-    Te=None,       # [eV], dim(ntemp,)
-    FAC=None,
-    fil=None,
-    verbose=None,
-    ):
-
-    # Loads date from ascii file
-    XSdata = utils._read_ascii(
-        fil = fil,
-        react = 'ci',
-        )
-
-    # Performs EEDF convolution to cross-sections
-    (
-        data,
-        ion, state,
-        ratec, XS, engy
-        ) = utils._conv_ascii2colradpy(
-            FAC = FAC,
-            XSdata = XSdata,
-            EEDF = EEDF,
-            Te = Te,
-            react = 'ci',
-            verbose = verbose,
-            )
-
-    # Formats output
-    FAC['rates']['ioniz'] = {}
-    FAC['rates']['ioniz']['ion_transitions'] = np.vstack(
-        (np.asarray(state), np.asarray(ion))
-        ).T # dim(ntrans,2), Z state -> Z+1 state
-    FAC['rates']['ioniz']['ion_excit'] = np.asarray(data) # dim(ntrans, nt), [reduced rate] 
-    if verbose == 1:
-        FAC['rates']['ioniz']['ratec_cm3/s'] = np.asarray(ratec) # dim(ntrans, nt), [cm3/s]
-        FAC['rates']['ioniz']['XS_cm2'] = np.asarray(XS) # dim(ntrans, nE), [cm2]
-        FAC['rates']['ioniz']['engy_eV'] = np.asarray(engy) # dim(ntrans, nE), [eV]
-
-    # Output
-    return FAC
-
-############################################################
-#
-#             fac.MaxwellRate Data Files
-#
-############################################################
-
-# Reads Maxwell-averaged collisional excitation data files
-def _ce_mr(
-    FAC=None,
-    fil=None,
+# Reads Maxwell-averaged data files
+def _get_mr(
+    FAC = None,
+    fil = None,
     verbose = None,
+    reacts = None,
     ):
+
+    # Error check
+    if 'ce' not in reacts:
+        print('NEED TO INCLUDE COLLISIONAL EXCITATION DATA IN MODELING!!!')
+        sys.exit(1)
+
+    # Fill blank
+    if 'rr' not in reacts:
+        FAC['rates']['recomb'] = {}
+        FAC['rates']['recomb']['recomb_transitions'] = np.asarray([])
+        FAC['rates']['recomb']['recomb_excit'] = np.asarray([])
+    if 'ci' not in reacts:
+        FAC['rates']['ioniz'] = {}
+        FAC['rates']['ioniz']['ion_transitions'] = np.asarray([])
+        FAC['rates']['ioniz']['ion_excit'] = np.asarray([])
 
     # Useful constants
     eV2K = 11604.5
 
-    # Reads data file
-    mr = utils._read_mr(
-        fil=fil,
-        react='ce'
-        )
+    # Loop over reactions
+    for react in reacts:
+        # Skip
+        if react not in ['ce', 'rr', 'ci']:
+            continue
 
-    # Saves temperature grid data
-    # NOTE: ColRadPy assumes Te is in Kelvin within the data file (per ADF04 standard)
-    FAC['temp_grid'] = np.asarray(mr['Te_eV'])*eV2K # [K], dim(nt,)
+        # Reads data file
+        mr = utils._read_mr(
+            fil = fil,
+            react = react,
+            )
 
-    # Converts data file to ColRadPy form
-    data, st_upr, st_lwr, ratec = utils._conv_mr2colradpy(
-        FAC = FAC,
-        mr = mr,
-        react = 'ce',
-        verbose=verbose,
-        )
+        # Saves temperature grid data
+        if 'temp_grid' not in FAC.keys():
+            # NOTE: ColRadPy assumes Te is in Kelvin within the data file (per ADF04 standard)
+            FAC['temp_grid'] = np.asarray(mr['Te_eV'])*eV2K # [K], dim(nt,)
 
-    # Formats output
-    FAC['rates']['excit'] = {}
-    FAC['rates']['excit']['col_transitions'] = np.vstack(
-        (np.asarray(st_upr), np.asarray(st_lwr))
-        ).T # dim(ntrans,2), (upr,lwr) states in ColRadPy indices
-    FAC['rates']['excit']['col_excit'] = np.asarray(data) # dim(ntrans, nt), [cm3/s] 
-    if verbose == 1:
-        FAC['rates']['excit']['col_trans_unfill'] = FAC['rates']['excit']['col_transitions'].copy()
-        FAC['rates']['excit']['ratec_cm3/s'] = np.asarray(ratec) # dim(ntrans, nt), [cm3/s]
+        # Converts data file to ColRadPy form
+        data, st_upr, st_lwr, ratec = utils._conv_mr2colradpy(
+            FAC = FAC,
+            mr = mr,
+            react = react,
+            verbose = verbose,
+            )
+
+        # Dictionary labeling
+        if react == 'ce':
+            lbl = 'excit'
+            lbl_trans = 'col_transitions'
+            lbl_excit = 'col_excit'
+        elif react == 'rr':
+            lbl = 'recomb'
+            lbl_trans = 'recomb_transitions'
+            lbl_excit = 'recomb_excit'
+        elif react == 'ci':
+            lbl = 'ioniz'
+            lbl_trans = 'ion_transitions'
+            lbl_excit = 'ion_excit'
+
+        # Formats output
+        FAC['rates'][lbl] = {}
+
+        # Stores transitions arrays
+        if react in ['ce', 'rr']:
+            # If excit -- (upr,lwr) states in ColRadPy indices
+            # If recomb -- Z+1 state -> Z state
+            FAC['rates'][lbl][lbl_trans] = np.vstack(
+                (np.asarray(st_upr), np.asarray(st_lwr))
+                ).T # dim(ntrans,2)
+        else:
+            # If ioniz -- Z state -> Z+1 state
+            FAC['rates'][lbl][lbl_trans] = np.vstack(
+                (np.asarray(st_lwr), np.asarray(st_upr))
+                ).T # dim(ntrans,2)
+
+        # Stores rate coefficient data
+        # If excit -- [upsilon], if recomb -- [cm3/s], if ioniz -- [reduced]
+        FAC['rates'][lbl][lbl_excit] = np.asarray(data) # dim(ntrans, nt)
+
+        if verbose == 1:
+            if react == 'ce':
+                # Stores transition array before padding to match Einstein coefficient
+                FAC['rates'][lbl]['col_trans_unfill'] = FAC['rates'][lbl][lbl_trans].copy()
+            if react != 'rr':
+                # Stores rate coefficients in SI units
+                FAC['rates'][lbl]['ratec_cm3/s'] = np.asarray(ratec) # dim(ntrans, nt), [cm3/s]
 
     # Output
-    return FAC
-
-# Reads Maxwell-averaged Radiative recombination data
-def _rr_mr(
-    FAC=None,
-    fil=None,
-    ):
-
-    # Reads data file
-    mr = utils._read_mr(
-        fil=fil,
-        react='rr'
-        )
-
-    # Converts data file to ColRadPy form
-    data, ion, state, ratec = utils._conv_mr2colradpy(
-        FAC = FAC,
-        mr = mr,
-        react = 'rr',
-        )
-
-    # Formats output
-    FAC['rates']['recomb'] = {}
-    FAC['rates']['recomb']['recomb_transitions'] = np.vstack(
-        (np.asarray(ion), np.asarray(state))
-        ).T # dim(ntrans,2), Z+1 state -> Z state
-    FAC['rates']['recomb']['recomb_excit'] = np.asarray(data) # dim(ntrans, nt), [cm3/s] 
-
-    # Ouput
-    return FAC
-        
-# Reads Maxwell-averaged collisional ionization data
-def _ci_mr(
-    FAC=None,
-    fil=None,
-    verbose=None,
-    ):
-
-    # Reads data file
-    mr = utils._read_mr(
-        fil=fil,
-        react='ci'
-        )
-
-    # Converts data file to ColRadPy form
-    data, ion, state, ratec = utils._conv_mr2colradpy(
-        FAC = FAC,
-        mr = mr,
-        react = 'ci',
-        verbose=verbose,
-        )
-
-    # Formats output
-    FAC['rates']['ioniz'] = {}
-    FAC['rates']['ioniz']['ion_transitions'] = np.vstack(
-        (np.asarray(state), np.asarray(ion))
-        ).T # dim(ntrans,2), Z state -> Z+1 state
-    FAC['rates']['ioniz']['ion_excit'] = np.asarray(data) # dim(ntrans, nt), [reduced rate] 
-    if verbose == 1:
-        FAC['rates']['ioniz']['ratec_cm3/s'] = np.asarray(ratec) # dim(ntrans, nt), [cm3/s]
-
-    # Ouput
     return FAC

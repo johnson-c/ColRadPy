@@ -349,7 +349,8 @@ class colradpy():
                         Zele=self.data['user']['Zele'],
                         fil=fil,
                         EEDF=self.data['user']['EEDF'],
-                        physics=self.data['user']['atomic_physics'],
+                        reacts=self.data['user']['atomic_physics'],
+                        Te=self.data['user']['temp_grid'], # [eV]
                         )
                     )
             self.data['user']['file_loc'] = str(fil)#make this a string changed for hdfdict
