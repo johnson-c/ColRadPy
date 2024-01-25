@@ -100,8 +100,6 @@ def convolve_EEDF(
             engyEEDF=engyEEDF,
             XS=XS,
             engyXS=engyXS,
-            m=m,
-            dE=dE,
             use_rel=use_rel,
             ) # [cm3/s], dim(ntemp,ntrans)
 
@@ -136,8 +134,6 @@ def _calc_DC(
     engyEEDF = None,    # [eV], dim(ngrid, ntemp)
     XS = None,          # [eV*cm2], dim(ntrans,)
     engyXS = None,      # [eV], dim(ntrans,)
-    m = None,
-    dE = None,          # [eV], dim(ntrans,)
     use_rel=None,
     ):
 
@@ -146,14 +142,9 @@ def _calc_DC(
 
     # Loop over transitions
     for nn in np.arange(len(XS)):
-        if m == 0:
-            engy_tmp = engyXS[nn]
-        elif m == 1:
-            engy_tmp = engyXS[nn] + dE[nn]
-
         # Incident electron velocity
         vel = _get_vel(
-            E_inc = engyEEDF[:,tt],   
+            E_inc = engyXS[nn],   
             use_rel = use_rel,
             ) # [cm/s], dim(ngrid,)
 
@@ -165,7 +156,7 @@ def _calc_DC(
                 np.log10(EEDF[:,tt]),
                 bounds_error = False,
                 fill_value = (-1e5,-1e5)
-                )(np.log10(engy_tmp)) # [1/eV]
+                )(np.log10(engyXS[nn])) # [1/eV]
 
             # Calculates rate coefficient, [cm3/s]
             ratec[tt,nn] = XS[nn] *vel *EEDF_tmp

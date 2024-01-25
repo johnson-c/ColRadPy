@@ -422,6 +422,116 @@ def _tr(
 #
 ############################################################
 
+# Reads dielectronic recombination strength data files
+## NOTE: Skips autoionization rates right now!!!
+def _ai(
+    nele=None,
+    EEDF=None,
+    Te=None,        # [eV], dim(ntemp,)
+    FAC=None,
+    fil=None,
+    verbose=None,
+    ):
+
+    # Error check if H-like
+    if nele == 1:
+        return FAC
+
+    # Init output data
+    bnd = []
+    fre = []
+    bnd_ColRadPy = []
+    fre_ColRadPy = []
+    dE = [] # [eV]
+    DC = [] # [eV *cm2]
+
+    # Loop over blocks
+    for blk in np.arange(len(ai[1])):
+        # Loop over transitions
+        for tran in np.arange(len(ai[1][blk]['Delta E'])):
+            # Stores data
+            dE.append(
+                ai[1][blk]['Delta E'][trn]
+                )
+
+            DC.append(
+                ai[1][blk]['DC strength'][trn]*1e-20
+                )
+
+            bnd.append(
+                ai[1][blk]['bound_index'][trn]
+                )
+            fre.append(
+                ai[1][blk]['free_index'][trn]
+                )
+
+            # Converts FAC indices to ColRadPy notation
+            ind_bnd = np.where(FAC['lvl_indices']['FAC'] == bnd[-1])[0][0]
+            ind_fre = np.where(FAC['lvl_indices']['FAC'] == fre[-1])[0][0]
+            bnd_ColRadPy.append(
+                FAC['lvl_indices']['ColRadPy'][ind_bnd]
+                )
+            fre_ColRadPy.append(
+                FAC['lvl_indices']['ColRadPy'][ind_fre]
+                )
+
+    # Calculates rate coefficient assuming delta function energy-dependent cross-section
+    ratec = convolve_EEDF(
+        EEDF=EEDF,
+        Te=Te,
+        XS=DC,
+        engyXS=dE,
+        DC_flag=True,
+        use_rel=True,
+        ).T # [cm3/s],dim(ntrans,ntemp)
+
+    # Transition array from AITable()
+    trans_ColRadPy = np.vstack((fre_ColRadPy, bnd_ColRadPy)).T # dim(ntrans,2)
+
+    # Combining together rad recomb and DC recomb 
+    rad_trans = FAC['rates']['recomb']['recomb_transitions'].copy()
+    rad_recomb = FAC['rates']['recomb']['recomb_excit'].copy()
+    all_trans = np.unique(
+        np.concatenate((
+            trans_ColRadPy,
+            rad_trans,
+            ), axis=0),
+        axis=0)
+    all_recomb = np.ones((all_trans.shape[0], rad_recomb.shape[1]))*1e-30 # dim(ntrans, ntemp)
+
+    for tt in np.arange(all_trans.shape[0]):
+        # Finds the indices for this transition
+        ind_dc = np.where(
+            np.all(
+                trans_ColRadPy == all_trans[tt,:],
+                axis = 1
+                )
+            )[0]
+        ind_rr = np.where(
+            np.all(
+                rad_trans == all_trans[tt,:],
+                axis = 1
+                )
+            )[0]
+
+        # Error check
+        if len(ind_rr) != 1 and len(ind_dc) != 1:
+            print(all_trans[tt,:])
+            print('xxxx')
+
+        # Fills arrays
+        if len(ind_rr) == 1:
+            all_recomb[tt,:] += rad_recomb[ind_rr[0],:]
+
+        if len(ind_dc) == 1:
+            all_recomb[tt,:] += ratec[ind_dc[0],:]
+
+    # Output
+    FAC['rates']['recomb']['recomb_transitions'] = all_trans    # dim(ntrans,2)
+    FAC['rates']['recomb']['recomb_excit'] = all_recomb         # [cm3/s], dim(ntrans, ntemp)
+
+    return FAC
+
 # Reads cross-section data files
 def _get_xs(
     EEDF=None,
