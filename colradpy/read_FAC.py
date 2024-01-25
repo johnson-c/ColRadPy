@@ -39,7 +39,7 @@ def read_FAC(
     fil = None,         # Common path to FAC files, excluding physics extentions
     # Physics controls
     EEDF = None,        # if None -> assumes Maxwell-averages rates from pfac.fac.MaxwellRate
-    reacts = None,     # if None -> looks for all file suffixes
+    reacts = None,      # if None -> looks for all file suffixes
     Te = None,          # if not using MaxwellRate files, [eV], dim(ntemp,)
     verbose = 1,
     ):
@@ -189,6 +189,7 @@ def _en(
     ion_pot = []                # [1/cm], dim(nion,), ionization potentials
     ion_term = []               # dim(nion,), ionization states
     ion_pot_lvl = []            # dim(nion,), ionization state index
+    ion_L = []                  # dim(nion,), ionization state orbital angular momentum
 
     config = []                 # dim(ntran,), state configuration
     L = []                      # dim(ntran,), state L quantum number
@@ -255,6 +256,10 @@ def _en(
                     en[1][blk]['ENERGY'][st] * eV2invcm
                     )
 
+                ion_L.append(
+                    en[1][blk]['VNL'][st]%100
+                    )
+
                 # Index conversion
                 FAC['lvl_indices']['FAC'] = np.append(
                     FAC['lvl_indices']['FAC'], 
@@ -284,6 +289,7 @@ def _en(
     FAC['atomic']['zpla'] = -1*np.ones((len(config), len(ion_pot)))
     FAC['atomic']['zpla1'] = -1*np.ones((len(config), len(ion_pot)))
     FAC['atomic']['ion_pot_lvl'] = np.asarray(ion_pot_lvl)
+    FAC['atomic']['ion_L'] = np.asarray(ion_L)
 
     # Output
     return FAC

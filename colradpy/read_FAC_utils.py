@@ -73,6 +73,7 @@ def _conv_ascii2colradpy(
                     limit = XSdata[lwr][upr]['limit'][None,:],
                     w_upr = np.asarray([XSdata[lwr][upr]['w_upr']]),
                     w_lwr = np.asarray([XSdata[lwr][upr]['w_lwr']]),
+                    ion_L = FAC['atomic']['ion_L']
                     verbose=verbose,
                     use_rel = True,
                     react = react,
@@ -93,6 +94,7 @@ def _conv_ascii2colradpy(
                         Bethe = XSdata[lwr][upr]['limit'][None,:],
                         w_upr = np.asarray([XSdata[lwr][upr]['w_upr']]),
                         w_lwr = np.asarray([XSdata[lwr][upr]['w_lwr']]),
+                        ion_L = FAC['atomic']['ion_L']
                         verbose=verbose,
                         use_rel = True,
                         react = react,

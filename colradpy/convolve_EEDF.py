@@ -5,6 +5,9 @@ given an electron energy distribution (EEDF)
 
 cjperks, Jan 18th, 2024
 
+TO DO:
+    1) high-energy asymptotic cross-section for radiative
+        recombination assumes you only have one ionized state
 
 '''
 
@@ -31,6 +34,7 @@ def convolve_EEDF(
     limit = None,   # (optional), high-energy asymptotic behavior
     w_upr = None,   # (optional) Upper level total angular momentum
     w_lwr = None,   # (optional) Upper level total angular momentum
+    ion_L = None,   # (optional) ionized state orbital angular momentum
     verbose = 1,
     use_rel = True, # flag to use relativistic corrections
     react = None,   # reaction type in ['ce', 'rr', 'ci']
@@ -113,6 +117,7 @@ def convolve_EEDF(
             limit = limit,
             w_upr = w_upr,
             w_lwr = w_lwr,
+            ion_L = ion_L,
             verbose = verbose,
             use_rel=use_rel,
             react=react,
@@ -179,6 +184,7 @@ def _calc_ratec(
     limit = None,       # dim(ntrans,2) if ce or dim(ntrans,4) if rr, ci
     w_upr = None,      
     w_lwr = None,
+    ion_L = None,
     verbose = None,
     use_rel = None,
     react = None,
@@ -218,11 +224,15 @@ def _calc_ratec(
                 )(np.log10(engyEEDF[:,tt])) # dim(ngrid,), [cm2]
 
             # Fill missing data right at threshold
-            indE = np.where(
-                (engyEEDF[:,tt] >= dE[nn])
-                & (engyEEDF[:,tt] <= engy_tmp[0])
-                )[0]
-            XS_tmp[indE] = XS[0,nn]
+            ## NOTE: collisional ioniz quickly drops to 0 near E_inc = dE
+            ## NOTE: collisional excit is pretty nonlinear but flat enough this should be fine
+            ## NOTE: radiative recomb blows up near E_inc = dE, so hopefully this is just a small error !!!
+            if react != 'ci':
+                indE = np.where(
+                    (engyEEDF[:,tt] >= dE[nn])
+                    & (engyEEDF[:,tt] <= engy_tmp[0])
+                    )[0]
+                XS_tmp[indE] = XS[0,nn]
 
             # Fill values with high-energy asymptotic behavior if available
             if limit is not None:
@@ -234,6 +244,7 @@ def _calc_ratec(
                     limit = limit[nn,:],
                     w_upr = w_upr[nn],
                     w_lwr = w_lwr[nn],
+                    ion_L = ion_L[0],
                     react = react,
                     )
 
@@ -269,6 +280,7 @@ def _get_limit(
     limit = None,
     w_upr = None,
     w_lwr = None,
+    ion_L = None,
     react = None,
     ):
 
@@ -307,11 +319,48 @@ def _get_limit(
         XS_tmp[indE] = (
             np.pi *omega
             / k02
-            / (1 +2*w_upr)
+            / (1 +2*w_lwr)
             ) * a02 # [cm2]
 
     elif react == 'rr':
-        blah = 0
+        # Incident photon energy, [eV]
+        E_gamma = (engyEEDF[indE] + dE)
+
+        # Photon-electron energy, [eV]
+        E_e = engyEEDF[indE]
+
+        # Formula for bound-free oscillator strength, [1/Hartree]
+        xx = (E_e + limit[3]) /limit[3]
+        yy = (1 +limit[2]) /(np.sqrt(xx) + limit[2])
+
+        dgf_dE = (
+            E_gamma /(E_e +limit[3])
+            * limit[0]
+            * xx**(-3.5 -ion_L +0.5 *limit[1])
+            * yy**limit[1]
+            )
+
+        eps = E_e *eV2Hartree # [Hartree]
+        omega = E_gamma *eV2Hartree # [Hartree]
+
+        # Function for photo-ionization cross-section, [atomic units]
+        XS_PI = (
+            2 *np.pi *np.sqrt(fine_struct2)
+            /(1 +2*w_lwr)
+            *(1 +fine_struct2 *eps)
+            /(1 +0.5 *fine_struct2 *eps)
+            *dgf_dE
+            )
+
+        # Function for radiative recombinarion cross-section, [cm2]
+        XS_tmp[indE] = (
+            fine_struct2/2
+            * (1 +2*w_lwr)/(1 +2*w_upr)
+            * omega**2
+            / eps
+            / (1 +0.5*fine_struct2 *eps)
+            * XS_PI
+            ) *a02
 
     elif react == 'ci':
         # Electron kinetic momentum squared with fine structure correction
@@ -335,7 +384,7 @@ def _get_limit(
         XS_tmp[indE] = (
             omega
             / k02
-            / (1 +2*w_upr)
+            / (1 +2*w_lwr)
             ) * a02 # [cm2]
 
     # Output
