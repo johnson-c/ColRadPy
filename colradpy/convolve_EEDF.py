@@ -217,6 +217,13 @@ def _calc_ratec(
                 fill_value = (-1e5,-1e5)
                 )(np.log10(engyEEDF[:,tt])) # dim(ngrid,), [cm2]
 
+            # Fill missing data right at threshold
+            indE = np.where(
+                (engyEEDF[:,tt] >= dE[nn])
+                & (engyEEDF[:,tt] <= engy_tmp[0])
+                )[0]
+            XS_tmp[indE] = XS[0,nn]
+
             # Fill values with high-energy asymptotic behavior if available
             if limit is not None:
                 XS_tmp = _get_limit(
