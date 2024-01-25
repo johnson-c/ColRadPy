@@ -136,9 +136,6 @@ def _calc_DC(
     use_rel=None,
     ):
 
-    # Useful constants
-    eV2electron = cnt.e /(cnt.m_e*cnt.c**2) # [1/eV]
-
     # Init output
     ratec = np.zeros((EEDF.shape[1], len(XS))) # [cm3/s], dim(ntemp,ntrans)
 
@@ -150,15 +147,10 @@ def _calc_DC(
             engy_tmp = engyXS[nn] + dE[nn]
 
         # Incident electron velocity
-        if use_rel:     # relativistic form
-            vel =  cnt.c *100 *np.sqrt(
-                1 -
-                1/(engyEEDF[:,tt] *eV2electron +1)**2
-                ) # [cm/s], dim(ngrid,)
-        else:           # classical form
-            vel = cnt.c *100 *np.sqrt(
-                2*engyEEDF[:,tt] *eV2electron
-                ) # [cm/s], dim(ngrid,)
+        vel = _get_vel(
+            E_inc = engyEEDF[:,tt],   
+            use_rel = use_rel,
+            ) # [cm/s], dim(ngrid,)
 
         # Loop over temperatures
         for tt in np.arange(EEDF.shape[1]):
@@ -192,9 +184,6 @@ def _calc_ratec(
     react = None,
     ):
 
-    # Useful constants
-    eV2electron = cnt.e /(cnt.m_e*cnt.c**2) # [1/eV]
-
     # Init output
     ratec = np.zeros((EEDF.shape[1], XS.shape[1])) # [cm3/s], dim(ntemp,ntrans)
     if verbose == 1:
@@ -208,15 +197,10 @@ def _calc_ratec(
     # Loop over temperatures
     for tt in np.arange(EEDF.shape[1]):
         # Incident electron velocity
-        if use_rel:     # relativistic form
-            vel =  cnt.c *100 *np.sqrt(
-                1 -
-                1/(engyEEDF[:,tt] *eV2electron +1)**2
-                ) # [cm/s], dim(ngrid,)
-        else:           # classical form
-            vel = cnt.c *100 *np.sqrt(
-                2*engyEEDF[:,tt] *eV2electron
-                ) # [cm/s], dim(ngrid,)
+        vel = _get_vel(
+            E_inc = engyEEDF[:,tt],   
+            use_rel = use_rel,
+            ) # [cm/s], dim(ngrid,)
 
         # Loop over transitions
         for nn in np.arange(XS.shape[1]):
@@ -243,6 +227,7 @@ def _calc_ratec(
                     limit = limit[nn,:],
                     w_upr = w_upr[nn],
                     w_lwr = w_lwr[nn],
+                    react = react,
                     )
 
             # Preforms integration
@@ -268,15 +253,22 @@ def _calc_ratec(
 ############################################################
 
 # Calculate high-energy asymptotic behavior of cross-section
+## NOTE: So far, FAC-specific
 def _get_limit(
     XS_tmp = None,
-    engy_tmp = None,
-    engyEEDF = None,
-    dE = None,
+    engy_tmp = None,    # [eV], incident electron energy always
+    engyEEDF = None,    # [eV], incident electron energy always
+    dE = None,          # [eV], threshold energy
     limit = None,
     w_upr = None,
     w_lwr = None,
+    react = None,
     ):
+
+    # Useful constants
+    fine_struct2 = cnt.physical_constants['fine-structure constant'][0]**2 # []
+    eV2Hartree = 1/cnt.physical_constants['Hartree energy in eV'][0] # [Hartree/eV]
+    a02 = cnt.physical_constants['Bohr radius'][0]**2 *1e4 # [cm^2]
 
     # FAC cross-section data isn't really trustworthy about 10x transition energy
     tol = 10
@@ -290,26 +282,54 @@ def _get_limit(
         return XS_tmp
     
     if react == 'ce':
+        # Electron kinetic momentum squared with fine structure correction
+        k02 = 2 * engyEEDF[indE] *eV2Hartree *(
+            1+
+            0.5 *fine_struct2 *engyEEDF[indE] *eV2Hartree
+            ) # [atomic units]
+
         # Bethe asymptotic form of collision strength for (first term) optically
         # allowed and (second term) forbidden transitions
         omega = (
             limit[0]
             * np.log(engyEEDF[indE]/dE)
             + limit[1]
-            )
+            ) # []
 
+        # Cross-section
         XS_tmp[indE] = (
-            omega
-            *np.pi *cnt.physical_constants['Bohr radius'][0]**2
-            * 13.6 /engyEEDF[indE]
-            /(1 +2*w_upr)
-            ) *1e4
+            np.pi *omega
+            / k02
+            / (1 +2*w_upr)
+            ) * a02 # [cm2]
 
     elif react == 'rr':
         blah = 0
 
     elif react == 'ci':
-        blah = 0
+        # Electron kinetic momentum squared with fine structure correction
+        k02 = 2 * engyEEDF[indE] *eV2Hartree *(
+            1+
+            0.5 * fine_struct2 * engyEEDF[indE] *eV2Hartree
+            ) # [atomic units]
+
+        # Formula for collision strength
+        xx = engyEEDF[indE]/dE
+        yy = 1 - 1/xx
+
+        omega = (
+            limit[0] *np.log(xx)
+            + limit[1] *yy**2
+            + limit[2] *1/xx *yy
+            + limit[3] *1/xx**2 *yy
+            )
+
+        # Cross-section
+        XS_tmp[indE] = (
+            omega
+            / k02
+            / (1 +2*w_upr)
+            ) * a02 # [cm2]
 
     # Output
     return XS_tmp
@@ -368,3 +388,27 @@ def _get_Max(
     # Output
     return EEDF, engy
 
+# Incident electron velocity
+def _get_vel(
+    E_inc = None,   # [eV]
+    use_rel = None
+    ):
+
+    # Useful constants
+    eV2electron = cnt.e /(cnt.m_e*cnt.c**2) # [1/eV]
+
+    # Relativistic form
+    if use_rel:
+        return (
+            cnt.c *100 *np.sqrt(
+                1 -
+                1/(E_inc *eV2electron +1)**2
+                ) 
+            ) # [cm/s], dim(ngrid,)
+    # Classical form
+    else:         
+        return (
+            cnt.c *100 *np.sqrt(
+                2*E_inc *eV2electron
+                )
+            ) # [cm/s], dim(ngrid,)
