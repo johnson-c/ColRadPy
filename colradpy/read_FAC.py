@@ -62,7 +62,7 @@ def read_FAC(
             'tr',      # Einstein coefficients
             'ce',      # Collisional excitation
             'rr',      # Radiative recombination
-            #'ai',      # Autoionization/dielectronic recombination
+            'ai',      # Autoionization/dielectronic recombination
             'ci',      # Collision ionization
             ]
 
@@ -123,10 +123,12 @@ def read_FAC(
     # Autoionization/dielectronic recombination
     if 'ai' in reacts:
         FAC = _ai(
+            nele=nele,
             FAC=FAC,
             fil=fil,
             EEDF=EEDF,
             Te=Te,
+            verbose=verbose,
             )
 
     # Charge exchange
@@ -422,7 +424,6 @@ def _tr(
 ############################################################
 
 # Reads dielectronic recombination strength data files
-## NOTE: Skips autoionization rates right now!!!
 def _ai(
     nele=None,
     EEDF=None,
@@ -443,6 +444,9 @@ def _ai(
     fre_ColRadPy = []
     dE = [] # [eV]
     DC = [] # [eV *cm2]
+
+    # Loads FAC AI data file
+    ai = rfac.read_ai(fil+'a.ai')
 
     # Loop over blocks
     for blk in np.arange(len(ai[1])):
@@ -528,6 +532,11 @@ def _ai(
     # Output
     FAC['rates']['recomb']['recomb_transitions'] = all_trans    # dim(ntrans,2)
     FAC['rates']['recomb']['recomb_excit'] = all_recomb         # [cm3/s], dim(ntrans, ntemp)
+    if verbose == 1:
+        FAC['rates']['recomb']['RR_trans'] = rad_trans          # dim(ntrans,2)
+        FAC['rates']['recomb']['RR_ratec_cm3/s'] = rad_recomb   # [cm3/s], dim(ntrans, ntemp)
+        FAC['rates']['recomb']['DC_trans'] = trans_ColRadPy     # dim(ntrans,2)
+        FAC['rates']['recomb']['DC_ratec_cm3/s'] = ratec        # [cm3/s], dim(ntrans,ntemp)
 
     return FAC
 
@@ -537,7 +546,7 @@ def _get_xs(
     Te=None,       # [eV], dim(ntemp,)
     FAC=None,
     fil=None,
-    vebose = None,
+    verbose = None,
     reacts = None,
     ):
 
@@ -625,8 +634,8 @@ def _get_xs(
         FAC['rates'][lbl][lbl_excit] = np.asarray(data) # dim(ntrans, nt)
 
         if verbose == 1:
-            FAC['rates'][lbl]['XS_cm2'] = np.asarray(XS) # dim(ntrans, nE), [cm2]
-            FAC['rates'][lbl]['engy_eV'] = np.asarray(engy) # dim(ntrans, nE), [eV]
+            FAC['rates'][lbl]['XS_cm2'] = np.asarray(XS) # dim(ntrans, nE, ntemp), [cm2]
+            FAC['rates'][lbl]['engy_eV'] = np.asarray(engy) # dim(ntrans, nE, ntemp), [eV]
             if react == 'ce':
                 # Stores transition array before padding to match Einstein coefficient
                 FAC['rates'][lbl]['col_trans_unfill'] = FAC['rates'][lbl][lbl_trans].copy()

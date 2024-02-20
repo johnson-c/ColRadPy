@@ -85,8 +85,8 @@ def _conv_ascii2colradpy(
                     react = react,
                     )
                 data.append(tmp_data[:,0])
-                XS.append(tmp_XS[:,0])
-                engy.append(tmp_engy[:,0])
+                XS.append(tmp_XS[:,:,0])
+                engy.append(tmp_engy)
 
             else:
                 data.append(
@@ -283,12 +283,12 @@ def _read_ascii(
         upr_lbl = 'upper_index'
         data_lbl = 'crosssection'
     elif react == 'rr':
-        data_fil = rfac.read_rr(fil+'a.ce')
+        data_fil = rfac.read_rr(fil+'a.rr')
         lwr_lbl = 'bound_index'
         upr_lbl = 'free_index'
         data_lbl = 'RR crosssection'
     elif react == 'ci':
-        data_fil = rfac.read_rr(fil+'a.ce')
+        data_fil = rfac.read_ci(fil+'a.ci')
         lwr_lbl = 'bound_index'
         upr_lbl = 'free_index'
         data_lbl = 'crosssection'
@@ -314,6 +314,8 @@ def _read_ascii(
 
             # Stores transition energy, [eV]
             out[lwr][upr]['dE'] = data_fil[1][blk]['Delta E'][trn]
+            if react == 'ce':
+                out[lwr][upr]['dE'] *= 1e3
 
             if react == 'ce':
                 # Stores energy grid in terms of incident electron energy, [eV]

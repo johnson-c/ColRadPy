@@ -213,7 +213,8 @@ def _calc_ratec(
             # Fill missing data right at threshold
             ## NOTE: collisional ioniz quickly drops to 0 near E_inc = dE
             ## NOTE: collisional excit is pretty nonlinear but flat enough this should be fine
-            ## NOTE: radiative recomb blows up near E_inc = dE, so hopefully this is just a small error !!!
+            ## NOTE: radiative recomb blows up near E_inc = dE, should fill with _get_limit
+                    # E_inc is the incident photon energy (photoionization) with min(E_inc) = dE
             if react != 'ci':
                 indE = np.where(
                     (engyEEDF[:,tt] >= dE[nn])
@@ -221,7 +222,7 @@ def _calc_ratec(
                     )[0]
                 XS_tmp[indE] = XS[0,nn]
 
-            # Fill values with high-energy asymptotic behavior if available
+            # Fill values with high-energy asymptotic behavior if available (low-energy for radiative recombination)
             if limit is not None:
                 XS_tmp = _get_limit(
                     XS_tmp = XS_tmp,
@@ -284,7 +285,7 @@ def _get_limit(
         indE = np.where(engyEEDF> engy_tmp[-1])[0]
 
     # If unnecessary
-    if len(indE) == 0:
+    if (len(indE) == 0 and react != 'rr'):
         return XS_tmp
     
     if react == 'ce':
@@ -310,6 +311,9 @@ def _get_limit(
             ) * a02 # [cm2]
 
     elif react == 'rr':
+        # Note with radiative recombination, you want the low-energy behavior
+        indE = np.where(engyEEDF < engy_tmp[0])[0]
+
         # Incident photon energy, [eV]
         E_gamma = (engyEEDF[indE] + dE)
 
