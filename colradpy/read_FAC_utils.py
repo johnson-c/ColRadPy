@@ -15,6 +15,7 @@ import os
 import numpy as np
 import copy
 from colradpy.convolve_EEDF import convolve_EEDF
+import scipy.constants as cnt
 
 ############################################################
 #
@@ -247,14 +248,24 @@ def _conv_rate2upsilon(
     ind_upr = None,
     FAC = None,
     ):
+    '''
+    Ref -- A. Burgess and J.A. Tully, Astronomy and Astrophysics, Vol.254, NO. FEB(I), P. 436, 1992
+    Eqn 20
+
+    '''
 
     # Useful constants
     eV2invcm = 8065.73 # [1/cm/eV]
+    factor = (
+        2*np.sqrt(np.pi)
+        *cnt.physical_constants['Bohr radius'][0]*1e2 # [cm]
+        *cnt.hbar/cnt.m_e *1e4 # [cm^2/s]
+        ) # [cm^3/s], 2.1716e-8
 
     return data * (
             np.sqrt(np.asarray(Te_eV)/13.6058)
-            /2.1716e-8
-            *(1 + 2*FAC['atomic']['w'][ind_upr])
+            /factor
+            *(1 + 2*FAC['atomic']['w'][ind_lwr])
             * np.exp(
                 abs(
                     FAC['atomic']['energy'][ind_upr]
