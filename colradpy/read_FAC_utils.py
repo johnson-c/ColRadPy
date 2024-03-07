@@ -262,7 +262,7 @@ def _conv_rate2upsilon(
         *cnt.hbar/cnt.m_e *1e4 # [cm^2/s]
         ) # [cm^3/s], 2.1716e-8
 
-    return data * (
+    tmp = data * (
             np.sqrt(np.asarray(Te_eV)/13.6058)
             /factor
             *(1 + 2*FAC['atomic']['w'][ind_lwr])
@@ -274,6 +274,9 @@ def _conv_rate2upsilon(
                 /(np.asarray(Te_eV)*eV2invcm)
                 )
             )
+
+    tmp[np.isnan(tmp)] = 0
+    return tmp
 
 ############################################################
 #
