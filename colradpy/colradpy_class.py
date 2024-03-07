@@ -886,6 +886,14 @@ class colradpy():
                                                  np.sum(np.einsum('ij,j->ij',self.data['rates']['ioniz']['ionization'][i,:,:],
                                                                    self.data['user']['dens_grid']),axis=0)
 
+                    # Includes autoionization rate if given
+                    if 'autoioniz' in self.data['rates']['ioniz'].keys():
+                        self.data['cr_matrix']['cr'][i,i,:] -= np.sum(
+                                                    self.data['rates']['ioniz']['autoioniz'][i,:]
+                                                    )
+                        self.data['cr_matrix']['cr_loss'][i,i,:] -= np.sum(
+                                                    self.data['rates']['ioniz']['autoioniz'][i,:]
+                                                    )
 
 
                 self.data['cr_matrix']['cr'][i,0:len(self.data['atomic']['energy']),:] = \
@@ -944,6 +952,15 @@ class colradpy():
                                                              0:len(self.data['atomic']['energy']),:] + \
                                    np.einsum('ij,j->ij',self.data['rates']['ioniz']['ionization'][:,p,:],
                                                        self.data['user']['dens_grid'])
+
+                    # Includes autoionization rate if given
+                    if 'autoioniz' in self.data['rates']['ioniz'].keys():
+                        self.data['cr_matrix']['cr'][len(self.data['atomic']['energy'])+ p,
+                                                    0:len(self.data['atomic']['energy']),:] += (
+                                                    self.data['rates']['ioniz']['autoioniz'][:,p]
+                                                    )[:,None]
+
+                    
             if(self.data['user']['use_cx']):
 
                 for p in range(0,nsigmaplus_cx):
@@ -984,6 +1001,16 @@ class colradpy():
                     self.data['cr_matrix']['cr_loss'][i,i,:,:] = self.data['cr_matrix']['cr'][i,i,:,:] - \
                                           np.sum(np.einsum('ij,k->ijk',self.data['rates']['ioniz']['ionization'][i,:,:],
                                                            self.data['user']['dens_grid']),axis=0)
+
+                    # Includes autoionization rate if given
+                    if 'autoioniz' in self.data['rates']['ioniz'].keys():
+                        self.data['cr_matrix']['cr'][i,i,:,:] -= np.sum(
+                                                    self.data['rates']['ioniz']['autoioniz'][i,:]
+                                                    )
+                        self.data['cr_matrix']['cr_loss'][i,i,:,:] -= np.sum(
+                                                    self.data['rates']['ioniz']['autoioniz'][i,:]
+                                                    )
+
                 #level i populating mechanisms
                 #these are the transition rates from higher levels into the level i
                 self.data['cr_matrix']['cr'][i,0:len(self.data['atomic']['energy']),:,:] = \
@@ -1055,6 +1082,13 @@ class colradpy():
                                                              0:len(self.data['atomic']['energy']),:,:] + \
                                    np.einsum('ij,k->ijk',self.data['rates']['ioniz']['ionization'][:,p,:],
                                                        self.data['user']['dens_grid'])
+
+                    # Includes autoionization rate if given
+                    if 'autoioniz' in self.data['rates']['ioniz'].keys():
+                        self.data['cr_matrix']['cr'][len(self.data['atomic']['energy'])+ p,
+                                                    0:len(self.data['atomic']['energy']),:,:] += (
+                                                    self.data['rates']['ioniz']['autoioniz'][:,p]
+                                                    )[:,None,None]
 
 
 
@@ -2356,7 +2390,7 @@ class colradpy():
 
 
 
-    def write_pecs_adf15(self,fil_name='', pec_inds = 0, num = 8, pecs_split=False):
+    def write_pecs_adf15(self,fil_name='', pec_inds = 0, num = 8, pecs_split=False, wave_lims=None):
 
         """ This function calls the write_adf15 function.
 
@@ -2390,7 +2424,8 @@ class colradpy():
                     self.data['atomic']['charge_state'], self.data['user']['dens_grid'],
                     self.data['user']['temp_grid'], self.data['atomic']['metas'],
                         self.data['atomic']['ion_pot'],
-                        user = self.data['user'], atomic = self.data['atomic'], num = num)
+                        user = self.data['user'], atomic = self.data['atomic'], num = num,
+                        wave_lims=wave_lims)
             
         else:#write un-split PECs
 
@@ -2405,7 +2440,8 @@ class colradpy():
                     self.data['atomic']['charge_state'], self.data['user']['dens_grid'],
                     self.data['user']['temp_grid'], self.data['atomic']['metas'],
                         self.data['atomic']['ion_pot'],
-                        user = self.data['user'], atomic = self.data['atomic'], num = num)
+                        user = self.data['user'], atomic = self.data['atomic'], num = num,
+                        wave_lims=wave_lims)
             
 
 

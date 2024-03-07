@@ -81,9 +81,17 @@ def convolve_EEDF(
 
     # Prepares EEDF
     if EEDF == 'Maxwellian':
+        if react == 'rr':
+            lwr = 1e-4
+            ngrid = int(1e4)
+        else:
+            lwr = 1e-3
+            ngrid = int(1e3)
         EEDF, engyEEDF = _get_Max(
             Te=Te,
             use_rel=use_rel,
+            lwr=lwr,
+            ngrid=ngrid,
             ) # dim(ngrid, ntemp), ([1/eV], [eV])
     else:
         print('NON-MAXWELLIAN ELECTRONS NOT IMPLEMENTED YET')
@@ -377,6 +385,9 @@ def _get_limit(
             / k02
             / (1 +2*w_lwr)
             ) * a02 # [cm2]
+
+    # Error check
+    XS_tmp[XS_tmp<0] = 0
 
     # Output
     return XS_tmp

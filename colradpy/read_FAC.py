@@ -22,6 +22,7 @@ import os
 import numpy as np
 import copy
 import colradpy.read_FAC_utils as utils
+from colradpy.convolve_EEDF import convolve_EEDF
 
 ############################################################
 #
@@ -342,32 +343,6 @@ def _tr(
     # Transition array from TRTable()
     trans_ColRadPy = np.vstack((upr_ColRadPy, lwr_ColRadPy)).T # dim(ntrans,2)
 
-    # Includes two-photon emission
-    #  Only works for H-like and He-like
-    if nele <= 2:
-        a_2photon = crm.TwoPhoton(Zele, nele-1) # [1/s]
-
-        # 2s(0.5) for H-like
-        if nele == 1:
-            ind = np.where(FAC['atomic']['config'] == '2s1')[0][0]
-        # 1s 2s (J=0) for He-like
-        elif nele == 2:
-            ind = np.where(
-                (FAC['atomic']['config'] == '1s1.2s1')
-                & (FAC['atomic']['w'] == 0)
-                )[0][0]
-
-        ind2 = np.where(
-            np.all(
-                trans_ColRadPy == np.asarray([
-                    FAC['lvl_indices']['ColRadPy'][ind], 1
-                    ]),
-                axis = 1
-                )
-            )[0][0]
-
-        a_val[ind2] += a_2photon
-
     ## NOTE: ColRadPy assumes the index of 'a_val' corresponds to 'col_transitions'
     # But, not all transitions have collisional exication or Einstein coefficients
     # Therefore need to fill
@@ -409,6 +384,32 @@ def _tr(
         if len(indc) == 1:
             all_excit[tt,:] = col_excit[indc[0],:]
 
+    # Includes two-photon emission
+    #  Only works for H-like and He-like
+    if nele <= 2:
+        a_2photon = crm.TwoPhoton(Zele, nele-1) # [1/s]
+
+        # 2s(0.5) for H-like
+        if nele == 1:
+            ind = np.where(FAC['atomic']['config'] == '2s1')[0][0]
+        # 1s 2s (J=0) for He-like
+        elif nele == 2:
+            ind = np.where(
+                (FAC['atomic']['config'] == '1s1.2s1')
+                & (FAC['atomic']['w'] == 0)
+                )[0][0]
+
+        ind2 = np.where(
+            np.all(
+                all_trans == np.asarray([
+                    FAC['lvl_indices']['ColRadPy'][ind], 1
+                    ]),
+                axis = 1
+                )
+            )[0][0]
+
+        all_a_val[ind2] += a_2photon
+
     # Output
     FAC['rates']['a_val'] = all_a_val                       # [1/s], dim(ntrans,)
     FAC['rates']['excit']['col_transitions'] = all_trans    # dim(ntrans,2)
@@ -444,6 +445,7 @@ def _ai(
     fre_ColRadPy = []
     dE = [] # [eV]
     DC = [] # [eV *cm2]
+    AI = [] # [1/s]
 
     # Loads FAC AI data file
     ai = rfac.read_ai(fil+'a.ai')
@@ -451,7 +453,7 @@ def _ai(
     # Loop over blocks
     for blk in np.arange(len(ai[1])):
         # Loop over transitions
-        for tran in np.arange(len(ai[1][blk]['Delta E'])):
+        for trn in np.arange(len(ai[1][blk]['Delta E'])):
             # Stores data
             dE.append(
                 ai[1][blk]['Delta E'][trn]
@@ -459,6 +461,10 @@ def _ai(
 
             DC.append(
                 ai[1][blk]['DC strength'][trn]*1e-20
+                )
+
+            AI.append(
+                ai[1][blk]['AI rate'][trn]
                 )
 
             bnd.append(
@@ -491,6 +497,48 @@ def _ai(
     # Transition array from AITable()
     trans_ColRadPy = np.vstack((fre_ColRadPy, bnd_ColRadPy)).T # dim(ntrans,2)
 
+    # Combining together autoionization and collisional ionization
+    ion_trans = FAC['rates']['ioniz']['ion_transitions'].copy()
+    ion_col = FAC['rates']['ioniz']['ion_excit'].copy()
+    all_ion_trans = np.unique(
+        np.concatenate((
+            np.flip(trans_ColRadPy,axis=1),
+            ion_trans,
+            ), axis=0),
+        axis=0) # (bound, free) indexing
+    all_ion_colls = np.ones((all_ion_trans.shape[0], ion_col.shape[1]))*1e-30 # dim(ntrans, ntemp)
+    all_ion_rates = np.ones((
+        len(FAC['atomic']['energy']), len(FAC['atomic']['ion_pot'])
+        ))*1e-30 # dim(nlvls, nions)
+
+    for tt in np.arange(all_ion_trans.shape[0]):
+        # Finds the indices for this transition
+        ind_ai = np.where(
+            np.all(
+                np.flip(trans_ColRadPy,axis=1) == all_ion_trans[tt,:],
+                axis = 1
+                )
+            )[0]
+        ind_ci = np.where(
+            np.all(
+                ion_trans == all_ion_trans[tt,:],
+                axis = 1
+                )
+            )[0]
+
+        # Error check
+        if len(ind_ai) != 1 and len(ind_ci) != 1:
+            print('AI Error')
+            print(all_trans[tt,:])
+            print('xxxx')
+
+        # Fills arrays
+        if len(ind_ci) == 1:
+            all_ion_colls[tt,:] += ion_col[ind_ci[0],:]
+
+        if len(ind_ai) == 1:
+            all_ion_rates[trans_ColRadPy[ind_ai,1]-1, trans_ColRadPy[ind_ai,0]-1] += AI[ind_ai[0]]
+
     # Combining together rad recomb and DC recomb 
     rad_trans = FAC['rates']['recomb']['recomb_transitions'].copy()
     rad_recomb = FAC['rates']['recomb']['recomb_excit'].copy()
@@ -519,6 +567,7 @@ def _ai(
 
         # Error check
         if len(ind_rr) != 1 and len(ind_dc) != 1:
+            print('DC Error')
             print(all_trans[tt,:])
             print('xxxx')
 
@@ -532,11 +581,18 @@ def _ai(
     # Output
     FAC['rates']['recomb']['recomb_transitions'] = all_trans    # dim(ntrans,2)
     FAC['rates']['recomb']['recomb_excit'] = all_recomb         # [cm3/s], dim(ntrans, ntemp)
+    
+    FAC['rates']['ioniz']['ion_transitions'] = all_ion_trans    # dim(ntrans, 2)
+    FAC['rates']['ioniz']['ion_excit'] = all_ion_colls          # [reduced], dim(ntrans, 2)
+    FAC['rates']['ioniz']['autoioniz'] = all_ion_rates           # [1/s], dim(nlvls, nions)
+
     if verbose == 1:
         FAC['rates']['recomb']['RR_trans'] = rad_trans          # dim(ntrans,2)
         FAC['rates']['recomb']['RR_ratec_cm3/s'] = rad_recomb   # [cm3/s], dim(ntrans, ntemp)
         FAC['rates']['recomb']['DC_trans'] = trans_ColRadPy     # dim(ntrans,2)
         FAC['rates']['recomb']['DC_ratec_cm3/s'] = ratec        # [cm3/s], dim(ntrans,ntemp)
+        
+        FAC['rates']['ioniz']['ion_trans_unfil'] = ion_trans      # dim(ntrans,2)
 
     return FAC
 
