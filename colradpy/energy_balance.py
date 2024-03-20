@@ -140,7 +140,7 @@ class energy_balance(object):
             eigenvectors=self.ion_balance.data["processed"]["eigen_vec"],
         )
 
-        # Calculate solution using scipy solver (4th order Runge-Kutta method)
+        # Calculate solution using scipy solver
         sol = solve_ivp(
             self._evolve_energy, t_span=[0, td_t[-1]], t_eval=td_t, y0=E0,
             args=(pops_fun,), method="Radau",
@@ -152,65 +152,6 @@ class energy_balance(object):
         self.data["processed"]["abundances"] = self.ion_balance.data["processed"]["pops_td"][:, :, 0, 0]
         self.data["processed"]["energies"] = sol.y
         self.data["processed"]["temperatures"] = self.data["processed"]["energies"] / (3/2 * self.data["processed"]["abundances"])
-        self.data["processed"]["nfev"] = sol.nfev
-        self.data["processed"]["status"] = sol.status
-        self.data["processed"]["message"] = sol.message
-        self.data["processed"]["success"] = sol.success
-
-
-    def solve_temperature(self, n0=np.array([]), T0=np.array([]), td_t=np.array([])):
-        """
-        Solves the time-dependent energy balance given initial populations and temperatures
-
-        :param n0: The initial fractional abundance of each charge state at t=0
-        :type n0: float array
-
-        :param T0: The intial temperature in (eV) of each charge state at t=0
-        :type T0: float array
-
-        :param td_t: Solution times
-        :type td_t: float array
-
-        populates the abundances, energies, and temperatures for all solution times
-        """
-        # Set default parameter values
-        if(n0.size < 1):
-            n0 = self.ion_balance.data['user']['init_abund']
-        if(T0.size < 1):
-            T0 = self.data['user']['init_temp']
-        if(td_t.size < 1):
-            td_t = self.ion_balance.data['user']['soln_times']
-
-        # Solve the ionization balance to get fractional abundances vs time
-        self.ion_balance.populate_ion_matrix()
-        self.ion_balance.solve_no_source(n0, td_t)
-
-        # Set up the energy matrix to track energy transfer due to ionization/recombination processes
-        self.energy_matrix = (
-            self.ion_balance.data["ion_matrix"][:, :, 0, 0]
-            * self.data["user"]["electron_dens"]
-        )
-
-        # Create function that returns population in each charge state at any time
-        pops_fun = partial(
-            eval_matrix_exponential_solution,
-            n0=n0,
-            eigenvalues=self.ion_balance.data["processed"]["eigen_val"],
-            eigenvectors=self.ion_balance.data["processed"]["eigen_vec"],
-        )
-
-        # Calculate solution using scipy solver (4th order Runge-Kutta method)
-        sol = solve_ivp(
-            self._evolve_temperature, t_span=[0, td_t[-1]], t_eval=td_t, y0=T0, args=(pops_fun,),
-            method="Radau",
-        )
-
-        # Package solution data
-        self.data["processed"] = {}
-        self.data["processed"]["time"] = td_t
-        self.data["processed"]["abundances"] = self.ion_balance.data["processed"]["pops_td"][:, :, 0, 0]
-        self.data["processed"]["temperatures"] = sol.y
-        self.data["processed"]["energies"] = 3/2 * self.data["processed"]["abundances"] * self.data["processed"]["temperatures"]
         self.data["processed"]["nfev"] = sol.nfev
         self.data["processed"]["status"] = sol.status
         self.data["processed"]["message"] = sol.message
@@ -280,64 +221,6 @@ class energy_balance(object):
         energy_derivative = np.einsum("ij,j->i", energy_matrix, energies) + energy_source
 
         return energy_derivative
-
-
-    def _evolve_temperature(self, time, temperatures, pops_fun):
-        """
-        Calculates the time derivative of the temperature in each charge state.
-    
-        :param time: Time at which to compute the energy time derivative
-        :type time: float
-        
-        :param temperatures: Temperature in eV in each charge state at the current time
-        :type temperatures: float array
-        
-        :param pops_fun: Function that returns the population in each charge state for an input time
-        :type pops_fun: fun(t)
-    
-        Returns a vector of the time derivative of the temperature in each charge state
-        """
-        # Get fractional abundance for this time and calculate state temperatures
-        pops = pops_fun(np.array([time]))[:, 0, 0, 0]
-    
-        # Create vector of energy transfer frequencies for each charge state
-        num_charge_states = len(pops)
-        frequencies = np.zeros(num_charge_states)
-        frequencies[0] = neutral_energy_transfer_frequency(
-            np.array([self.data["user"]["mass"], self.data["user"]["ion_mass"]]) * constants.value("atomic mass constant"),
-            self.data["user"]["ion_dens"] * 1e6,  # cm^-3 -> m^-3
-            self.data["user"]["polarizability"],
-        )
-        frequencies[1:] = plasma_energy_transfer_frequency(
-            masses=np.array(
-                [self.data["user"]["mass"], self.data["user"]["ion_mass"]]
-            ) * constants.value("atomic mass constant"),  # amu -> kg
-            charges=np.column_stack((
-                np.arange(1, num_charge_states),
-                np.full(num_charge_states - 1, self.data["user"]["ion_charge_number"]),
-            )),
-            densities=np.full(num_charge_states - 1, self.data["user"]["ion_dens"] * 1e6),  # cm^-3 -> m^-3
-            temperatures=np.column_stack((
-                temperatures[1:],
-                np.full(num_charge_states - 1, self.data["user"]["ion_temp"]),
-            )),
-        )
-        frequencies[~np.isfinite(frequencies)] = 0 # Handle special cases where temperature is zero
-
-        # Calculate temperature derivative
-        ionization_rates = np.diagonal(self.energy_matrix, offset=-1)
-        recombination_rates = np.diagonal(self.energy_matrix, offset=1)
-        temperature_derivative = np.zeros(num_charge_states)
-        temperature_derivative -= (  # Heating/cooling from main ions
-            2/3 * frequencies * (temperatures - self.data["user"]["ion_temp"])
-        )
-        temperature_derivative[1:] -= (  # Cooling/heating from ionization of stage below
-            ionization_rates * pops[:-1] / pops[1:] * (temperatures[1:] - temperatures[:-1])
-        )
-        temperature_derivative[:-1] -= (  # Cooling/heating from recombination of stage above
-            recombination_rates * pops[1:] / pops[:-1] * (temperatures[:-1] - temperatures[1:])
-        )
-        return temperature_derivative
 
 
 def plasma_energy_transfer_frequency(
