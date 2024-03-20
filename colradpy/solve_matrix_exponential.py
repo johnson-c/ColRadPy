@@ -69,6 +69,14 @@ def solve_matrix_exponential(matrix,td_n0,td_t):
     return td_pop, eigenvals, eigenvectors
 
 
+def eval_matrix_exponential_solution(time, n0, eigenvalues, eigenvectors):
+    v0 = np.dot(np.linalg.inv(eigenvectors), n0)
+    vt = np.einsum('klj,kljt->kljt', v0, np.exp(np.einsum('klj,t->kljt', eigenvalues, time)))
+    pops = np.einsum('klij,kljt->itkl', eigenvectors, vt)
+    pops[pops < 0] = 0
+    return pops
+
+
 def solve_matrix_exponential_steady_state(matrix):
     """ This definition will solve the steady state solutions of a 4d matrix
        
