@@ -18,11 +18,11 @@ class energy_balance(object):
     calculation. Unlike an ionization balance calculation, the energy balance
     involves solving a nonlinear system of rate equations, due to the nonlinear
     temperature dependence of the collisional energy transfer between plasma
-    species). So, the efficient matrix solvers in 'solve_matrix_exponential.py'
-    cannot be used. The energy balance can therefore only be performed for a
-    single set of main ion/electron densities/temperatures at a time (it is not
-    vectorized across a grid of temperatures/densities like the ionization
-    balance).
+    species. So, the efficient analytic matrix ODE solver in
+    'solve_matrix_exponential.py' cannot be used. The energy balance can
+    therefore only be performed for a single set of main ion/electron
+    densities/temperatures at a time (it is not vectorized across a grid of
+    temperatures/densities like the ionization balance).
 
     :Args:       
       :param fils: Array of the input adf04 or adf11 files
@@ -125,6 +125,13 @@ class energy_balance(object):
             * self.data["user"]["electron_dens"]
         )
 
+        # Calculate Debye length (assume mobility of electrons is higher than all other species)
+        self.debye_length = debye_length(
+            charges=np.array([-1]),
+            densities=np.array([self.data["user"]["electron_dens"]]),
+            temperatures=np.array([self.data["user"]["electron_temp"]]),
+        )
+
         # Create function that returns population in each charge state at any time
         pops_fun = partial(
             eval_matrix_exponential_solution,
@@ -157,7 +164,7 @@ class energy_balance(object):
 
         :param n0: The initial fractional abundance of each charge state at t=0
         :type n0: float array
-        
+
         :param T0: The intial temperature in (eV) of each charge state at t=0
         :type T0: float array
 
@@ -229,6 +236,7 @@ class energy_balance(object):
         pops = pops_fun(np.array([time]))[:, 0, 0, 0]
         # Handle special cases where populations are zero (typically at beginning)
         temps = np.divide(energies, 3/2 * pops, out=np.zeros_like(energies), where=(pops != 0))
+        temps[temps < 0] = 0  # Prevent numerical noise from making negative temperatures
 
         # Set up energy transfer matrix & source vector (starting with ionization matrix)
         energy_matrix = self.energy_matrix.copy()
@@ -250,14 +258,12 @@ class energy_balance(object):
                 np.arange(1, num_charge_states),
                 np.full(num_charge_states - 1, self.data["user"]["ion_charge_number"]),
             )),
-            densities=np.column_stack((
-                pops[1:] * self.data["user"]["dens"],
-                np.full(num_charge_states - 1, self.data["user"]["ion_dens"]),
-            )) * 1e6,  # cm^-3 -> m^-3
+            densities=np.full(num_charge_states - 1, self.data["user"]["ion_dens"] * 1e6),  # cm^-3 -> m^-3
             temperatures=np.column_stack((
                 temps[1:],
                 np.full(num_charge_states - 1, self.data["user"]["ion_temp"]),
             )),
+            debye_length=self.debye_length,
         )
         frequencies[~np.isfinite(frequencies)] = 0 # Handle special cases where temperature is zero
 
@@ -310,10 +316,7 @@ class energy_balance(object):
                 np.arange(1, num_charge_states),
                 np.full(num_charge_states - 1, self.data["user"]["ion_charge_number"]),
             )),
-            densities=np.column_stack((
-                pops[1:] * self.data["user"]["dens"],
-                np.full(num_charge_states - 1, self.data["user"]["ion_dens"]),
-            )) * 1e6,  # cm^-3 -> m^-3
+            densities=np.full(num_charge_states - 1, self.data["user"]["ion_dens"] * 1e6),  # cm^-3 -> m^-3
             temperatures=np.column_stack((
                 temperatures[1:],
                 np.full(num_charge_states - 1, self.data["user"]["ion_temp"]),
@@ -337,7 +340,9 @@ class energy_balance(object):
         return temperature_derivative
 
 
-def plasma_energy_transfer_frequency(masses, charges, densities, temperatures):
+def plasma_energy_transfer_frequency(
+    masses, charges, densities, temperatures, debye_length
+):
     """
     Calculates the collisional energy transfer frequency between two plasma
     species.
@@ -357,10 +362,12 @@ def plasma_energy_transfer_frequency(masses, charges, densities, temperatures):
         Mass of each species in kilograms. 
     charges : array, shape (..., 2)
         Charge number of each species.
-    densities : array, shape (..., 2)
-        Density of each species in particles per cubic meter.
+    densities : array, shape (...)
+        Density of species 2 in particles per cubic meter.
     temperatures : array, shape (..., 2)
         Temperature of each species in electron-volts.
+    debye_length : array, shape (...)
+        Debye length of the plasma in meters.
 
     Returns
     -------
@@ -369,10 +376,10 @@ def plasma_energy_transfer_frequency(masses, charges, densities, temperatures):
         energy is collisionally transferred from species 2 to species 1.
     """
     thermal_velocities = np.sqrt(2 * constants.e * temperatures / masses)
-    log = coulomb_logarithm(masses, charges, densities, temperatures)
+    log = coulomb_logarithm(masses, charges, temperatures, debye_length)
     frequency = (
         (
-            densities[..., 1] * charges[..., 0]**2 * charges[..., 1]**2
+            densities * charges[..., 0]**2 * charges[..., 1]**2
             * constants.e**4 * log
         )
         / (
@@ -434,31 +441,79 @@ def neutral_energy_transfer_frequency(masses, plasma_density, neutral_dipole_pol
     return 3/2 * frequency  # Include 3/2 factor to go from temperature to energy
 
 
-def coulomb_logarithm(masses, charges, densities, temperatures):
+def coulomb_logarithm(masses, charges, temperatures, debye_length):
     """
     Calculates the coulomb logarithm for collisions between two plasma species.
+
+    This equation comes from Eqs. 2.1.19 and 2.2.21-23 in Jim Callen's Plasma
+    Kinetic Theory lecture notes.
     
-    See documentation of `plasma_energy_transfer_frequency` for explanation of 
-    input parameters.
+    Parameters
+    ----------
+    masses : array, shape (..., 2)
+        Mass of each species in kilograms.
+    charges : array, shape (..., 2)
+        Charge number of each species.
+    temperatures : array, shape (..., 2)
+        Temperature of each species in electron-volts.
+    debye_length : array, shape (...)
+        Debye length of the plasma in meters.
+
+    Returns
+    -------
+    coulomb_logarithm : array
     """
-    debye_length = (
-        (
-            (densities * charges**2 * constants.e**2)
-            / (constants.epsilon_0 * constants.e * temperatures)
-        ).sum(axis=-1)
-    )**(-1/2)
     reduced_mass = masses[..., 0] * masses[..., 1] / masses.sum(axis=-1)
     thermal_velocities = np.sqrt(2 * constants.e * temperatures / masses)
-    log = np.log(
-        (
-            4 * np.pi * constants.epsilon_0 * reduced_mass * debye_length
-            * (thermal_velocities**2).sum(axis=-1) / 2
-        )
+    min_impact_parameter_classical = (
+        np.abs(charges[..., 0] * charges[..., 1]) * constants.e**2
         / (
-            np.abs(charges[..., 0] * charges[..., 1]) * constants.e**2
+            4 * np.pi * constants.epsilon_0
+            * reduced_mass * (thermal_velocities**2).sum(axis=-1) / 2
         )
     )
-    return log
+    min_impact_parameter_quantum = (
+        constants.hbar
+        / (reduced_mass * np.sqrt((thermal_velocities**2).sum(axis=-1)))
+    )
+    min_impact_parameter = np.max(
+        [min_impact_parameter_classical, min_impact_parameter_quantum],
+        axis=0,
+    )
+    return np.log(debye_length / min_impact_parameter)
+
+
+def debye_length(charges, densities, temperatures):
+    """
+    Calculates the Debye length of a multi-species plasma.
+
+    charges : array, shape (..., S)
+        Charge number of each species. Species axis must be last.
+    densities : array, shape (..., S)
+        Density of each species in particles per cubic meter. Species axis
+        must be last.
+    temperatures : array, shape (..., S)
+        Temperature of each species in electron-volts. Species axis must be
+        last.
+
+    Returns
+    -------
+    debye_length : array, shape (...)
+        Debye length of the plasma in meters.
+    """
+    #TODO: The Debye length calculation
+    #should not include plasma species for which the temperature is so low that
+    #the q * phi / k_B * T << 1 approximation becomes invalid. Not entirely
+    #sure how to check this approximation... I think it would involve an
+    #iterative process where the analytic solution for the shielded potential
+    #with all species included is used to evaluate q_s * phi / T_s at
+    #r = (n_s)^(-1/3). If for any species this expression is not << 1, then
+    #that species should be removed, the Debye length recalculated, and so on
+    #until all species involved in the calculation satisfy this requirement.
+    return (
+        (densities * charges**2 * constants.e**2)
+        / (constants.epsilon_0 * constants.e * temperatures)
+    ).sum(axis=-1)**(-1/2)
 
 
 if __name__ == "__main__":
@@ -484,7 +539,12 @@ if __name__ == "__main__":
         plasma_density=5e18,
         neutral_dipole_polarizability=12.0,
     )
-    
+    deuteron_to_electron_rate = plasma_energy_transfer_frequency(
+        masses=np.array([constants.electron_mass, constants.value("deuteron mass")]),
+        charges=np.array([-1, 1]),
+        densities=np.array([1e21, 1e21]),
+        temperatures=np.array([1e3, 10e3]),
+    )
     print(1e6 * 3/2 / plasma_energy_transfer_frequency(
         masses=np.array([12.011 * constants.value("atomic mass constant"), constants.value("deuteron mass")]),
         charges=np.array([3, 1]),
