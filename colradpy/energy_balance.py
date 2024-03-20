@@ -143,7 +143,7 @@ class energy_balance(object):
         # Calculate solution using scipy solver
         sol = solve_ivp(
             self._evolve_energy, t_span=[0, td_t[-1]], t_eval=td_t, y0=E0,
-            args=(pops_fun,), method="Radau",
+            args=(pops_fun,), method="BDF",
         )
 
         # Package solution data
