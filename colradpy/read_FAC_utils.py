@@ -329,7 +329,7 @@ def _read_ascii(
             # Stores transition energy, [eV]
             out[lwr][upr]['dE'] = data_fil[1][blk]['Delta E'][trn]
             if react == 'ce':
-                out[lwr][upr]['dE'] *= 1e3
+                out[lwr][upr]['dE'] *= 10**int(np.log10(data_fil[1][blk]['TE0']))
 
             if react == 'ce':
                 # Stores energy grid in terms of incident electron energy, [eV]
