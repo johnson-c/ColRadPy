@@ -123,13 +123,14 @@ def _conv_ascii2colradpy(
 
             elif react == 'ci':
                 # Converts ionization data to adf04 reduced form
-                data[-1] = _conv_rate2reduct(
+                data_tmp = _conv_rate2reduct(
                     data = data[-1],
                     Te_eV = Te,
                     ind_st  = st_lwr[-1] -1,
                     ind_ion = st_upr[-1] -1,
                     FAC = FAC,
                     )
+                data[-1] = [x if not np.isnan(x) else 0.0 for x in data_tmp] # fixes overflow error
 
     # Output
     return data, st_upr, st_lwr, ratec, XS, engy
@@ -194,13 +195,14 @@ def _conv_mr2colradpy(
 
             elif react == 'ci':
                 # Converts ionization data to adf04 reduced form
-                data[-1] = _conv_rate2reduct(
+                data_tmp = _conv_rate2reduct(
                     data = data[-1],
                     Te_eV = mr['Te_eV'],
                     ind_st  = st_lwr[-1] -1,
                     ind_ion = st_upr[-1] -1,
                     FAC = FAC,
                     )
+                data[-1] = [x if not np.isnan(x) else 0.0 for x in data_tmp] # fixes overflow error
 
     # Output
     return data, st_upr, st_lwr, ratec
