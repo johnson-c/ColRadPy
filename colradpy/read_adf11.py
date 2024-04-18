@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import re
 
@@ -24,7 +25,7 @@ def read_adf11(fil):
     adf11['input_file']['charge_max'] = int(tmp[4])
 
     f.readline() #reading '-------------'
-    if( 'r' in re.split('_',re.split('/',fil)[-1])[0]):
+    if('r' in re.split('_', os.path.split(fil)[-1])[0]):
         
         adf11['input_file']['metas'] = np.array(list(   #metastables
                        map(int,re.findall('(\d+)',f.readline()))))
