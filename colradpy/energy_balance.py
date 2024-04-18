@@ -31,9 +31,6 @@ class energy_balance(object):
       :param metas: List of arrays for the metastable levels in a charge state
       :type metas: list
 
-      :param dens: Total density of the species being modelled (sum over all charge states) in (cm^-3)
-      :type dens: float
-
       :param mass: Mass of the species being modelled in (amu)
       :type mass: float
       
@@ -64,7 +61,7 @@ class energy_balance(object):
       :param kwargs: Keyword arguments to pass to `ionization_balance`
     """
 
-    def __init__(self, fils, metas, dens, mass, polarizability, electron_temp,
+    def __init__(self, fils, metas, mass, polarizability, electron_temp,
                  electron_dens, ion_temp, ion_dens, ion_mass, ion_charge_number,
                  init_temp=np.array([]), **kwargs):
 
@@ -77,7 +74,6 @@ class energy_balance(object):
         # Initialize data
         self.data = {}
         self.data["user"] = {}
-        self.data["user"]["dens"] = dens
         self.data["user"]["mass"] = mass
         self.data["user"]["polarizability"] = polarizability
         self.data["user"]["electron_temp"] = electron_temp
@@ -399,6 +395,7 @@ def debye_length(charges, densities, temperatures):
     ).sum(axis=-1)**(-1/2)
 
 
+# Tests for collisional energy transfer rates
 if __name__ == "__main__":
     proton_to_carbon2_rate = plasma_energy_transfer_frequency(  # Energy transfer rate from protons to C2+
         masses=np.array([12.011 * constants.value("atomic mass constant"), constants.proton_mass]),
@@ -428,9 +425,3 @@ if __name__ == "__main__":
         densities=np.array([1e21, 1e21]),
         temperatures=np.array([1e3, 10e3]),
     )
-    print(1e6 * 3/2 / plasma_energy_transfer_frequency(
-        masses=np.array([12.011 * constants.value("atomic mass constant"), constants.value("deuteron mass")]),
-        charges=np.array([3, 1]),
-        densities=np.array([3e18, 3e18]),
-        temperatures=np.array([0.001, 50]),
-    ))
