@@ -14,7 +14,8 @@ def interp_rates_adf11(logged_temp,logged_dens,temp,dens,logged_gcr):
                 for l in range(0,len(dens)):
                     interp_gcr = interp2d(logged_temp,
                                           logged_dens,
-                                          logged_gcr[i,j,:,:].transpose(1,0))
+                                          logged_gcr[i,j,:,:].transpose(1,0),
+                                          kind="cubic")
                     gcr_arr[i,j,k,l] = interp_gcr(np.log10(temp[k]),np.log10(dens[l]))
     return 10**gcr_arr
 
