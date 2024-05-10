@@ -1,48 +1,47 @@
 import os
 import time
-import numpy as np 
-import matplotlib.pyplot as plt
+import numpy as np
 from scipy import integrate
+import matplotlib.pyplot as plt
 from colradpy.energy_balance import energy_balance
 
 
 #%% Specify element to analyze and path to ACD and SCD adf11 files
+path_to_atomic_data = ""  # Path on local machine where adf11 files are stored
 element_name = 'carbon'
 element_symbol = 'C'
 num_charge_states = 7
 year = '96'
-pec_data_dir = r"C:\Users\Matt\Dropbox\Research\Auburn\Collisional radiative modelling\Atomic data"  # Need to specify path to ADAS ADF11 files on local machine
 files = np.array([
-    os.path.join(pec_data_dir, f'scd{year}_{element_symbol.lower()}.dat'),
-    os.path.join(pec_data_dir, f'acd{year}_{element_symbol.lower()}.dat'),
+    os.path.join(path_to_atomic_data, f'scd{year}_{element_symbol.lower()}.dat'),
+    os.path.join(path_to_atomic_data, f'acd{year}_{element_symbol.lower()}.dat'),
 ])
 
 
 #%% Specify input physics parameters for the energy balance
 mass = 12.011 # mass of the species being modelled in amu
 polarizability = 12.0 # dipole polarizabiliy in Bohr radii cubed of the modelled species' neutral state
-electron_temp = 50 # background plasma electron temperature in eV
+electron_temp = 100 # background plasma electron temperature in eV
 electron_dens = 1e13 # background plasma electron density in cm^-3
-ion_temp = 75 # background plasma ion temperature in eV
+ion_temp = 100 # background plasma ion temperature in eV
 ion_dens = 1e13 # background plasma ion density in cm^-3
-ion_mass = 1.00794 # background plasma ion mass in amu
+ion_mass = 1.007 # background plasma ion mass in amu
 ion_charge_number = 1 # background plasma ion charge number
 ion_species = "protium"
 
 
-#%% Setup time-dependent energy balance
+#%% Setup time-dependent ionization balance
 # Times for energy balance to be solved at. Unlike an ionization balance, the
 # solution times for the energy balance need to begin sufficiently close to t=0
 # that the populations and energies have not evolved significantly from their
 # values at t=0. It helps to run an ionization balance first to see the time
 # dynamics of the system and then use that info to refine the solution times
 # for the energy balance.
-t = np.geomspace(1e-10, 1e1, 301)
+t = np.geomspace(1e-8, 1e-0, 301)
 initial_abundances = np.zeros(num_charge_states)
 initial_abundances[0] = 1 # 100% of the population in the neutral charge state
-initial_abundances /= np.sum(initial_abundances)
 initial_temperatures = np.zeros(num_charge_states)
-initial_temperatures[0] = 1.5 # Neutral carbon sourced temperature characteristic of chemical erosion
+initial_temperatures[0] = 1.5 # Neutral carbon sourced at temperature characteristic of chemical erosion
 
 balance = energy_balance(
     files,
@@ -60,6 +59,7 @@ balance = energy_balance(
     init_abund=initial_abundances,
     init_temp=initial_temperatures,
 )
+
 
 #%% Run time-dependent energy balance
 t0 = time.perf_counter()
@@ -94,7 +94,7 @@ ax.set_ylabel("Fractional abundance")
 ax.set_title(
     f"Fractional ion balance for {element_name}\n"
     fr"$T_\mathrm{{e}}$ = {balance.data['user']['electron_temp']:.1f} eV  "
-    fr"$n_\mathrm{{e}}$ = {balance.data['user']['electron_dens']:5.1e} $\mathrm{{cm}}^{{-3}}$  ",
+    fr"$n_\mathrm{{e}}$ = {balance.data['user']['electron_dens']:5.1e} $\mathrm{{cm}}^{{-3}}$  "
 )
 leg = ax.legend()
 leg.set_draggable(True)
