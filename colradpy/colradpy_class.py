@@ -1302,16 +1302,44 @@ class colradpy():
                                                           self.data['rates']['ioniz']['ionization'][levels_to_keep,:],
                                                           self.data['processed']['F'])
 
+                # Includes autoionization rate if given
+                if 'autoioniz' in self.data['rates']['ioniz'].keys():
+                    self.data['processed']['scd'] += np.einsum('ipl,iml->mpl',
+                        np.einsum('ip,l->ipl',
+                            self.data['rates']['ioniz']['autoioniz'][levels_to_keep,:],
+                            1/self.data['user']['dens_grid']
+                            ),
+                        self.data['processed']['F']
+                        )
+                
                 if(self.data['processed']['driving_populations_norm']):
                     self.data['processed']['scd'] = self.data['processed']['scd'] + \
                                                   np.einsum('ipk,ik->ipk',
                                                   self.data['rates']['ioniz']['ionization'][self.data['atomic']['metas'],:],
                               1/(1+np.sum(self.data['processed']['pops_no_norm'][:,self.data['atomic']['metas'],:],axis=0)))
 
+                    # Includes autoionization rate if given
+                    if 'autoioniz' in self.data['rates']['ioniz'].keys():
+                        self.data['processed']['scd'] += np.einsum('ipl,il->ipl',
+                            np.einsum('ip,l->ipl',
+                                self.data['rates']['ioniz']['autoioniz'][self.data['atomic']['metas'],:],
+                                1/self.data['user']['dens_grid']
+                                ),
+                            1/(1+np.sum(self.data['processed']['pops_no_norm'][:,self.data['atomic']['metas'],:],axis=0))
+                            )
+
                 else:
                     self.data['processed']['scd'] = self.data['processed']['scd'] + \
                                              self.data['rates']['ioniz']['ionization'][self.data['atomic']['metas'],:,:]
 
+                    # Includes autoionization rate if given
+                    if 'autoioniz' in self.data['rates']['ioniz'].keys():
+                        self.data['processed']['scd'] += (
+                            np.einsum('ip,l->ipl',
+                                self.data['rates']['ioniz']['autoioniz'][self.data['atomic']['metas'],:],
+                                1/self.data['user']['dens_grid']
+                                )
+                            )
 
             if(self.data['user']['use_recombination'] and self.data['user']['use_recombination_three_body']):
                 #this is the total recombination with three body and the rates that in included in the adf04 file
@@ -1433,15 +1461,44 @@ class colradpy():
                                                           self.data['rates']['ioniz']['ionization'][levels_to_keep,:,:],
                                                           self.data['processed']['F'])
 
+                # Includes autoionization rate if given
+                if 'autoioniz' in self.data['rates']['ioniz'].keys():
+                    self.data['processed']['scd'] += np.einsum('ipl,imkl->mpkl',
+                        np.einsum('ip,l->ipl',
+                            self.data['rates']['ioniz']['autoioniz'][levels_to_keep,:],
+                            1/self.data['user']['dens_grid']
+                            ),
+                        self.data['processed']['F']
+                        )
+
                 if(self.data['processed']['driving_populations_norm']):
                     self.data['processed']['scd'] = self.data['processed']['scd'] + \
                                                   np.einsum('ipk,ikl->ipkl',
                                                   self.data['rates']['ioniz']['ionization'][self.data['atomic']['metas'],:,:],
                               1/(1+np.sum(self.data['processed']['pops_no_norm'][:,self.data['atomic']['metas'],:,:],axis=0)))
 
+                    # Includes autoionization rate if given
+                    if 'autoioniz' in self.data['rates']['ioniz'].keys():
+                        self.data['processed']['scd'] += np.einsum('ipl,ikl->ipkl',
+                            np.einsum('ip,l->ipl',
+                                self.data['rates']['ioniz']['autoioniz'][self.data['atomic']['metas'],:],
+                                1/self.data['user']['dens_grid']
+                                ),
+                            1/(1+np.sum(self.data['processed']['pops_no_norm'][:,self.data['atomic']['metas'],:,:],axis=0))
+                            )
+
                 else:
                     self.data['processed']['scd'] = self.data['processed']['scd'] + \
                                              self.data['rates']['ioniz']['ionization'][self.data['atomic']['metas'],:,:,None]
+
+                    # Includes autoionization rate if given
+                    if 'autoioniz' in self.data['rates']['ioniz'].keys():
+                        self.data['processed']['scd'] += (
+                            np.einsum('ip,l->ipl',
+                                self.data['rates']['ioniz']['autoioniz'][self.data['atomic']['metas'],:],
+                                1/self.data['user']['dens_grid']
+                                )
+                            )[:,:,None,:]
 
             if(self.data['user']['use_recombination'] and self.data['user']['use_recombination_three_body']):
                 #this is the total recombination with three body and the rates that in included in the adf04 file
@@ -1594,6 +1651,16 @@ class colradpy():
         #just remember not to include the population from the + stage
         self.data['processed']['td']['scd'] =  np.einsum('ipk,itkl->ptkl',self.data['rates']['ioniz']['ionization'],
                             self.data['processed']['td']['td_pop'][0:len(self.data['rates']['ioniz']['ionization']),:,:,:])
+
+        # Includes autoionization rate if given
+        if 'autoioniz' in self.data['rates']['ioniz'].keys():
+            self.data['processed']['scd'] += np.einsum('ipl,itkl->ptkl',
+                np.einsum('ip,l->ipl',
+                    self.data['rates']['ioniz']['autoioniz'],
+                    1/self.data['user']['dens_grid']
+                    ),
+                self.data['processed']['td']['td_pop'][0:len(self.data['rates']['ioniz']['ionization']),:,:,:]
+                )
 
 
     def split_pec_multiplet(self):
