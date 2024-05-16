@@ -5,7 +5,7 @@ from datetime import date
 # group subset of an array
 # this is so there are 8 entries per line
 # in the adf15 file
-# see stackexchange
+# see stackexchangeG
 def grouper(n, iterable):
     it = iter(iterable)
     while True:
@@ -127,7 +127,7 @@ def write_adf15(fil_name,pec_inds, wave, pecs, pec_lvls, element_sym,
                     +'('+str(atomic['S'][upr])+')'
                     +str(atomic['L'][upr])
                     +'('+str(atomic['w'][upr])+')'
-                    ).rjust(15, ' ')
+                    ).rjust(17, ' ')
                 +'-'
                 + (
                     str(lwr) 
@@ -208,10 +208,10 @@ def write_adf15(fil_name,pec_inds, wave, pecs, pec_lvls, element_sym,
     f.write('C-----------------------------------------------------------------------\n')
     f.write('C\n')
     f.write(
-        "C   ISEL     WVLEN [A]     TRANSITION lvl(S)L(w)         TYPE\n"
+        "C   ISEL     WVLEN [A]     TRANSITION lvl(S)L(w)           TYPE\n"
         )
     f.write(
-        "C  -----  ------------  ------------------------------  -----\n"
+        "C  -----  ------------  --------------------------------  -----\n"
         )
     for tt in np.arange(len(trans)):
         f.write(trans[tt])
