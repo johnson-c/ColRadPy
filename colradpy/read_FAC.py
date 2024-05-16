@@ -448,7 +448,11 @@ def _ai(
     AI = [] # [1/s]
 
     # Loads FAC AI data file
-    ai = rfac.read_ai(fil+'a.ai')
+    try:
+        ai = rfac.read_ai(fil+'a.ai')
+    except:
+        print('No AI/DR rates found. Skipping')
+        return FAC
 
     # Loop over blocks
     for blk in np.arange(len(ai[1])):
