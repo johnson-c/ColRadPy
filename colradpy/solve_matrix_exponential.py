@@ -112,6 +112,7 @@ def solve_matrix_exponential_steady_state(matrix):
 
     index = list(np.ix_(*[np.arange(i) for i in eigenvals.shape]))
     index[axis] = np.abs(eigenvals).argsort(axis)
+    index = tuple(index)  # Needs to be tuple for multidimensional indexing to work
 
     if(len(np.shape(matrix)) ==4):    
         ev = eigenvectors.transpose(0,1,3,2)[index]#egienvectors sorted on eigenvals
