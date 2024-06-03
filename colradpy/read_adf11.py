@@ -1,5 +1,6 @@
 import numpy as np
 import re
+from pathlib import Path
 
 
 def read_adf11(fil):
@@ -11,9 +12,16 @@ def read_adf11(fil):
       :type fil: string
     """
     
-    f = open(fil)
+    path = Path(fil)
+    f = path.open()
     adf11 = {}
     adf11['input_file'] = {}
+    
+    is_ascd = 'acd' in path.name or 'scd' in path.name
+    is_qcd = 'qcd' in path.name
+    is_xcd = 'xcd' in path.name
+    is_plt = 'plt' in path.name
+    is_prb = 'prb' in path.name
 
     #reading the first line
     tmp = re.findall('(\d+)',f.readline())
@@ -24,7 +32,7 @@ def read_adf11(fil):
     adf11['input_file']['charge_max'] = int(tmp[4])
 
     f.readline() #reading '-------------'
-    if( 'r' in re.split('_',re.split('/',fil)[-1])[0]):
+    if( 'r' in path.name):
         
         adf11['input_file']['metas'] = np.array(list(   #metastables
                        map(int,re.findall('(\d+)',f.readline()))))
@@ -46,33 +54,22 @@ def read_adf11(fil):
         num_stages = adf11['input_file']['nuc_charge']
     else:
         num_stages = len(adf11['input_file']['metas'])
+        
+        
     for i in range(0,num_stages):
-        adf11['input_file'][str(i)] = {}
-        if( 'scd' in fil or 'acd' in fil):
-            adf11['input_file'][str(i)] = np.zeros((adf11['input_file']['metas'][i],
-                                                     adf11['input_file']['metas'][i+1],
-                                             len(adf11['input_file']['temp_grid']),
-                                             len(adf11['input_file']['dens_grid'])))
-        if( 'qcd' in fil ):
-            adf11['input_file'][str(i)] = np.zeros((adf11['input_file']['metas'][i],
-                                                     adf11['input_file']['metas'][i],
-                                             len(adf11['input_file']['temp_grid']),
-                                             len(adf11['input_file']['dens_grid'])))
-        if('xcd' in fil):
-            adf11['input_file'][str(i)] = np.zeros((adf11['input_file']['metas'][i+1],
-                                                     adf11['input_file']['metas'][i+1],
-                                             len(adf11['input_file']['temp_grid']),
-                                             len(adf11['input_file']['dens_grid'])))
-        if('plt' in fil):
-            adf11['input_file'][str(i)] = np.zeros((adf11['input_file']['metas'][i],
-                                                     adf11['input_file']['metas'][i],
-                                             len(adf11['input_file']['temp_grid']),
-                                             len(adf11['input_file']['dens_grid'])))
-        if('prb' in fil):
-            adf11['input_file'][str(i)] = np.zeros((adf11['input_file']['metas'][i],
-                                                     adf11['input_file']['metas'][i],
-                                             len(adf11['input_file']['temp_grid']),
-                                             len(adf11['input_file']['dens_grid'])))
+        size_1 = size_2 = i
+        if is_ascd:
+            size_2 += 1
+        elif is_xcd:
+            size_1 += 1
+            size_2 += 1
+        
+        adf11['input_file'][str(i)] = np.zeros((
+            adf11['input_file']['metas'][size_1],
+            adf11['input_file']['metas'][size_2],
+            len(adf11['input_file']['temp_grid']),
+            len(adf11['input_file']['dens_grid'])
+        ))
             
     #Reading the GCR value portion
     gcr_line = f.readline()
@@ -84,7 +81,7 @@ def read_adf11(fil):
             dens_count = 0
             temp_count = 0
             stage_id = np.array(list(map(int,re.findall('(\d+ )',gcr_line))))
-            if('scd' in fil or 'acd' in fil):
+            if is_ascd:
                 if(len(stage_id) >1):
                     tmp = stage_id[0]
                     stage_id[0] = stage_id[1]
