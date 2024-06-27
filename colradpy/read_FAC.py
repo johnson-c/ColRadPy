@@ -18,7 +18,7 @@ TO DO:
 
 # Module
 from pfac import rfac, crm
-import os
+import sys, os
 import numpy as np
 import copy
 import colradpy.read_FAC_utils as utils
@@ -41,7 +41,7 @@ def read_FAC(
     EEDF = None,        # if None -> assumes Maxwell-averages rates from pfac.fac.MaxwellRate
     reacts = None,      # if None -> looks for all file suffixes
     Te = None,          # if not using MaxwellRate files, [eV], dim(ntemp,)
-    verbose = 1,
+    verbose = 0,
     ):
 
     ######## -------- Determines which files to search for -------- ########
@@ -50,10 +50,10 @@ def read_FAC(
     if EEDF == 'Maxwellian_mr':
         # Use Maxwell-averaged rates from pfac.fac.MaxwellRate
         use_mr = True
-    elif EEDF == 'Maxwellian':
+    elif EEDF in ['Maxwellian', 'Gaussian']:
         use_mr = False
     else:
-        print('NON-MAXWELLIAN ELECTRONS NOT IMPLEMENTED YET')
+        print('REQUESTED ELECTRON ENERGY DISTRIBUTION NOT IMPLEMENTED YET')
         sys.exit(1)
 
     # FAC data files to search for
@@ -85,7 +85,6 @@ def read_FAC(
     # Error check
     else:
         print('NEED TO INCLUDE ENERGY LEVEL DATA IN MODELING!!!')
-        sys.exit(1)
 
     # Gets rate coefficient data
     # Includes: collisional excit, radiative recomb, collisional ioniz
@@ -119,7 +118,6 @@ def read_FAC(
     # Error check
     else:
         print('NEED TO INCLUDE EINSTEIN COEFFICIENT DATA IN MODELING!!!')
-        sys.exit(1)
 
     # Autoionization/dielectronic recombination
     if 'ai' in reacts:
@@ -374,6 +372,7 @@ def _tr(
 
         # Error check
         if len(inda) != 1 and len(indc) != 1:
+            print('TR error')
             print(all_trans[tt,:])
             print('xxxx')
 
@@ -613,7 +612,6 @@ def _get_xs(
     # Error check
     if 'ce' not in reacts:
         print('NEED TO INCLUDE COLLISIONAL EXCITATION DATA IN MODELING!!!')
-        sys.exit(1)
 
     # Fill blank
     if 'rr' not in reacts:
@@ -717,7 +715,6 @@ def _get_mr(
     # Error check
     if 'ce' not in reacts:
         print('NEED TO INCLUDE COLLISIONAL EXCITATION DATA IN MODELING!!!')
-        sys.exit(1)
 
     # Fill blank
     if 'rr' not in reacts:

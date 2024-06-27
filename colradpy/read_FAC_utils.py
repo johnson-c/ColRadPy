@@ -98,7 +98,7 @@ def _conv_ascii2colradpy(
                         engyXS = XSdata[lwr][upr]['engy'],
                         m = 0,
                         dE = np.asarray([XSdata[lwr][upr]['dE']]),
-                        Bethe = XSdata[lwr][upr]['limit'][None,:],
+                        limit = XSdata[lwr][upr]['limit'][None,:],
                         w_upr = np.asarray([XSdata[lwr][upr]['w_upr']]),
                         w_lwr = np.asarray([XSdata[lwr][upr]['w_lwr']]),
                         ion_L = ion_L,
