@@ -43,7 +43,11 @@ def convolve_EEDF(
                 if Te <10 keV = Maxwell-Boltzmann
                 if Te >10 keV = Maxwell-Juttner (relativistic)
 
-            2) NOT IMPLEMENTED YET (non-Maxwellians)
+            2) 'Gaussian' --> electron beam, i.e. an EBIT
+                Therefore, Te is interpreted as the central beam voltage, [eV]
+                NOTE: currently hardcoded a beam width of 5eV.
+
+            3) NOT IMPLEMENTED YET (non-Maxwellians)
 
         Te -- [eV], dim(ntemp,), characteristic temperature of EEDF
             if using non-Maxwellian then whatever characteristic 
@@ -93,6 +97,14 @@ def convolve_EEDF(
             lwr=lwr,
             ngrid=ngrid,
             ) # dim(ngrid, ntemp), ([1/eV], [eV])
+
+    elif EEDF == 'Gaussian':
+        EEDF, engyEEDF = _get_Gauss(
+            Eb = Te, # [eV]
+            #dEb = 5, # [eV]
+            #ngrid = ngrid,
+            ) # dim(ngrid, ntemp), ([1/eV], [eV])
+
     else:
         print('NON-MAXWELLIAN ELECTRONS NOT IMPLEMENTED YET')
         sys.exit(1)
@@ -391,6 +403,36 @@ def _get_limit(
 
     # Output
     return XS_tmp
+
+# Calculate Gaussian energy distribution function
+def _get_Gauss(
+    Eb = None,          # [eV], dim(nEb,), central beam voltage
+    dEb = 5,            # [eV], (scalar), beam width
+    ngrid = int(1e3),   # energy grid resolution
+    nstd = 5,           # number of standard deviations to make energy grid
+    ):
+
+    # Calc bounds of energy grid
+    _dEb = dEb*nstd
+
+    # Energy mesh
+    engy = np.linspace(
+        Eb - _dEb,
+        Eb + _dEb,
+        ngrid, axis = 0
+        ) # dim(ngrid, nEb), [eV]
+
+    # Calculates normalized Gaussian
+    EEDF = (
+        1/(dEb * np.sqrt(2*np.pi))
+        * np.exp(
+            -(engy-Eb[None,:])**2
+            /(2*dEb**2)
+            )
+        ) # dim(ngrid, nEb), [1/eV]
+
+    # Output
+    return EEDF, engy
 
 # Calculate Maxwellian energy distribution function
 def _get_Max(
