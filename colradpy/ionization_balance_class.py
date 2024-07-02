@@ -35,16 +35,18 @@ class ionization_balance():
       :param metas: List of arrays for the metastable levels in a charge state
       :type metas: list
 
-      :param temp_grid: Array of the temperatures in (eV)
+      :param temp_grid: Array of electron temperatures in (eV)
       :type temp_grid: float array
 
-      :param dens_grid: Array of the densities in (cm-3)
+      :param dens_grid: Array of electron densities in (cm-3)
       :type dens_grid: float array
 
-      :param htemp_grid: Temperature grid of thermal CX hydrogen (eV)
+      :param htemp_grid: Temperature grid of thermal CX hydrogen (eV). Must be
+       aligned with the electron temperature grid.
       :type htemp_grid: float array
 
-      :param hdens_grid: Density grid of the thermal CX hydrogen densities in (cm-3)
+      :param hdens_grid: Density grid of the thermal CX hydrogen densities in
+       (cm^-3). Must be aligned with the electron density grid.
       :type hdens_grid: float array
 
       :param soln_times: Times to calculate the solution for the time dependent solutions (s)
@@ -120,7 +122,9 @@ class ionization_balance():
         self.data['cr_data']['gcrs'] = {}
         self.data['user'] = {}
         self.data['user']['temp_grid'] = np.asarray(temp_grid) #eV
-        self.data['user']['dens_grid'] = np.asarray(dens_grid)#cm-3
+        self.data['user']['dens_grid'] = np.asarray(dens_grid) #cm^-3
+        self.data['user']['htemp_grid'] = np.asarray(htemp_grid) #eV
+        self.data['user']['hdens_grid'] = np.asarray(hdens_grid) # cm^-3
         self.data['user']['fils'] = np.asarray(fils)
         self.data['user']['init_abund'] = np.asarray(init_abund)
         self.data['user']['soln_times'] = np.asarray(soln_times)
@@ -147,9 +151,9 @@ class ionization_balance():
 
 
                 if(type(use_cx) == bool):
-                    self.data['user']['use_cx'] = np.ones(len(adf11['input_file']['metas'])-1,dtype=bool)
-                    self.data['user']['use_cx'][:] = False
-                
+                    self.data['user']['use_cx'] = np.ones(len(adf11['input_file']['metas'])-1, dtype=bool)
+                    self.data['user']['use_cx'][:] = use_cx
+
 
                 for j in range(0,len(adf11['input_file']['metas'])-1):
                     if( str(j) not in self.data['cr_data']['gcrs']):
@@ -168,20 +172,20 @@ class ionization_balance():
                         self.data['input_file']['acd'] = adf11['input_file']
                         
                     if( 'qcd' in fils[i]):
-                        self.data['cr_data']['gcrs'][str(j)]['qcd']= interp_rates_adf11(adf11['input_file']['temp_grid'],
+                        self.data['cr_data']['gcrs'][str(j)]['qcd'] = interp_rates_adf11(adf11['input_file']['temp_grid'],
                                                                                         adf11['input_file']['dens_grid'],
                                                                          temp_grid,dens_grid,adf11['input_file'][str(j)])
                         self.data['input_file']['qcd'] = adf11['input_file']
                         
                     if( 'xcd' in fils[i]):
-                        self.data['cr_data']['gcrs'][str(j)]['xcd']= interp_rates_adf11(adf11['input_file']['temp_grid'],
+                        self.data['cr_data']['gcrs'][str(j)]['xcd'] = interp_rates_adf11(adf11['input_file']['temp_grid'],
                                                                                         adf11['input_file']['dens_grid'],
                                                                          temp_grid,dens_grid,adf11['input_file'][str(j)])
                         self.data['input_file']['xcd'] = adf11['input_file']                               
                     if( 'ccd' in fils[i]):        
-                        self.data['cr_data']['gcrs'][str(j)]['ccd']= interp_rates_adf11(adf11['input_file']['temp_grid'],
+                        self.data['cr_data']['gcrs'][str(j)]['ccd'] = interp_rates_adf11(adf11['input_file']['temp_grid'],
                                                                                         adf11['input_file']['dens_grid'],
-                                                                         temp_grid,dens_grid,adf11['input_file'][str(j)])
+                                                                         htemp_grid,hdens_grid,adf11['input_file'][str(j)])
                         self.data['input_file']['ccd'] = adf11['input_file']                        
                         
                     if('qcd' not in self.data['cr_data']['gcrs'][str(j)]):
