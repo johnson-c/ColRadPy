@@ -226,14 +226,17 @@ def plasma_energy_transfer_frequency(
     Calculates the collisional energy transfer frequency between two plasma
     species.
     
-    This frequency characterizes the rate at which energy is transferred by
-    collisions from species 2 to species 1. It is given by Eq. 2.4.55 in Jim
-    Callen's Plasma Kinetic Theory lecture notes.
-    
     The thermal equilibration of two species is given by:
         3/2 * n_1 * dT_1/dt = -nu_1,2 * n_1 * (T_1 - T_2)
     where n is density, T is temperature, t is time, and nu is the collisional
-    energy transfer frequency.
+    energy transfer frequency. This frequency characterizes the rate at which
+    energy is transferred by collisions from species 2 to species 1. It is
+    given by Eq. 2.4.55 in Jim Callen's Plasma Kinetic Theory lecture notes.
+    Note that the frequency given in the more widely known NRL Plasma Formulary
+    differs from the definition here by a factor of 3/2 (because that frequency
+    gives the temperature relaxation rate, while this formula gives the energy
+    transfer rate). To convert this frequency into the temperature relaxation
+    frequency, multiply the result by 2/3.
 
     Parameters
     ----------
