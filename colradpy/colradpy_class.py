@@ -2399,7 +2399,7 @@ class colradpy():
                                          self.data['processed']['pecs'][:,k,j,i]*10**np.abs(scaling))
 
                     plt.xlabel('Wavelength in air (nm)',weight='semibold')
-                    plt.ylabel('PEC X 1E' +str(scaling) + ' (ph cm$^{-1}$ s$^{-1}$)',weight='semibold')
+                    plt.ylabel('PEC X 1E' +str(scaling) + ' (ph cm$^{-3}$ s$^{-1}$)',weight='semibold')
                     plt.title('Temperature ' + str(self.data['user']['temp_grid'][j]) + ' eV,  '+\
                               'Density ' + format(self.data['user']['dens_grid'][i],'.2e') + ' cm$^{-3}$, '+\
                               'Metastable ' + str(self.data['atomic']['metas'][k]),weight='semibold')
