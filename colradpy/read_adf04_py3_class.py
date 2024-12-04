@@ -119,7 +119,7 @@ def read_adf04(fil):
                 
 
                 if( tmp[tmp_inds[config_stop]].count(')') > 1):
-                    w.append(float(re.split('[(]',tmp[tmp_inds[config_stop]])[2][0:4]))
+                    w.append(float(re.split('[()]',tmp[tmp_inds[config_stop]])[3]))
                     offset = -1
                 else:
                     w.append(float(re.split('[)]',re.split('[(]',tmp[tmp_inds[config_stop+1]])[0])[0]))
