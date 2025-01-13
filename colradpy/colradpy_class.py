@@ -1542,6 +1542,8 @@ class colradpy():
            that this will split. Most transitsions of spectroscopic importance should be able to be 
            split by this.
 
+           Creates the ['split'] sub dictionary to hold the information of the split
+
         """
         if('processed' not in self.data.keys()):
             self.solve_quasi_static()
@@ -1589,9 +1591,6 @@ class colradpy():
                                   (self.data['processed']['split']['S'] == self.data['atomic']['S'][low]) &
                                   (self.data['processed']['split']['j'] == jl[j]))[0]
 
-
-
-
                         #Allows for solution to ambiguility when no parentage is specified in
                         #configuations. 
                         conf_id_u = 0
@@ -1606,37 +1605,40 @@ class colradpy():
                                 if( low in self.data['atomic']['id_groups'][kk]):
                                     conf_id_l = np.where( low == self.data['atomic']['id_groups'][kk])[0][0]
 
-                        self.data['processed']['split']['pec_levels'].append(np.array([up_id[conf_id_u],low_id[conf_id_l]]))
-
-
-                        if(res.size == 1):
+                        self.data['processed']['split']['pec_levels'].append(np.array([up_id[conf_id_u],
+                                                                                       low_id[conf_id_l]]))
+                        if(res.size == 1):#check if the term is split and apply factors if it is
+                            #term is not split into multiply levels 
                             self.data['processed']['split']['pecs'].append(
                                                                      self.data['processed']['pecs'][i])
-                            self.data['processed']['split']['unsplit_pec_levels'].append(self.data['processed']['pec_levels'][i])
+                            self.data['processed']['split']['unsplit_pec_levels'].append(
+                                                                                self.data['processed']['pec_levels'][i])
                             self.data['processed']['split']['unres_pec_map'].append(i)
-                        else:
+                            
+                        else:#term is split into different levels
+                            #give each split corresponding PEC its relative value add the transition to different maps
                             self.data['processed']['split']['pecs'].append(
                                                    self.data['processed']['pecs'][i]*res[j]/np.sum(res))
-                            self.data['processed']['split']['unsplit_pec_levels'].append(self.data['processed']['pec_levels'][i])
+                            self.data['processed']['split']['unsplit_pec_levels'].append(
+                                                                                self.data['processed']['pec_levels'][i])
                             self.data['processed']['split']['unres_pec_map'].append(i)
-                            
+                        #
                         self.data['processed']['split']['wave_air'].append(
-                         1/(self.data['processed']['split']['energy'][up_id[0]] - \
-                            self.data['processed']['split']['energy'][low_id[0]]+1.e-20)*1e7)
-                            
+                            1/(self.data['processed']['split']['energy'][up_id[conf_id_u]] - \
+                               self.data['processed']['split']['energy'][low_id[conf_id_l]]+1.e-20)*1e7)
+
             else:
                 self.data['processed']['split']['pecs'].append(self.data['processed']['pecs'][i])
 
-
-
-                
         self.data['processed']['split']['wave_vac'] = np.copy(np.asarray(self.data['processed']['split']['wave_air']))
         self.data['processed']['split']['wave_air'] = np.asarray(self.data['processed']['split']['wave_air'])/\
-                                                     convert_to_air( np.asarray(self.data['processed']['split']['wave_air']))
+                                                convert_to_air( np.asarray(self.data['processed']['split']['wave_air']))
         self.data['processed']['split']['pecs'] =  np.asarray(self.data['processed']['split']['pecs'])
-
-
-
+        self.data['processed']['split']['pec_levels'] =  np.asarray(self.data['processed']['split']['pec_levels'])
+        self.data['processed']['split']['unsplit_pecs_levels'] =  np.asarray(
+                                                                  self.data['processed']['split']['unsplit_pec_levels'])
+        self.data['processed']['split']['unres_pec_map'] =  np.asarray(self.data['processed']['split']['unres_pec_map'])
+        
 
     def auto_check_eissner_config(self):
 
