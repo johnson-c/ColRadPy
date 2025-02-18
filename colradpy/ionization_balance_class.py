@@ -1,22 +1,23 @@
 import numpy as np
 from colradpy.colradpy_class import *
 from colradpy.solve_matrix_exponential import *
-from scipy.interpolate import interp2d
+from scipy.interpolate import RectBivariateSpline
 from colradpy.read_adf11 import *
 
-def interp_rates_adf11(logged_temp,logged_dens,temp,dens,logged_gcr):
+def interp_rates_adf11(logged_temp,logged_dens,temp,dens,logged_gcr): # y are logged_temp and logged_dens args alongside temp and dens? seems redundant?
+    # Dane did some optimization, Curt seemed to cobble this together (Dane optimized just this block of code as a self-contained unit)
+    # parallelization should be implemented if more performance is needed
     gcr_arr = np.zeros( (np.shape(logged_gcr)[0],np.shape(logged_gcr)[1],len(temp),len(dens)) )
-    #there has to be a better way to do this mess with the for loops but I can't be bothered
-    #to spend the time to figure it out if this actually gets used for much it should be changed
+
+    logged_temp, logged_dens = np.log10(temp), np.log10(dens) # pre-compute to save time
+    
     for i in range(0,np.shape(logged_gcr)[0]):
         for j in range(0,np.shape(logged_gcr)[1]):
-            for k in range(0,len(temp)):
-                for l in range(0,len(dens)):
-                    interp_gcr = interp2d(logged_temp,
-                                          logged_dens,
-                                          logged_gcr[i,j,:,:].transpose(1,0),
-                                          kind="cubic")
-                    gcr_arr[i,j,k,l] = interp_gcr(np.log10(temp[k]),np.log10(dens[l]))
+            interp_gcr = RectBivariateSpline(logged_temp,
+                logged_dens,
+                logged_gcr[i,j,:,:],
+            )
+            gcr_arr[i,j] = interp_gcr(logged_temp, logged_dens) # array size matching works when Dane tests it
     return 10**gcr_arr
 
 
