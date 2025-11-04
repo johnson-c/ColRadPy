@@ -50,6 +50,43 @@ from matplotlib import rc,rcParams
 from fractions import Fraction
 import os
 import pathlib
+import subprocess
+
+def get_git_hash(base_path=None):
+    base_path = pathlib.Path(base_path or __file__).resolve().parent
+
+    # Try using git directly if available (works even in subfolders)
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=base_path,
+            capture_output=True,
+            text=True,
+            check=True)
+        return result.stdout.strip()
+    except Exception:
+        pass  # fall through if git not installed or .git missing
+    # Try to read from .git manually (works in shallow clone)
+    git_dir = base_path / ".git"
+    if git_dir.exists():
+        try:
+            with open(git_dir / "HEAD", "r") as head:
+                ref = head.readline().strip().split(" ")[-1]
+            ref_file = git_dir / ref
+            if ref_file.exists():
+                return ref_file.read_text().strip()
+        except Exception:
+            pass
+    # Try to infer from environment (e.g. CI/CD or baked-in version)
+    env_hash = os.environ.get("GIT_HASH")
+    if env_hash:
+        return env_hash.strip()
+    # Try to read from an embedded version file (zip or packaged)
+    version_file = base_path / "VERSION"
+    if version_file.exists():
+        return version_file.read_text().strip()
+    # Nothing worked
+    return "unknown"
 
 def convert_to_air(lam):
     """This function converts the vacuum wavelength of spectral lines to 
@@ -281,18 +318,9 @@ class colradpy():
                           (self.data['atomic']['S'] == self.data['atomic']['S'][[ij]]) &
                           (self.data['atomic']['L'] == self.data['atomic']['L'][[ij]]) &        
                           (self.data['atomic']['w'] == self.data['atomic']['w'][[ij]]) )[0])
-    
+                
 
-
-        #get the path of the hash so people can track versions, done this way incase the user
-        #didn't pull with git but just zip tssssk tsssk tsssssk
-        base_path = os.path.dirname(os.path.abspath(__file__))
-        base_path = base_path[0:len(base_path) - 9]
-        git_dir = pathlib.Path(base_path) / '.git'
-        with (git_dir / 'HEAD').open('r') as head:
-            ref = head.readline().split(' ')[-1].strip()
-        with (git_dir / ref).open('r') as git_hash:
-            self.data['user']['git_hash'] = git_hash.readline().strip()
+        self.data["user"]["git_hash"] = get_git_hash()
 
                 
     def update_dict(self,d, u):
