@@ -24,6 +24,11 @@ class energy_balance(object):
     densities/temperatures at a time (it is not vectorized across a grid of
     temperatures/densities like the ionization balance).
 
+    Currently, if charge exchange effects are turned on, they only directly
+    affect the ionization balance. The energy balance is then indirectly
+    affected through the ionization balance. The direct effects of charge
+    exchange on the energy balance are not modelled.
+
     :Args:       
       :param fils: Array of the input adf04 or adf11 files
       :type fils: string array
@@ -54,7 +59,16 @@ class energy_balance(object):
 
       :param ion_charge_number: Main ion species charge number
       :type ion_charge_number: int
-      
+
+      :param use_cx: Include thermal charge exchange in the ionization balance
+      :param use_cx: bool
+
+      :param hydrogen_temp: Neutral hydrogen temperature in (eV)
+      :type hydrogen_temp: float
+
+      :param hydrogen_dens: Neutral hydrogen density in (cm^-3)
+      :type hydrogen_dens: float
+
       :param init_temp: Initial temperatures in (eV) of the charge states for the modelled species
       :type init_temp: float array
 
@@ -63,12 +77,19 @@ class energy_balance(object):
 
     def __init__(self, fils, metas, mass, polarizability, electron_temp,
                  electron_dens, ion_temp, ion_dens, ion_mass, ion_charge_number,
+                 use_cx=False, hydrogen_temp=None, hydrogen_dens=None,
                  init_temp=np.array([]), **kwargs):
 
         # Set up ionization balance 
         self.ion_balance = ionization_balance(
-            fils, metas, temp_grid=np.array([electron_temp]),
-            dens_grid=np.array([electron_dens]), **kwargs,
+            fils,
+            metas,
+            temp_grid=np.array([electron_temp]),
+            dens_grid=np.array([electron_dens]),
+            htemp_grid=np.array([hydrogen_temp]),
+            hdens_grid=np.array([hydrogen_dens]),
+            use_cx=use_cx,
+            **kwargs,
         )
 
         # Initialize data
@@ -83,6 +104,10 @@ class energy_balance(object):
         self.data["user"]["ion_mass"] = ion_mass
         self.data["user"]["ion_charge_number"] = ion_charge_number
         self.data["user"]["init_temp"] = init_temp
+        self.data["user"]["use_cx"] = use_cx
+        if use_cx:
+            self.data["user"]["hydrogen_temp"] = hydrogen_temp
+            self.data["user"]["hydrogen_dens"] = hydrogen_dens
 
 
     def solve(self, n0=np.array([]), T0=np.array([]), td_t=np.array([])):
@@ -169,6 +194,7 @@ class energy_balance(object):
 
         Returns a vector of the time derivative of the energy in each charge state
         """
+        # TODO: Implement effects of charge exchange reactions on energy balance
         # Get fractional abundance for this time and calculate state temperatures
         pops = pops_fun(np.array([time]))[:, 0, 0, 0]
         # Handle special cases where populations are zero (typically at beginning)
