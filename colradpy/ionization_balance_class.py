@@ -4,21 +4,23 @@ from colradpy.solve_matrix_exponential import *
 from scipy.interpolate import RectBivariateSpline
 from colradpy.read_adf11 import *
 
-def interp_rates_adf11(logged_temp,logged_dens,temp,dens,logged_gcr): # y are logged_temp and logged_dens args alongside temp and dens? seems redundant?
-    # Dane did some optimization, Curt seemed to cobble this together (Dane optimized just this block of code as a self-contained unit)
-    # parallelization should be implemented if more performance is needed
-    gcr_arr = np.zeros( (np.shape(logged_gcr)[0],np.shape(logged_gcr)[1],len(temp),len(dens)) )
+def interp_rates_adf11(logged_temp, logged_dens, temp, dens, logged_gcr):
+    # changed some variable names to more accurately represent what they are
+    # logged_ indicates the INITIAL grid of values, also is log base 10'd
+    # absence of logged_ indicates the grid to INTERPOLATE onto, also is the straight value (not log base 10'd)
+    # Dane sped up array processing, parallelization should be implemented if more performance is needed
+    new_logged_gcr = np.zeros((*np.shape(logged_gcr)[:2], len(temp), len(dens)))
 
-    logged_temp, logged_dens = np.log10(temp), np.log10(dens) # pre-compute to save time
+    new_logged_temp, new_logged_dens = np.log10(temp), np.log10(dens) # pre-compute to save time
     
-    for i in range(0,np.shape(logged_gcr)[0]):
-        for j in range(0,np.shape(logged_gcr)[1]):
+    for i in range(0,np.shape(new_logged_gcr)[0]):
+        for j in range(0,np.shape(new_logged_gcr)[1]):
             interp_gcr = RectBivariateSpline(logged_temp,
                 logged_dens,
                 logged_gcr[i,j,:,:],
             )
-            gcr_arr[i,j] = interp_gcr(logged_temp, logged_dens) # array size matching works when Dane tests it
-    return 10**gcr_arr
+            new_logged_gcr[i,j] = interp_gcr(new_logged_temp, new_logged_dens) # array size matching works when Dane tests it
+    return 10**new_logged_gcr
 
 
 class ionization_balance():
