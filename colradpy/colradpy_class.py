@@ -27,6 +27,17 @@
 ################################################################################
 
 import numpy as np
+# Prefer current NumPy APIs, with fallbacks for older releases.
+try:
+    from numpy import isin as _isin
+except ImportError:
+    from numpy import in1d as _isin
+
+try:
+    from numpy import trapezoid as _trapezoid
+except ImportError:
+    from numpy import trapz as _trapezoid
+
 import re
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
@@ -296,7 +307,7 @@ class colradpy():
         new_arr = uniq[:,counts == 1] #indexes of array that are unique
         a_idx = np.arange(tot_id_arr.shape[1]) #array of every index
         
-        self.data['atomic']['inds_same_id'] = a_idx[np.in1d(a_idx, uniq_idx[counts==1], invert=True)]
+        self.data['atomic']['inds_same_id'] = a_idx[_isin(a_idx, uniq_idx[counts==1], invert=True)]
         
         self.data['atomic']['id_groups'] = []#we won't know how many levels are in a group
 
@@ -1327,7 +1338,7 @@ class colradpy():
                 #calculate the metastable cross coupling coefficent, this the number of atoms that start in one
                 #metastable and then end up in a different metastable
                 metas_to_keep_ind = np.arange(self.data['atomic']['metas'].shape[0])\
-                                         [np.in1d(self.data['atomic']['metas'], metas_to_keep)]
+                                         [_isin(self.data['atomic']['metas'], metas_to_keep)]
                 if(len(self.data['processed']['qcd']) > 1):
 
                     self.data['processed']['qcd'][metas_to_keep_ind,n,:] = np.einsum('nk,k->nk',
@@ -1344,7 +1355,7 @@ class colradpy():
                     metasplus_to_keep = np.setdiff1d( np.linspace(0,len(self.data['atomic']['ion_pot'])-1,
                                                                   len(self.data['atomic']['ion_pot']),dtype='int'),m)
                     metasplus_to_keep_ind = np.arange(self.data['atomic']['ion_pot'].shape[0])\
-                                         [np.in1d(self.data['atomic']['ion_pot_lvl']-1, metasplus_to_keep)]
+                                         [_isin(self.data['atomic']['ion_pot_lvl']-1, metasplus_to_keep)]
                     #parent cross coupling coefficient, start in the parent atom, recombine get redistrubted then
                     #ionize back into the parent but into a different parent metastable
                     if(len(self.data['processed']['xcd']) > 1):
@@ -1459,7 +1470,7 @@ class colradpy():
                 #calculate the metastable cross coupling coefficent, this the number of atoms that start in one
                 #metastable and then end up in a different metastable
                 metas_to_keep_ind = np.arange(self.data['atomic']['metas'].shape[0])\
-                                         [np.in1d(self.data['atomic']['metas'], metas_to_keep)]
+                                         [_isin(self.data['atomic']['metas'], metas_to_keep)]
                 self.data['processed']['qcd'][metas_to_keep_ind,n,:,:] = np.einsum('nkl,l->nkl',
 
                                         self.data['cr_matrix']['cr'][self.data['atomic']['metas'][n],metas_to_keep,:,:] +\
@@ -1474,7 +1485,7 @@ class colradpy():
                     metasplus_to_keep = np.setdiff1d( np.linspace(0,len(self.data['atomic']['ion_pot'])-1,
                                                                   len(self.data['atomic']['ion_pot']),dtype='int'),m)
                     metasplus_to_keep_ind = np.arange(self.data['atomic']['ion_pot'].shape[0])\
-                                         [np.in1d(self.data['atomic']['ion_pot_lvl']-1, metasplus_to_keep)]
+                                         [_isin(self.data['atomic']['ion_pot_lvl']-1, metasplus_to_keep)]
                     #parent cross coupling coefficient, start in the parent atom, recombine get redistrubted then
                     #ionize back into the parent but into a different parent metastable
                     self.data['processed']['xcd'][metasplus_to_keep_ind,np.array([m]),:,:] =-np.einsum('ik,imkl->mkl',
@@ -1973,8 +1984,8 @@ class colradpy():
                             
                             wat = shells_arr_tmp[ik] + '.' + closed_shells[ij]
                         shells_arr_tmp[ik] = wat
-            shells_arr_tmp = np.core.defchararray.add(shells_arr_tmp,  '.')        
-            self.data['atomic']['nist_conf_form'] = np.core.defchararray.add(shells_arr_tmp,  conf)
+            shells_arr_tmp = np.char.add(shells_arr_tmp,  '.')
+            self.data['atomic']['nist_conf_form'] = np.char.add(shells_arr_tmp,  conf)
                 
             '''            
             shells_arr_tmp = np.empty_like(self.data['atomic']['nist_conf_form'].astype('<U1000'))
@@ -2064,8 +2075,8 @@ class colradpy():
     def shift_j_res_pecs(self):
         
         a = np.where( self.data['atomic']['energy'] > -1)[0] #levels that are not in NIST have be given -1 for energies
-        in_upper = np.in1d(self.data['processed']['pec_levels'][:,0],a) #find all the levels that have be shifted upp and lower
-        in_lower = np.in1d(self.data['processed']['pec_levels'][:,1],a) 
+        in_upper = _isin(self.data['processed']['pec_levels'][:,0],a) #find all the levels that have be shifted upp and lower
+        in_lower = _isin(self.data['processed']['pec_levels'][:,1],a)
 
 
         #set up 'shift' wave and pecs 
@@ -2257,7 +2268,7 @@ class colradpy():
             #normalize so area under the curve is 1
             self.data['processed']['broadening']['nat']['theta'] =np.einsum('ij,i->ij',
                                                                             lor_tmp,
-                            1/np.trapz(lor_tmp,x=self.data['processed']['broadening']['nat']['wave_arr'],axis=1))
+                            1/_trapezoid(lor_tmp,x=self.data['processed']['broadening']['nat']['wave_arr'],axis=1))
 
 
             
@@ -2325,7 +2336,7 @@ class colradpy():
             #normalize so the area under the curve is 1
             self.data['processed']['broadening']['dopp']['theta'] = np.einsum('ij,i->ij',
                                                                               gau_tmp,
-                                1/np.trapz(gau_tmp,x=self.data['processed']['broadening']['dopp']['wave_arr'],axis=1))
+                                1/_trapezoid(gau_tmp,x=self.data['processed']['broadening']['dopp']['wave_arr'],axis=1))
 
             '''
 
@@ -2347,7 +2358,7 @@ class colradpy():
                                                                                      (np.sqrt(np.pi)*dnu_g[:,None])
 
         #normalize so the area under the curve is 1
-        return np.einsum('ij,i->ij', gau_tmp,1/np.trapz(gau_tmp,x=wave_arr,axis=1))
+        return np.einsum('ij,i->ij', gau_tmp,1/_trapezoid(gau_tmp,x=wave_arr,axis=1))
 
 
 
